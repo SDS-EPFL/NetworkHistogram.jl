@@ -3,6 +3,9 @@ uuid = "7806f430-7229-459c-b2e6-df35e8e4eb5d"
 authors = ["SDS Chair"]
 version = "0.1.0"
 
+[deps]
+ValueHistories = "98cad3c8-aec3-5f06-8e41-884608649ab7"
+
 [compat]
 julia = "1.8"
 
