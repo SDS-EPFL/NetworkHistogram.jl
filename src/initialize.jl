@@ -65,3 +65,7 @@ function initialize(A, h)
     history = MVHistory([:likelihood => QHistory(Float64), :best_likelihood => QHistory(Float64), :proposal_likelihood => QHistory(Float64)])
     return old_store, new_store, history
 end
+
+function initialise_node_labels(A, h)
+    error("Not yet implemented")
+end
