@@ -34,6 +34,7 @@ struct Assignment
         end
 
         estimated_theta = realized ./ counts
+        likelihood = compute_log_likelihood(number_groups, estimated_theta, counts, number_nodes)
       
         new(
             number_nodes,
@@ -62,14 +63,30 @@ struct Assignment
 
 end
 
-function initialize(A, h)
+function initialize(A, h, optimizer)
     node_labels = initialise_node_labels(A, h)
     old_store = Assignment(A, node_labels, h)
     new_store = deepcopy(oldstore)
     history = MVHistory([:likelihood => QHistory(Float64), :best_likelihood => QHistory(Float64), :proposal_likelihood => QHistory(Float64)])
+    proposal = initialise_proposal(old_store, optimizer)
     return old_store, new_store, history
+end
+
+function initialise_proposal(node_assignment, optimizer)
 end
 
 function initialise_node_labels(A, h)
     error("Not yet implemented")
+end
+
+function compute_log_likelihood(number_groups, estimated_theta, counts, number_nodes)
+    loglik = 0.0
+    @inbounds @simd for i in 1:number_groups
+        for j in i:number_groups
+            θ = estimated_theta[i, j]
+            θ_c = θ < 0 ? 1e-16 : (θ > 1 ? 1 - 1e-16 : θ)
+            loglik += (θ_c * log(θ_c) + (1 - θ_c) * log(1 - θ_c)) * counts[i, j]
+        end
+    end
+    return loglik / number_nodes
 end
