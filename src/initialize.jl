@@ -2,16 +2,18 @@ struct Assignment
     number_nodes::Int
     number_groups::Int
     node_labels::Vector{Int}
+    group_size::Tuple{Int,Int}
 
     counts::Matrix{Int}
     realized::Matrix{Float64}
     estimated_theta::Matrix{Float64}
 
     likelihood::Float64
-    function Assignment(A, node_labels)
+    function Assignment(A, node_labels, h)
         
         number_groups = length(unique(node_labels))
         number_nodes = length(node_labels)
+        group_size = (h, number_nodes % h)
         estimated_theta = zeros(Float64, number_nodes, number_groups)
         counts = zeros(Int64, number_groups, number_groups)
         realized = zeros(Int64, number_groups, number_groups)
@@ -37,6 +39,7 @@ struct Assignment
             number_nodes,
             number_groups,
             node_labels,
+            group_size,
             counts,
             realized,
             estimated_theta,
@@ -49,6 +52,7 @@ struct Assignment
             a.number_nodes,
             a.number_groups,
             a.node_labels,
+            a.group_size,
             a.counts,
             a.realized,
             a.estimated_theta,
@@ -60,7 +64,7 @@ end
 
 function initialize(A, h)
     node_labels = initialise_node_labels(A, h)
-    old_store = Assignment(A, node_labels)
+    old_store = Assignment(A, node_labels, h)
     new_store = deepcopy(oldstore)
     history = MVHistory([:likelihood => QHistory(Float64), :best_likelihood => QHistory(Float64), :proposal_likelihood => QHistory(Float64)])
     return old_store, new_store, history
