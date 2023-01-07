@@ -2,7 +2,7 @@ struct Assignment
     number_nodes::Int
     number_groups::Int
     node_labels::Vector{Int}
-    group_size::Tuple{Int,Int}
+    group_size::Tuple{Int, Int}
 
     counts::Matrix{Int}
     realized::Matrix{Float64}
@@ -10,7 +10,6 @@ struct Assignment
 
     likelihood::Float64
     function Assignment(A, node_labels, h)
-
         number_groups = length(unique(node_labels))
         number_nodes = length(node_labels)
         group_size = (h, number_nodes % h)
@@ -21,7 +20,7 @@ struct Assignment
 
         @inbounds @simd for k in 1:number_groups
             for l in k:number_groups
-                realized[k, l] = sum(adjacency_matrix[node_labels.==k, node_labels.==l])
+                realized[k, l] = sum(adjacency_matrix[node_labels .== k, node_labels .== l])
                 realized[l, k] = realized[k, l]
                 counts[k, l] = size_groups[k] * size_groups[l]
                 counts[l, k] = counts[k, l]
@@ -30,49 +29,45 @@ struct Assignment
 
         @inbounds @simd for k in 1:number_groups
             counts[k, k] = size_groups[k] * (size_groups[k] - 1) / 2
-            realized[k, k] = sum(adjacency_matrix[node_labels.==k, node_labels.==k]) / 2
+            realized[k, k] = sum(adjacency_matrix[node_labels .== k, node_labels .== k]) / 2
         end
 
         estimated_theta = realized ./ counts
-        likelihood = compute_log_likelihood(number_groups, estimated_theta, counts, number_nodes)
+        likelihood = compute_log_likelihood(number_groups, estimated_theta, counts,
+                                            number_nodes)
 
-        new(
-            number_nodes,
+        new(number_nodes,
             number_groups,
             node_labels,
             group_size,
             counts,
             realized,
             estimated_theta,
-            likelihood
-        )
+            likelihood)
     end
 
     function Assignment(a::Assignment, likelihood)
-        new(
-            a.number_nodes,
+        new(a.number_nodes,
             a.number_groups,
             a.node_labels,
             a.group_size,
             a.counts,
             a.realized,
             a.estimated_theta,
-            likelihood
-        )
+            likelihood)
     end
-
 end
 
 function initialize(A, h, optimizer)
     node_labels = initialise_node_labels(A, h)
     old_store = Assignment(A, node_labels, h)
     new_store = deepcopy(oldstore)
-    history = MVHistory([:likelihood => QHistory(Float64), :best_likelihood => QHistory(Float64), :proposal_likelihood => QHistory(Float64)])
-    proposal = initialise_proposal(old_store, optimizer)
+    history = MVHistory([
+                            :likelihood => QHistory(Float64),
+                            :best_likelihood => QHistory(Float64),
+                            :proposal_likelihood => QHistory(Float64),
+                        ])
     return old_store, new_store, history
-end
-
-function initialise_proposal(node_assignment, optimizer)
 end
 
 function initialise_node_labels(A, h)
