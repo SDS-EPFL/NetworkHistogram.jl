@@ -10,7 +10,7 @@ struct Assignment
 
     likelihood::Float64
     function Assignment(A, node_labels, h)
-        
+
         number_groups = length(unique(node_labels))
         number_nodes = length(node_labels)
         group_size = (h, number_nodes % h)
@@ -35,7 +35,7 @@ struct Assignment
 
         estimated_theta = realized ./ counts
         likelihood = compute_log_likelihood(number_groups, estimated_theta, counts, number_nodes)
-      
+
         new(
             number_nodes,
             number_groups,
