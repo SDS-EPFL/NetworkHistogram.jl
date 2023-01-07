@@ -1,5 +1,5 @@
-function graphhist(A::Matrix{Int}; h = select_bandwidth(A), maxitr = 1000)
-    best, current, proposal, history = initialize(A, h)
+function graphhist(A::Matrix{Int}; h = select_bandwidth(A), maxitr = 1000, optimizer = RandomNodeSwap())
+    best, current, proposal, history = initialize(A, h, optimizer)
 
     for i in 1:maxitr
         proposal = create_proposal!(history, i, proposal, current, A)
