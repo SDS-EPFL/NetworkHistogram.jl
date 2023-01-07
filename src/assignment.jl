@@ -12,38 +12,33 @@ struct Assignment
 
         # need to fill this in
 
-        new(
-            number_nodes,
+        new(number_nodes,
             number_groups,
             node_labels,
             counts,
             realized,
             estimated_theta,
-            likelihood,
-        )
+            likelihood)
     end
 
     function Assignment(a::Assignment, likelihood::Real)
-        new(
-            a.number_nodes,
+        new(a.number_nodes,
             a.number_groups,
             a.node_labels,
             a.counts,
             a.realized,
             a.estimated_theta,
-            likelihood,
-        )
+            likelihood)
     end
-
 end
 
 function initialize(A::Matrix{Int}, h::Int)
     old_store = Assignment(A, h)
     new_store = deepcopy(oldstore)
     history = MVHistory([
-        :likelihood => QHistory(Float64),
-        :best_likelihood => QHistory(Float64),
-        :proposal_likelihood => QHistory(Float64),
-    ])
+                            :likelihood => QHistory(Float64),
+                            :best_likelihood => QHistory(Float64),
+                            :proposal_likelihood => QHistory(Float64),
+                        ])
     return old_store, new_store, history
 end

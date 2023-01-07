@@ -1,9 +1,7 @@
-function accept_reject_update!(
-    history::MultivalueHistory,
-    iteration::Int,
-    proposal::Assignment,
-    current::Assignment;
-)
+function accept_reject_update!(history::MultivalueHistory,
+                               iteration::Int,
+                               proposal::Assignment,
+                               current::Assignment;)
     # fill in
 
     push!(history, :likelihood, iteration, current.likelihood)
