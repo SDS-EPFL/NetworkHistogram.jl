@@ -58,7 +58,7 @@ struct Assignment
     end
 end
 
-function initialize(A, h, optimizer)
+function initialize(A, h::Int, optimizer)
     node_labels = initialise_node_labels(A, h)
     old_store = Assignment(A, node_labels, h)
     new_store = deepcopy(oldstore)
@@ -70,7 +70,7 @@ function initialize(A, h, optimizer)
     return old_store, new_store, history
 end
 
-function initialise_node_labels(A, h)
+function initialise_node_labels(A, h::Int)
     error("Not yet implemented")
 end
 
