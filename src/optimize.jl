@@ -1,4 +1,4 @@
-function graphhist(A::Matrix{Real}; h = select_bandwidth(A), maxitr = 1000)
+function graphhist(A::Matrix{Int}; h = select_bandwidth(A), maxitr = 1000)
     best, current, proposal, history = initialize(A, h)
 
     for i in 1:maxitr
@@ -34,4 +34,8 @@ function update_best!(history::MultivalueHistory,
     else
         return best
     end
+end
+
+function stopping_rule(history, optimizer)
+    # check improvements over last k steps is above threshold
 end
