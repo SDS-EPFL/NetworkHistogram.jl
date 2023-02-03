@@ -17,8 +17,8 @@ end
 
 function update_best!(history::MVHistory, iteration::Int, current::Assignment,
                       best::Assignment)
-    if best.likelihood > current.likelihood
-        push!(history, :best_likelihood, iteration::Int, current.likelihood)
+    if best.likelihood[1] > current.likelihood[1]
+        push!(history, :best_likelihood, iteration::Int, current.likelihood[1])
         return current
     else
         return best
@@ -35,8 +35,8 @@ function initialize(A, h, starting_assignment_rule)
                                  :current_likelihood => QHistory(Float64),
                                  :best_likelihood => QHistory(Float64),
                              ]))
-    push!(history, :proposal_likelihood, 0, proposal.likelihood)
-    push!(history, :current_likelihood, 0, current.likelihood)
-    push!(history, :best_likelihood, 0, best.likelihood)
+    push!(history, :proposal_likelihood, 0, proposal.likelihood[1])
+    push!(history, :current_likelihood, 0, current.likelihood[1])
+    push!(history, :best_likelihood, 0, best.likelihood[1])
     return best, current, proposal, history
 end

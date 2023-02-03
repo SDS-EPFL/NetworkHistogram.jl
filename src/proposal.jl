@@ -2,7 +2,7 @@ function create_proposal!(history::MVHistory, iteration::Int, proposal::Assignme
                           current::Assignment, A, swap_rule)
     swap = select_swap(current, A, swap_rule)
     proposal = make_proposal!(proposal, current, swap, A)
-    push!(history, :proposal_likelihood, iteration::Int, proposal.likelihood)
+    push!(history, :proposal_likelihood, iteration::Int, proposal.likelihood[1])
     return proposal
 end
 
