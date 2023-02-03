@@ -20,9 +20,10 @@ end
     for (name, adjacency) in adjacencies
         @testset begin
             name
-            graphist,_ = NetworkHistogram.graphhist(adjacency; h = 0.3,
+            graphist,history = NetworkHistogram.graphhist(adjacency; h = 0.3,
                                                   stop_rule = NetworkHistogram.PreviousBestValue(10))
             println(graphist.θ)
+            println(length(get(history, :best_likelihood)[1]))
             @test all(graphist.θ .>= 0.0)
         end
     end

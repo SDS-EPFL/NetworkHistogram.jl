@@ -19,10 +19,9 @@ function update_best!(history::MVHistory, iteration::Int, current::Assignment,
                       best::Assignment)
     if current.likelihood[1] > best.likelihood[1]
         push!(history, :best_likelihood, iteration::Int, current.likelihood[1])
-        return current
-    else
-        return best
+        deepcopy!(best, current)
     end
+    return best
 end
 
 function initialize(A, h, starting_assignment_rule)
