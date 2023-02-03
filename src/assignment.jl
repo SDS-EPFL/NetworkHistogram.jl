@@ -1,15 +1,16 @@
 struct Assignment{T <: Real}
     number_nodes::Int
     number_groups::Int
-    node_labels::Vector{Int}
     group_size::Int
     proportion::T
 
+    node_labels::Vector{Int}
     counts::Matrix{Int}
     realized::Matrix{Float64}
     estimated_theta::Matrix{Float64}
 
     likelihood::Float64
+
     function Assignment(A, node_labels, h)
         number_groups = length(unique(node_labels))
         number_nodes = length(node_labels)
