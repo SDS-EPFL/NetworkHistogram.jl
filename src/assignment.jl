@@ -55,18 +55,6 @@ struct Assignment{T}
     end
 end
 
-function initialize(A, h; starting_assignment_rule)
-    node_labels, group_size = initialise_node_labels(A, h; starting_assignment_rule=starting_assignment_rule)
-    old_store = Assignment(A, node_labels, group_size)
-    new_store = deepcopy(oldstore)
-    history = MVHistory([
-                            :likelihood => QHistory(Float64),
-                            :best_likelihood => QHistory(Float64),
-                            :proposal_likelihood => QHistory(Float64),
-                        ])
-    return old_store, new_store, history
-end
-
 function compute_log_likelihood(number_groups, estimated_theta, counts, number_nodes)
     loglik = 0.0
     @inbounds @simd for i in 1:number_groups
