@@ -1,11 +1,11 @@
-function graphhist(A; h = select_bandwidth(A), maxitr = 1000, optimizer = RandomNodeSwap())
-    best, current, proposal, history = initialize(A, h, optimizer)
+function graphhist(A; h = select_bandwidth(A), maxitr = 1000; swap_rule = RandomNodeSwap(), starting_assignment_rule, accept_rule, stop_rule)
+    best, current, proposal, history = initialize(A, h; starting_assignment_rule=starting_assignment_rule)
 
     for i in 1:maxitr
         proposal = create_proposal!(history, i, proposal, current, A, swap_rule)
-        current = accept_reject_update!(history, i, proposal, current;)
+        current = accept_reject_update!(history, i, proposal, current; accept_rule = accept_rule)
         best = update_best!(history, i, current, best)
-        if stopping_rule(history, optimizer)
+        if stopping_rule(history; stop_rule=stop_rule)
             break
         end
     end
@@ -23,12 +23,12 @@ function update_best!(history::MVHistory, iteration::Int, current::Assignment,
     end
 end
 
-function stopping_rule(history::MVHistory, optimizer)
+function stopping_rule(history::MVHistory; stop_rule)
     # check improvements over last k steps is above threshold
 end
 
 function accept_reject_update!(history::MVHistory, iteration::Int, proposal::Assignment,
-                               current::Assignment;)
+                               current::Assignment; accept_rule)
     # fill in
 
     push!(history, :likelihood, iteration, current.likelihood)
