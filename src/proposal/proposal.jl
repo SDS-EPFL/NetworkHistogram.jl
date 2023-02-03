@@ -16,7 +16,7 @@ function make_proposal!(proposal::Assignment, current::Assignment, swap::Tuple{I
     # update counts, realized, estimated_theta
     #update_observed!(proposal, swap, A)
     # update ll
-    #proposal.likelihood = updateLL(proposal, current,A)
+    #proposal = Assignment(proposal,updateLL(proposal, current,A))
     # for now just create new assignment from scratch
     proposal = Assignment(A,proposal.node_labels,current.proportion)
 end
