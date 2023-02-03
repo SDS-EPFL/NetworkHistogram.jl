@@ -1,3 +1,1 @@
-@testset begin "starting_assigment_rule"
-    
-end
+@testset begin "starting_assigment_rule" end

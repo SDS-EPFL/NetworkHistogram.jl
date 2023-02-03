@@ -1,4 +1,6 @@
-function graphhist(A; h = select_bandwidth(A), maxitr = 1000, swap_rule = RandomNodeSwap(), starting_assignment_rule = RandomStart(), accept_rule = Strict(), stop_rule = PreviousBestValue(3))
+function graphhist(A; h = select_bandwidth(A), maxitr = 1000, swap_rule = RandomNodeSwap(),
+                   starting_assignment_rule = RandomStart(), accept_rule = Strict(),
+                   stop_rule = PreviousBestValue(3))
     best, current, proposal, history = initialize(A, h, starting_assignment_rule)
 
     for i in 1:maxitr
@@ -29,10 +31,10 @@ function initialize(A, h, starting_assignment_rule)
     current = deepcopy(proposal)
     best = deepcopy(proposal)
     history = MVHistory(Dict([
-                            :proposal_likelihood => QHistory(Float64),
-                            :current_likelihood => QHistory(Float64),
-                            :best_likelihood => QHistory(Float64),
-                        ]))
+                                 :proposal_likelihood => QHistory(Float64),
+                                 :current_likelihood => QHistory(Float64),
+                                 :best_likelihood => QHistory(Float64),
+                             ]))
     push!(history, :proposal_likelihood, 0, proposal.likelihood)
     push!(history, :current_likelihood, 0, current.likelihood)
     push!(history, :best_likelihood, 0, best.likelihood)
