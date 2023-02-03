@@ -1,7 +1,7 @@
 struct Assignment{T <: Real}
     number_nodes::Int
     number_groups::Int
-    group_size::Int
+    group_size::Tuple{Int, Int}
     proportion::T
 
     node_labels::Vector{Int}
@@ -14,7 +14,8 @@ struct Assignment{T <: Real}
     function Assignment(A, node_labels, h)
         number_groups = length(unique(node_labels))
         number_nodes = length(node_labels)
-        group_size = number_nodes % h
+        normal_group = floor(Int64, number_nodes * h)
+        group_size = (normal_group, number_nodes - number_groups*normal_group)
         estimated_theta = zeros(Float64, number_nodes, number_groups)
         counts = zeros(Int64, number_groups, number_groups)
         realized = zeros(Int64, number_groups, number_groups)
@@ -30,19 +31,19 @@ struct Assignment{T <: Real}
         end
 
         @inbounds @simd for k in 1:number_groups
-            counts[k, k] = size_groups[k] * (size_groups[k] - 1) / 2
-            realized[k, k] = sum(A[node_labels .== k, node_labels .== k]) / 2
+            counts[k, k] = size_groups[k] * (size_groups[k] - 1) ÷ 2
+            realized[k, k] = sum(A[node_labels .== k, node_labels .== k]) ÷ 2
         end
 
         estimated_theta = realized ./ counts
         likelihood = compute_log_likelihood(number_groups, estimated_theta, counts,
                                             number_nodes)
 
-        new(number_nodes,
+        new{typeof(h)}(number_nodes,
             number_groups,
-            node_labels,
-            h,
             group_size,
+            h,
+            node_labels,
             counts,
             realized,
             estimated_theta,
@@ -50,7 +51,7 @@ struct Assignment{T <: Real}
     end
 
     function Assignment(a::Assignment, likelihood)
-        new(a.number_nodes,
+        new{typeof(a.h)}(a.number_nodes,
             a.number_groups,
             a.node_labels,
             a.group_size,
