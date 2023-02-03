@@ -20,7 +20,7 @@ end
     for (name, adjacency) in adjacencies
         @testset begin
             name
-            graphist = NetworkHistogram.graphhist(adjacency; h = 1 / 3,
+            graphist = NetworkHistogram.graphhist(adjacency; h = 0.3,
                                                   stop_rule = NetworkHistogram.PreviousBestValue(10))
             println(graphist.θ)
             @test all(graphist.θ .>= 0.0)
