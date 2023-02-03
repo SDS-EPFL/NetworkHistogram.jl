@@ -1,8 +1,5 @@
-struct Assignment{T <: Real}
-    number_nodes::Int
-    number_groups::Int
-    group_size::Tuple{Int, Int}
-    proportion::T
+struct Assignment{T}
+    group_size::GroupSize{T}
 
     node_labels::Vector{Int}
     counts::Matrix{Int}
@@ -11,27 +8,24 @@ struct Assignment{T <: Real}
 
     likelihood::Float64
 
-    function Assignment(A, node_labels, h)
-        number_groups = length(unique(node_labels))
-        number_nodes = length(node_labels)
-        normal_group = floor(Int64, number_nodes * h)
-        group_size = (normal_group, number_nodes - number_groups*normal_group)
+    function Assignment(A, node_labels, group_size::GroupSize{T}) where {T}
+        number_groups = length(group_size)
         estimated_theta = zeros(Float64, number_nodes, number_groups)
+
         counts = zeros(Int64, number_groups, number_groups)
         realized = zeros(Int64, number_groups, number_groups)
-        size_groups = [count(==(element), node_labels) for element in unique(node_labels)]
 
         @inbounds @simd for k in 1:number_groups
             for l in k:number_groups
                 realized[k, l] = sum(A[node_labels .== k, node_labels .== l])
                 realized[l, k] = realized[k, l]
-                counts[k, l] = size_groups[k] * size_groups[l]
+                counts[k, l] = group_size[k] * group_size[l]
                 counts[l, k] = counts[k, l]
             end
         end
 
         @inbounds @simd for k in 1:number_groups
-            counts[k, k] = size_groups[k] * (size_groups[k] - 1) ÷ 2
+            counts[k, k] = group_size[k] * (group_size[k] - 1) ÷ 2
             realized[k, k] = sum(A[node_labels .== k, node_labels .== k]) ÷ 2
         end
 
@@ -39,32 +33,31 @@ struct Assignment{T <: Real}
         likelihood = compute_log_likelihood(number_groups, estimated_theta, counts,
                                             number_nodes)
 
-        new{typeof(h)}(number_nodes,
-            number_groups,
+        new{T}(
             group_size,
-            h,
             node_labels,
             counts,
             realized,
             estimated_theta,
-            likelihood)
+            likelihood
+        )
     end
 
-    function Assignment(a::Assignment, likelihood)
-        new{typeof(a.h)}(a.number_nodes,
-            a.number_groups,
-            a.node_labels,
+    function Assignment(a::Assignment{T}, likelihood) where {T}
+        new{T}(
             a.group_size,
+            a.node_labels,
             a.counts,
             a.realized,
             a.estimated_theta,
-            likelihood)
+            likelihood
+        )
     end
 end
 
 function initialize(A, h; starting_assignment_rule)
-    node_labels = initialise_node_labels(A, h; starting_assignment_rule=starting_assignment_rule)
-    old_store = Assignment(A, node_labels, h)
+    node_labels, group_size = initialise_node_labels(A, h; starting_assignment_rule=starting_assignment_rule)
+    old_store = Assignment(A, node_labels, group_size)
     new_store = deepcopy(oldstore)
     history = MVHistory([
                             :likelihood => QHistory(Float64),
@@ -89,12 +82,9 @@ end
 
 
 function deepcopy!(a::Assignment, b::Assignment)
-    a.number_nodes = b.number_nodes
-    a.number_groups = b.number_groups
     a.node_labels .= b.node_labels
-    a.group_size = b.group_size
     a.counts .= b.counts
     a.realized .= b.realized
     a.estimated_theta .= b.estimated_theta
-    a.likelihood = b.likelihood
+    return Assignment(a, b.likelihood)
 end
