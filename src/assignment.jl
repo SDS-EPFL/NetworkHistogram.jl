@@ -1,7 +1,7 @@
 struct Assignment{T <: Real}
     number_nodes::Int
     number_groups::Int
-    group_size::Int
+    group_size::Tuple{Int, Int}
     proportion::T
 
     node_labels::Vector{Int}
@@ -31,8 +31,8 @@ struct Assignment{T <: Real}
         end
 
         @inbounds @simd for k in 1:number_groups
-            counts[k, k] = size_groups[k] * (size_groups[k] - 1) / 2
-            realized[k, k] = sum(A[node_labels .== k, node_labels .== k]) / 2
+            counts[k, k] = size_groups[k] * (size_groups[k] - 1) ÷ 2
+            realized[k, k] = sum(A[node_labels .== k, node_labels .== k]) ÷ 2
         end
 
         estimated_theta = realized ./ counts
@@ -41,9 +41,9 @@ struct Assignment{T <: Real}
 
         new{typeof(h)}(number_nodes,
             number_groups,
-            node_labels,
-            h,
             group_size,
+            h,
+            node_labels,
             counts,
             realized,
             estimated_theta,
