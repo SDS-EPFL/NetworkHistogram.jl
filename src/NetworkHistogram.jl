@@ -2,10 +2,9 @@ module NetworkHistogram
 
 using ValueHistories
 
-include("initialize.jl")
+include("assignment.jl")
 include("optimize.jl")
 include("histogram.jl")
-include("accept_reject/accept_reject.jl")
-include("select_swap.jl")
-
+include("proposal/select_swap.jl")
+include("proposal/proposal.jl")
 end
