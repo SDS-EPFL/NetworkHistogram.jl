@@ -8,7 +8,7 @@ struct GroupSize{T} <: AbstractVector{Int}
     end
     function GroupSize(number_nodes, standard_group::Int)
         @assert 1 < standard_group < number_nodes
-        number_groups = number_nodes ÷ standard_group
+        number_groups = number_nodes ÷ standard_group # number of standard groups!
         if number_groups * standard_group == number_nodes
             new{Int}(standard_group, number_groups)
         else
@@ -16,7 +16,7 @@ struct GroupSize{T} <: AbstractVector{Int}
             if remainder_group == 1
                 @warn "h has to be changes as only one node in remainder group"
                 standard_group -= 1
-                remainder_group = number_groups # because equal to 1+number_groups-1 because we take 1 from each standard group, and there are number_groups-1 of them (and we had 1 before in remainder)
+                remainder_group = number_groups+1 # because equal to 1+number_groups because we take 1 from each standard group, and there are number_groups of them
                 if standard_group == 1
                     error("Standard group size now 1, please choose a new h value.")
                 end
