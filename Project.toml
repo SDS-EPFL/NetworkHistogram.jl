@@ -1,7 +1,7 @@
 name = "NetworkHistogram"
 uuid = "7806f430-7229-459c-b2e6-df35e8e4eb5d"
 authors = ["SDS Chair"]
-version = "0.2.1"
+version = "0.2.2"
 
 [deps]
 JLD = "4138dd39-2aa7-5051-a626-17a0bb65d9c8"
