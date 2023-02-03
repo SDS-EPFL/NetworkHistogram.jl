@@ -1,11 +1,11 @@
 function graphhist(A; h = select_bandwidth(A), maxitr = 1000, swap_rule = RandomNodeSwap(), starting_assignment_rule = RandomStart(), accept_rule = Strict(), stop_rule = PreviousBestValue(3))
-    best, current, proposal, history = initialize(A, h; starting_assignment_rule=starting_assignment_rule)
+    best, current, proposal, history = initialize(A, h, starting_assignment_rule)
 
     for i in 1:maxitr
         proposal = create_proposal!(history, i, proposal, current, A, swap_rule)
-        current = accept_reject_update!(history, i, proposal, current; accept_rule = accept_rule)
+        current = accept_reject_update!(history, i, proposal, current, accept_rule)
         best = update_best!(history, i, current, best)
-        if stopping_rule(history; stop_rule=stop_rule)
+        if stopping_rule(history, stop_rule)
             break
         end
     end
@@ -23,8 +23,8 @@ function update_best!(history::MVHistory, iteration::Int, current::Assignment,
     end
 end
 
-function initialize(A, h; starting_assignment_rule)
-    node_labels, group_size = initialise_node_labels(A, h; starting_assignment_rule=starting_assignment_rule)
+function initialize(A, h, starting_assignment_rule)
+    node_labels, group_size = initialise_node_labels(A, h, starting_assignment_rule)
     proposal = Assignment(A, node_labels, group_size)
     current = deepcopy(proposal)
     best = deepcopy(proposal)
