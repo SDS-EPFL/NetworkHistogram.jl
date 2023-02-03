@@ -62,8 +62,8 @@ struct Assignment{T <: Real}
     end
 end
 
-function initialize(A, h::Int, optimizer)
-    node_labels = initialise_node_labels(A, h)
+function initialize(A, h; starting_assignment_rule)
+    node_labels = initialise_node_labels(A, h; starting_assignment_rule=starting_assignment_rule)
     old_store = Assignment(A, node_labels, h)
     new_store = deepcopy(oldstore)
     history = MVHistory([
@@ -72,10 +72,6 @@ function initialize(A, h::Int, optimizer)
                             :proposal_likelihood => QHistory(Float64),
                         ])
     return old_store, new_store, history
-end
-
-function initialise_node_labels(A, h::Int)
-    error("Not yet implemented")
 end
 
 function compute_log_likelihood(number_groups, estimated_theta, counts, number_nodes)

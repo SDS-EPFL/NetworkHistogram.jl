@@ -22,15 +22,3 @@ function update_best!(history::MVHistory, iteration::Int, current::Assignment,
         return best
     end
 end
-
-function stopping_rule(history::MVHistory; stop_rule)
-    # check improvements over last k steps is above threshold
-end
-
-function accept_reject_update!(history::MVHistory, iteration::Int, proposal::Assignment,
-                               current::Assignment; accept_rule)
-    # fill in
-
-    push!(history, :likelihood, iteration, current.likelihood)
-    return current
-end
