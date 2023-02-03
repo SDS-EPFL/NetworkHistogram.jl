@@ -1,0 +1,3 @@
+var documenterSearchIndex = {"docs":
+[{"location":"#NetworkHistogram.jl","page":"Home","title":"NetworkHistogram.jl","text":"","category":"section"},{"location":"internals/#Notes-on-optimisation","page":"Notes on optimisation","title":"Notes on optimisation","text":"","category":"section"},{"location":"internals/","page":"Notes on optimisation","title":"Notes on optimisation","text":"We have three different assignment variables:\ncurrent\nbest\nproposal\nWe need best because we might accept a proposal which is worse than the curent value.\nThis is dealt with in acceptrejectupdate!().","category":"page"}]
+}
