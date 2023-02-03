@@ -3,10 +3,14 @@ abstract type NodeSwapRule end
 struct RandomNodeSwap <: NodeSwapRule end
 
 function select_swap(node_assignment::Assignment, A, ::RandomNodeSwap)
-    group_index = sort(sample(1:(node_assignment.number_groups), 2, replace = false)) # make non-allocating version of this
-    node_index1 = sample(1:node_assignment.group_size[1])
-    n2 = group_index == node_assignment.number_groups ? node_assignment.group_size[2] :
-         node_assignment.group_size[1]
-    node_index2 = sample(1:n2)
-    return (node_index1, node_index2)
+    index1 = rand(1:size(A,1))
+    label1 = node_assignment.node_labels[index1]
+    index2 = index1
+    for _ in 1:10
+        index2 = rand(1:size(A,1))
+        if node_assignment.node_labels[index2] != label1
+            break
+        end
+    end
+    return (index1, index2)
 end

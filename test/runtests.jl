@@ -2,5 +2,5 @@ using NetworkHistogram
 using Test
 
 @testset "NetworkHistogram.jl" begin
-    # Write your tests here.
+    include("pipeline_test.jl")
 end

@@ -1,6 +1,6 @@
 module NetworkHistogram
 
-using ValueHistories, StatsBase
+using ValueHistories, StatsBase, Random
 
 include("group_numbering.jl")
 include("assignment.jl")

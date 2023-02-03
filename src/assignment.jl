@@ -10,7 +10,7 @@ struct Assignment{T}
 
     function Assignment(A, node_labels, group_size::GroupSize{T}) where {T}
         number_groups = length(group_size)
-        estimated_theta = zeros(Float64, number_nodes, number_groups)
+        estimated_theta = zeros(Float64, size(A,1), number_groups)
 
         counts = zeros(Int64, number_groups, number_groups)
         realized = zeros(Int64, number_groups, number_groups)
@@ -31,7 +31,7 @@ struct Assignment{T}
 
         estimated_theta = realized ./ counts
         likelihood = compute_log_likelihood(number_groups, estimated_theta, counts,
-                                            number_nodes)
+                                            size(A,1))
 
         new{T}(
             group_size,
