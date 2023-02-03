@@ -1,8 +1,9 @@
-struct Assignment
+struct Assignment{T <: Real}
     number_nodes::Int
     number_groups::Int
     node_labels::Vector{Int}
-    group_size::Tuple{Int, Int}
+    group_size::Int
+    proportion::T
 
     counts::Matrix{Int}
     realized::Matrix{Float64}
@@ -12,7 +13,7 @@ struct Assignment
     function Assignment(A, node_labels, h)
         number_groups = length(unique(node_labels))
         number_nodes = length(node_labels)
-        group_size = (h, number_nodes % h)
+        group_size = number_nodes % h
         estimated_theta = zeros(Float64, number_nodes, number_groups)
         counts = zeros(Int64, number_groups, number_groups)
         realized = zeros(Int64, number_groups, number_groups)
@@ -20,7 +21,7 @@ struct Assignment
 
         @inbounds @simd for k in 1:number_groups
             for l in k:number_groups
-                realized[k, l] = sum(adjacency_matrix[node_labels .== k, node_labels .== l])
+                realized[k, l] = sum(A[node_labels .== k, node_labels .== l])
                 realized[l, k] = realized[k, l]
                 counts[k, l] = size_groups[k] * size_groups[l]
                 counts[l, k] = counts[k, l]
@@ -29,7 +30,7 @@ struct Assignment
 
         @inbounds @simd for k in 1:number_groups
             counts[k, k] = size_groups[k] * (size_groups[k] - 1) / 2
-            realized[k, k] = sum(adjacency_matrix[node_labels .== k, node_labels .== k]) / 2
+            realized[k, k] = sum(A[node_labels .== k, node_labels .== k]) / 2
         end
 
         estimated_theta = realized ./ counts
@@ -39,6 +40,7 @@ struct Assignment
         new(number_nodes,
             number_groups,
             node_labels,
+            h,
             group_size,
             counts,
             realized,
@@ -84,4 +86,17 @@ function compute_log_likelihood(number_groups, estimated_theta, counts, number_n
         end
     end
     return loglik / number_nodes
+end
+
+
+
+function deepcopy!(a::Assignment, b::Assignment)
+    a.number_nodes = b.number_nodes
+    a.number_groups = b.number_groups
+    a.node_labels .= b.node_labels
+    a.group_size = b.group_size
+    a.counts .= b.counts
+    a.realized .= b.realized
+    a.estimated_theta .= b.estimated_theta
+    a.likelihood = b.likelihood
 end
