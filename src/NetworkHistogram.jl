@@ -1,12 +1,17 @@
 module NetworkHistogram
 
-using ValueHistories
+using ValueHistories, StatsBase
 
 include("group_numbering.jl")
 include("assignment.jl")
 include("optimize.jl")
 include("histogram.jl")
-include("proposal/select_swap.jl")
-include("proposal/proposal.jl")
+
+include("config_rules/starting_assignment_rule.jl")
+include("config_rules/swap_rule.jl")
+include("config_rules/accept_rule.jl")
+include("config_rules/stop_rule.jl")
+
+include("proposal.jl")
 
 end
