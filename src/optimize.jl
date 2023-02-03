@@ -10,7 +10,7 @@ function graphhist(A; h = select_bandwidth(A), maxitr = 1000, swap_rule = Random
         end
     end
 
-    return GraphHist(best)
+    return GraphHist(best), history
 end
 
 function update_best!(history::MVHistory, iteration::Int, current::Assignment,

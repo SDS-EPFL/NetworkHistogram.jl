@@ -1,4 +1,4 @@
-struct GraphHist{T} <: AbstractMatrix{T}
+struct GraphHist{T}
     θ::Matrix{T}
     node_labels::Vector{Int}
     function GraphHist(a::Assignment)
