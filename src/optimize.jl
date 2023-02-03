@@ -17,7 +17,7 @@ end
 
 function update_best!(history::MVHistory, iteration::Int, current::Assignment,
                       best::Assignment)
-    if best.likelihood[1] > current.likelihood[1]
+    if current.likelihood[1] > best.likelihood[1]
         push!(history, :best_likelihood, iteration::Int, current.likelihood[1])
         return current
     else
