@@ -1,4 +1,4 @@
-function graphhist(A; h = select_bandwidth(A), maxitr = 1000; swap_rule = RandomNodeSwap(), starting_assignment_rule = RandomStart(), accept_rule = Strict(), stop_rule = PreviousValue(3))
+function graphhist(A; h = select_bandwidth(A), maxitr = 1000, swap_rule = RandomNodeSwap(), starting_assignment_rule = RandomStart(), accept_rule = Strict(), stop_rule = PreviousBestValue(3))
     best, current, proposal, history = initialize(A, h; starting_assignment_rule=starting_assignment_rule)
 
     for i in 1:maxitr
