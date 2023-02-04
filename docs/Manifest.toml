@@ -1,6 +1,6 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.8.2"
+julia_version = "1.8.3"
 manifest_format = "2.0"
 project_hash = "7e05626d342a3097495d6e66d2be083f7ab0fe55"
 
@@ -217,7 +217,7 @@ version = "2022.2.1"
 
 [[deps.NetworkHistogram]]
 deps = ["JLD", "Random", "StatsBase", "ValueHistories"]
-git-tree-sha1 = "0f6820f8207bdc89279a6f900f49da74e9b21653"
+path = ".."
 uuid = "7806f430-7229-459c-b2e6-df35e8e4eb5d"
 version = "0.3.1"
 

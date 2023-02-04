@@ -44,6 +44,18 @@ struct Assignment{T}
     end
 end
 
+"""
+    compute_log_likelihood(number_groups, estimated_theta, counts, number_nodes)
+
+Compute the scaled log-likelihood in terms of communities:
+```math
+l(z;A) = \\frac{1}{n} \\sum_{g_1 = 1}^{G} \\sum_{g_2 \\geq g_1}^{G}  \\left[ \\theta_{g_1g_2} \\log(\\theta_{g_1g_2}) + (1 - \\theta_{g_1g_2}) \\log(1 - \\theta_{g_1g_2}) \\right] \\cdot c_{g_1g_2},
+```
+
+where ``c_{g_1g_2}`` (``\\theta_{g_1g_2}``) is the number of possible edges (estimated
+probability) between communities ``g_1`` and ``g_2``, ``n`` is the number of nodes, and
+``z_i ∈ \\{1, \\dots, G\\}`` is the community assignment of node ``i``.
+"""
 function compute_log_likelihood(number_groups, estimated_theta, counts, number_nodes)
     loglik = 0.0
     @inbounds @simd for i in 1:number_groups
@@ -60,6 +72,17 @@ end
     compute_log_likelihood(assignment::Assignment)
 
 Compute the scaled log-likelihood of the assignment.
+
+```math
+	l(z;A) = \\frac{1}{n}\\sum\\limits_{i=1}^n \\sum\\limits_{j>i}^n  \\left[ A_{ij} \\log(\\hat{\\theta}_{z_i z_j}) + (1 - A_{ij}) \\log(1 - \\hat{\\theta}_{z_i z_j}) \\right],
+```
+
+where ``\\hat{\\theta}_{ab}`` is the estimated probability of an edge between communities
+``a`` and ``b``
+
+```math
+    \\hat{\\theta}_{ab} = \\frac{\\sum\\limits_{i<j} A_{ij} \\mathbb{1}(z_i = a, z_j = b) }{\\sum\\limits_{i<j} \\mathbb{1}(z_i = a, z_j = b)}.
+```
 """
 function compute_log_likelihood(assignment::Assignment)
     compute_log_likelihood(length(assignment.group_size),
