@@ -19,8 +19,8 @@
         for (name, adjacency) in adjacencies
             @testset "$name" begin
                 estimated, history = graphhist(adjacency; h = 0.3,
-                                                               stop_rule = PreviousBestValue(100),
-                                                               starting_assignment_rule = OrderedStart())
+                                               stop_rule = PreviousBestValue(100),
+                                               starting_assignment_rule = OrderedStart())
                 @test all(estimated.θ .>= 0.0)
             end
         end
