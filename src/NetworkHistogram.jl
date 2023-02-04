@@ -2,6 +2,9 @@ module NetworkHistogram
 
 using ValueHistories, StatsBase, Random
 
+export graphist
+export PreviousBestValue, OrderedStart, RandomStart, Strict, RandomNodeSwap
+
 include("group_numbering.jl")
 include("assignment.jl")
 include("optimize.jl")
