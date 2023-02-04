@@ -39,3 +39,9 @@ function initialize(A, h, starting_assignment_rule)
     push!(history, :best_likelihood, 0, best.likelihood[1])
     return best, current, proposal, history
 end
+
+
+
+function select_bandwith(A)
+    error("Automatic bandwidth selection not implemented yet, please specify h manually.")
+end
