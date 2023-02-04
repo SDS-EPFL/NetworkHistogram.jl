@@ -74,7 +74,7 @@ function update_observed!(proposal::Assignment, swap::Tuple{Int, Int}, A)
                                                   proposal.node_labels .== g_prime])
 
             # if we look at the connection within the same group, we need to divide by 2
-            # to avoid double counting
+            # to avoid double counting edges
             if g == g_prime
                 proposal.realized[g, g_prime] ÷= 2
             end
