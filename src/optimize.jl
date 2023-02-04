@@ -40,8 +40,6 @@ function initialize(A, h, starting_assignment_rule)
     return best, current, proposal, history
 end
 
-
-
 function select_bandwith(A)
     error("Automatic bandwidth selection not implemented yet, please specify h manually.")
 end
