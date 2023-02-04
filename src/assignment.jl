@@ -56,6 +56,18 @@ function compute_log_likelihood(number_groups, estimated_theta, counts, number_n
     return loglik / number_nodes
 end
 
+"""
+    compute_log_likelihood(assignment::Assignment)
+
+Compute the scaled log-likelihood of the assignment.
+"""
+function compute_log_likelihood(assignment::Assignment)
+    compute_log_likelihood(length(assignment.group_size),
+                           assignment.estimated_theta,
+                           assignment.counts,
+                           sum(assignment.group_size))
+end
+
 function deepcopy!(a::Assignment, b::Assignment)
     a.node_labels .= b.node_labels
     a.counts .= b.counts
