@@ -23,36 +23,28 @@ function update_labels!(proposal::Assignment, swap::Tuple{Int, Int}, current::As
 end
 
 function updateLL!(proposal::Assignment, current::Assignment, swap::Tuple{Int, Int})
-    #todo: check how to bound away from 0 and 1
-    group1 = proposal.node_labels[swap[1]]
-    group2 = proposal.node_labels[swap[2]]
-
-    for g in 1:length(proposal.group_size)
-        proposal.likelihood[1] += proposal.counts[g, group1] *
-                                  (log(proposal.realized[g, group1]) -
-                                   log(current.realized[g, group1]))
-        proposal.likelihood[1] += proposal.counts[g, group2] *
-                                  (log(proposal.realized[g, group2]) -
-                                   log(current.realized[g, group2]))
-        proposal.likelihood[1] += proposal.realized[g, group1] - current.realized[g, group1]
-        proposal.likelihood[1] += proposal.realized[g, group2] - current.realized[g, group2]
-    end
+    # O(G^2) where G is the number of groups
+    proposal.likelihood[1] = NetworkHistogram.compute_log_likelihood(proposal)
 end
 
 function update_observed!(proposal::Assignment, swap::Tuple{Int, Int}, A)
-    group1 = proposal.node_labels[swap[1]]
-    group2 = proposal.node_labels[swap[2]]
+    group_updated = [proposal.node_labels[swap[1]], proposal.node_labels[swap[2]]]
 
     #todo: probability smarter way to update by just summing over the upper triangle
     # of the matrix
-    for g in 1:length(proposal.group_size)
-        proposal.realized[g, group1] = sum(A[proposal.node_labels .== g,
-                                             proposal.node_labels .== group1]) ÷ 2
-        proposal.realized[g, group2] = sum(A[proposal.node_labels .== g,
-                                             proposal.node_labels .== group2]) ÷ 2
-        proposal.realized[group1, g] = proposal.realized[g, group1]
-        proposal.realized[group2, g] = proposal.realized[g, group2]
+    @inbounds for g in 1:length(proposal.group_size)
+        for g_prime in group_updated
+            proposal.realized[g, g_prime] = sum(A[proposal.node_labels .== g,
+                                                  proposal.node_labels .== g_prime])
+
+            # if we look at the connection within the same group, we need to divide by 2
+            # to avoid double counting
+            if g == g_prime
+                proposal.realized[g, g_prime] ÷= 2
+            end
+            proposal.realized[g_prime, g] = proposal.realized[g, g_prime]
+        end
     end
 
-    proposal.estimated_theta .= proposal.realized ./ proposal.counts
+    @. proposal.estimated_theta = proposal.realized / proposal.counts
 end
