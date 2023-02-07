@@ -5,4 +5,4 @@
     - best
     - proposal
 - We need best because we might accept a proposal which is worse than the curent value.
-- This is dealt with in accept_reject_update!().
+- This is dealt within `accept_reject_update!()`.

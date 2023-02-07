@@ -1,2 +1,5 @@
 .vscode
 *dev/
+
+docs/build/
+*docs/Manifest.toml
