@@ -24,7 +24,7 @@ Pages   = ["proposal.jl"]
 !!! note
     The groups will be of size `floor(h * n)` where `n` is the number of nodes if `h` is a
     float. If `h` is an integer, the groups will be of size `h`. The last group may be
-    smaller if `n` is not perfectely divisible by the group size.
+    smaller if `n` is not exactly divisible by the group size.
 
 
 ```@autodocs
