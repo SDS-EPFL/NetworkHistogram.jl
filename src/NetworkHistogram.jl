@@ -2,7 +2,8 @@ module NetworkHistogram
 
 using ValueHistories, StatsBase, Random, LinearAlgebra
 
-export graphhist, PreviousBestValue, OrderedStart, RandomStart, Strict, RandomNodeSwap
+export graphhist, PreviousBestValue, Strict, RandomNodeSwap
+export OrderedStart, RandomStart, EigenStart
 
 include("group_numbering.jl")
 include("assignment.jl")
