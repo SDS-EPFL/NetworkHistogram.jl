@@ -1,5 +1,4 @@
 
-
 """
     test_basic_node_labels(node_labels, group_size)
 
@@ -18,7 +17,6 @@ function test_basic_node_labels(node_labels, group_size)
 end
 
 @testset "Initial node labels" begin
-
     A = [0 1 1 1 0 0 1 0
          1 0 1 1 0 0 0 0
          1 1 0 0 0 0 0 0
@@ -30,19 +28,21 @@ end
     h = 0.5
 
     @testset "random start" begin
-        node_labels, group_size = NetworkHistogram.initialise_node_labels(A, h, NetworkHistogram.RandomStart())
+        node_labels, group_size = NetworkHistogram.initialise_node_labels(A, h,
+                                                                          NetworkHistogram.RandomStart())
         test_basic_node_labels(node_labels, group_size)
     end
 
     @testset "ordered start" begin
-        node_labels, group_size = NetworkHistogram.initialise_node_labels(A, h, NetworkHistogram.OrderedStart())
+        node_labels, group_size = NetworkHistogram.initialise_node_labels(A, h,
+                                                                          NetworkHistogram.OrderedStart())
         test_basic_node_labels(node_labels, group_size)
         @test node_labels == sort(node_labels)
     end
 
     @testset "eigenvalue start" begin
-        node_labels, group_size = NetworkHistogram.initialise_node_labels(A, h, NetworkHistogram.EigenStart())
+        node_labels, group_size = NetworkHistogram.initialise_node_labels(A, h,
+                                                                          NetworkHistogram.EigenStart())
         test_basic_node_labels(node_labels, group_size)
     end
-
 end

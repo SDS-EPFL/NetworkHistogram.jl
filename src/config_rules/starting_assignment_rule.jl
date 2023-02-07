@@ -15,8 +15,7 @@ function initialise_node_labels(A, h, ::RandomStart)
     return node_labels, group_size
 end
 
-
-function initialise_node_labels(A,h, ::EigenStart)
+function initialise_node_labels(A, h, ::EigenStart)
     group_size = GroupSize(size(A, 1), h)
     node_labels = zeros(Int, size(A, 1))
 

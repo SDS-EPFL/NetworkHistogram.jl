@@ -16,6 +16,5 @@ include("config_rules/stop_rule.jl")
 
 include("proposal.jl")
 
-
 include("utils.jl")
 end
