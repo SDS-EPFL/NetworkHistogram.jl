@@ -71,7 +71,7 @@ function update_observed!(proposal::Assignment, swap::Tuple{Int, Int}, A)
     @inbounds for g in 1:length(proposal.group_size)
         for g_prime in group_updated
             @views proposal.realized[g, g_prime] = sum(A[proposal.node_labels .== g,
-                                                  proposal.node_labels .== g_prime])
+                                                         proposal.node_labels .== g_prime])
 
             # if we look at the connection within the same group, we need to divide by 2
             # to avoid double counting edges
