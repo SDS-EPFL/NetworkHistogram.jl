@@ -70,7 +70,7 @@ function update_observed!(proposal::Assignment, swap::Tuple{Int, Int}, A)
     # of the matrix
     @inbounds for g in 1:length(proposal.group_size)
         for g_prime in group_updated
-            proposal.realized[g, g_prime] = sum(A[proposal.node_labels .== g,
+            @views proposal.realized[g, g_prime] = sum(A[proposal.node_labels .== g,
                                                   proposal.node_labels .== g_prime])
 
             # if we look at the connection within the same group, we need to divide by 2
