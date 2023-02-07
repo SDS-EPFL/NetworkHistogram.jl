@@ -1,6 +1,6 @@
 module NetworkHistogram
 
-using ValueHistories, StatsBase, Random
+using ValueHistories, StatsBase, Random, LinearAlgebra
 
 export graphhist, PreviousBestValue, OrderedStart, RandomStart, Strict, RandomNodeSwap
 
@@ -16,4 +16,6 @@ include("config_rules/stop_rule.jl")
 
 include("proposal.jl")
 
+
+include("utils.jl")
 end
