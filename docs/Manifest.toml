@@ -216,10 +216,10 @@ uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
 version = "2022.2.1"
 
 [[deps.NetworkHistogram]]
-deps = ["JLD", "Random", "StatsBase", "ValueHistories"]
+deps = ["JLD", "LinearAlgebra", "Random", "StatsBase", "ValueHistories"]
 path = ".."
 uuid = "7806f430-7229-459c-b2e6-df35e8e4eb5d"
-version = "0.3.1"
+version = "0.3.2"
 
 [[deps.NetworkOptions]]
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
