@@ -46,6 +46,5 @@ function initialise_node_labels(A, h, ::EigenStart)
         node_labels[indices[start:stop]] .= i
         start = stop + 1
     end
-
     return node_labels, group_size
 end
