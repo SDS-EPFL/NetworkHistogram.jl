@@ -6,14 +6,16 @@ Inspired from the library Erdos.jl from CarloLucibello (precisely the file
 
 const start_gt_format = "⛾ gt"
 
-function readgt_adj!(io::IO, adj, ::Type{T}) where {T}
+function readgt_simple_network!(io::IO, adj, ::Type{T}) where {T}
     n = size(adj, 1)
     for i in 1:n
         k = read(io, UInt64)
         for _ in 1:k
             j = read(io, T) + 1
-            adj[i, j] = 1
-            adj[j, i] = 1
+            if i != j
+                adj[i, j] = 1
+                adj[j, i] = 1
+            end
         end
     end
 end
@@ -34,6 +36,6 @@ function readgt(io::IO)
     end
     adj = zeros(Int, n, n)
 
-    readgt_adj!(io, adj, T)
+    readgt_simple_network!(io, adj, T)
     return adj
 end
