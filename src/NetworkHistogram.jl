@@ -20,6 +20,4 @@ include("proposal.jl")
 include("utils.jl")
 
 include("data/utils.jl")
-include("data/gt.jl")
-include("data/datasets.jl")
 end

@@ -31,8 +31,7 @@ function readgt(io::IO)
     n = read(io, UInt64)
     T = minutype(n)
     if isdir
-        @warn "Directed graphs are not supported, automatically converting to undirected by
-        dropping the direction"
+        @warn "Directed graphs are not supported, automatically converting to undirected."
     end
     adj = zeros(Int, n, n)
 
