@@ -35,10 +35,10 @@ function initialise_node_labels(A, h, ::EigenStart)
     node_labels = zeros(Int, size(A, 1))
 
     laplacian = normalized_laplacian(A)
-    _, eigenvectors = eigen(laplacian)
+    _, eigenvectors = eigen(Symmetric(laplacian), size(A,1)-1:size(A,1)-1)
 
     # get 2nd eigenvector, sort its components
-    indices = sortperm(eigenvectors[:, 2])
+    indices = sortperm(eigenvectors[:,1])
     # bin them into groups of correct size
     start = 1
     for (i, group) in enumerate(group_size)
