@@ -28,10 +28,10 @@ specified in `swap`. The new assignment is stored in `proposal`.
 function make_proposal!(proposal::Assignment, current::Assignment, swap::Tuple{Int, Int}, A)
     # copy current in proposal
     deepcopy!(proposal, current)
-    # update node labels
-    update_labels!(proposal, swap, current)
     # update realized, estimated_theta
     update_observed!(proposal, swap, A)
+    # update node labels (has to happen after!!!)
+    update_labels!(proposal, swap, current)
     # update ll
     updateLL!(proposal)
 end
@@ -62,25 +62,35 @@ end
 
 Update the observed and estimated attributes of the `proposal` assignment based on the
 swap of the nodes specified in `swap`.
+
+NOTE labels of the nodes before the swap
 """
 function update_observed!(proposal::Assignment, swap::Tuple{Int, Int}, A)
-    group_updated = [proposal.node_labels[swap[1]], proposal.node_labels[swap[2]]]
+    group_node_1 = proposal.node_labels[swap[1]]
+    group_node_2 = proposal.node_labels[swap[2]]
 
-    #todo: probability smarter way to update by just summing over the upper triangle
-    # of the matrix
-    @inbounds for g in 1:length(proposal.group_size)
-        for g_prime in group_updated
-            @views proposal.realized[g, g_prime] = sum(A[proposal.node_labels .== g,
-                                                         proposal.node_labels .== g_prime])
+    for i in axes(A,1)
+        if i == swap[1] || i == swap[2] || A[swap[1], i] == A[swap[2], i]
+            continue
+        end
+        group_i = proposal.node_labels[i]
+        if A[swap[1], i] == 1
+            proposal.realized[group_node_1, group_i] -= 1
+            proposal.realized[group_i, group_node_1] = proposal.realized[group_node_1, group_i]
 
-            # if we look at the connection within the same group, we need to divide by 2
-            # to avoid double counting edges
-            if g == g_prime
-                proposal.realized[g, g_prime] ÷= 2
-            end
-            proposal.realized[g_prime, g] = proposal.realized[g, g_prime]
+            proposal.realized[group_node_2, group_i] += 1
+            proposal.realized[group_i, group_node_2] = proposal.realized[group_node_2, group_i]
+        end
+        if A[swap[2], i] == 1
+            proposal.realized[group_node_2, group_i] -= 1
+            proposal.realized[group_i, group_node_2] = proposal.realized[group_node_2, group_i]
+
+            proposal.realized[group_node_1, group_i] += 1
+            proposal.realized[group_i, group_node_1] = proposal.realized[group_node_1, group_i]
         end
     end
-
+    
     @. proposal.estimated_theta = proposal.realized / proposal.counts
+
+    return nothing
 end
