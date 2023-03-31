@@ -35,14 +35,14 @@ function initialise_node_labels(A, h, ::EigenStart)
     node_labels = zeros(Int, size(A, 1))
 
     laplacian = normalized_laplacian(A)
-    _, eigenvectors = eigs(laplacian, nev=2, which = :LR, tol = 1e-2)
+    _, eigenvectors = eigs(laplacian, nev = 2, which = :LR, tol = 1e-2)
     #_, eigenvectors = eigen(Symmetric(laplacian), (size(A, 1) - 1):(size(A, 1) - 1))
 
     # get 2nd eigenvector, sort its components
     indices = sortperm(eigenvectors[:, 1])
     # bin them into groups of correct size
     start = 1
-    @simd for (i, group) in enumerate(group_size)
+    for (i, group) in enumerate(group_size)
         stop = start + group - 1
         node_labels[indices[start:stop]] .= i
         start = stop + 1
