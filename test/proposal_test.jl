@@ -34,7 +34,7 @@
         theoretical_after_update = 2 * (2 * log(2 / 6) + log(4 / 6) * 4)
         # between group likelihood contribution
         theoretical_after_update += 8 * log(8 / 16) * 2
-        @test proposal.likelihood == theoretical_after_update / 8 ==
+        @test proposal.likelihood == theoretical_after_update ==
               reference_proposal.likelihood
     end
 end
