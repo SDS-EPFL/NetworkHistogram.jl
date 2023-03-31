@@ -63,7 +63,7 @@ function compute_log_likelihood(number_groups, estimated_theta, counts, number_n
             loglik += (θ_c * log(θ_c) + (1 - θ_c) * log(1 - θ_c)) * counts[i, j]
         end
     end
-    return loglik / number_nodes
+    return loglik
 end
 
 """
