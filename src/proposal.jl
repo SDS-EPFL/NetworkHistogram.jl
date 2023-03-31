@@ -1,7 +1,7 @@
 """Functions to create and evaluate possible labels update."""
 
 """
-    create_proposal!(history::MVHistory, iteration::Int, proposal::Assignment,
+    create_proposal!(history::GraphOptimizationHistory, iteration::Int, proposal::Assignment,
                           current::Assignment, A, swap_rule)
 
 Create a new proposal by swapping the labels of two nodes. The new assignment is stored in
@@ -11,11 +11,11 @@ proposal is stored in the history.
 !!! warning
     The `proposal` assignment is modified in place to avoid unnecessary memory allocation.
 """
-function create_proposal!(history::MVHistory, iteration::Int, proposal::Assignment,
+function create_proposal!(history::GraphOptimizationHistory, iteration::Int, proposal::Assignment,
                           current::Assignment, A, swap_rule)
     swap = select_swap(current, A, swap_rule)
     make_proposal!(proposal, current, swap, A)
-    push!(history, :proposal_likelihood, iteration::Int, proposal.likelihood[1])
+    update_proposal!(history, iteration, proposal.likelihood)
     return proposal
 end
 
@@ -54,7 +54,7 @@ attributes.
 """
 function updateLL!(proposal::Assignment)
     # O(G^2) where G is the number of groups
-    proposal.likelihood[1] = NetworkHistogram.compute_log_likelihood(proposal)
+    proposal.likelihood = NetworkHistogram.compute_log_likelihood(proposal)
 end
 
 """

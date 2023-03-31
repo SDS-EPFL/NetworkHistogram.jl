@@ -1,12 +1,12 @@
-struct Assignment{T}
-    group_size::GroupSize{T}
+mutable struct Assignment{T}
+    const group_size::GroupSize{T}
 
-    node_labels::Vector{Int}
-    counts::Matrix{Int}
-    realized::Matrix{Float64}
-    estimated_theta::Matrix{Float64}
+    const node_labels::Vector{Int}
+    const counts::Matrix{Int}
+    const realized::Matrix{Float64}
+    const estimated_theta::Matrix{Float64}
 
-    likelihood::Vector{Float64}
+    likelihood::Float64
 
     function Assignment(A, node_labels, group_size::GroupSize{T}) where {T}
         number_groups = length(group_size)
@@ -30,10 +30,7 @@ struct Assignment{T}
         end
 
         estimated_theta = realized ./ counts
-        likelihood = [
-            compute_log_likelihood(number_groups, estimated_theta, counts,
-                                   size(A, 1)),
-        ]
+        likelihood = compute_log_likelihood(number_groups, estimated_theta, counts, size(A, 1))
 
         new{T}(group_size,
                node_labels,
@@ -96,5 +93,5 @@ function deepcopy!(a::Assignment, b::Assignment)
     a.counts .= b.counts
     a.realized .= b.realized
     a.estimated_theta .= b.estimated_theta
-    a.likelihood .= b.likelihood
+    a.likelihood = b.likelihood
 end

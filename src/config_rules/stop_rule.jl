@@ -7,8 +7,13 @@ struct PreviousBestValue
     end
 end
 
-function stopping_rule(history::MVHistory, stop_rule::PreviousBestValue)
-    current_itr = last(history, :current_likelihood)
-    prev_best_itr = last(history, :best_likelihood)
+"""
+    stopping_rule(history, stop_rule::PreviousBestValue)
+
+Returns a Bool with true if we should stop.
+"""
+function stopping_rule(history::GraphOptimizationHistory, stop_rule::PreviousBestValue)
+    current_itr = get_currentitr(history)
+    prev_best_itr = get_bestitr(history)
     return current_itr[1] - prev_best_itr[1] > stop_rule.k
 end
