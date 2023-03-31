@@ -2,6 +2,9 @@ module NetworkHistogram
 
 using ValueHistories, StatsBase, Random, LinearAlgebra
 
+using Arpack: eigs
+
+
 export graphhist, PreviousBestValue, Strict, RandomNodeSwap
 export OrderedStart, RandomStart, EigenStart
 

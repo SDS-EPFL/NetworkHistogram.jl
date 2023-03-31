@@ -69,24 +69,28 @@ function update_observed!(proposal::Assignment, swap::Tuple{Int, Int}, A)
     group_node_1 = proposal.node_labels[swap[1]]
     group_node_2 = proposal.node_labels[swap[2]]
 
-    for i in axes(A,1)
+    for i in axes(A, 1)
         if i == swap[1] || i == swap[2] || A[swap[1], i] == A[swap[2], i]
             continue
         end
         group_i = proposal.node_labels[i]
-        if A[i,swap[1]] == 1
+        if A[i, swap[1]] == 1
             proposal.realized[group_node_1, group_i] -= 1
-            proposal.realized[group_i, group_node_1] = proposal.realized[group_node_1, group_i]
+            proposal.realized[group_i, group_node_1] = proposal.realized[group_node_1,
+                                                                         group_i]
 
             proposal.realized[group_node_2, group_i] += 1
-            proposal.realized[group_i, group_node_2] = proposal.realized[group_node_2, group_i]
+            proposal.realized[group_i, group_node_2] = proposal.realized[group_node_2,
+                                                                         group_i]
         end
-        if A[i,swap[2]] == 1
+        if A[i, swap[2]] == 1
             proposal.realized[group_node_2, group_i] -= 1
-            proposal.realized[group_i, group_node_2] = proposal.realized[group_node_2, group_i]
+            proposal.realized[group_i, group_node_2] = proposal.realized[group_node_2,
+                                                                         group_i]
 
             proposal.realized[group_node_1, group_i] += 1
-            proposal.realized[group_i, group_node_1] = proposal.realized[group_node_1, group_i]
+            proposal.realized[group_i, group_node_1] = proposal.realized[group_node_1,
+                                                                         group_i]
         end
     end
 
