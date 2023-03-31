@@ -30,7 +30,8 @@ mutable struct Assignment{T}
         end
 
         estimated_theta = realized ./ counts
-        likelihood = compute_log_likelihood(number_groups, estimated_theta, counts, size(A, 1))
+        likelihood = compute_log_likelihood(number_groups, estimated_theta, counts,
+                                            size(A, 1))
 
         new{T}(group_size,
                node_labels,

@@ -9,12 +9,12 @@ Compute the graph histogram.
 TBW
 """
 function graphhist(A; h = select_bandwidth(A), maxitr = 1000, swap_rule = RandomNodeSwap(),
-    starting_assignment_rule = RandomStart(), accept_rule = Strict(),
-    stop_rule = PreviousBestValue(3), record_trace=true)
-
+                   starting_assignment_rule = RandomStart(), accept_rule = Strict(),
+                   stop_rule = PreviousBestValue(3), record_trace = true)
     return _graphhist(A, Val{record_trace}(), h = h, maxitr = maxitr, swap_rule = swap_rule,
-    starting_assignment_rule = starting_assignment_rule, accept_rule = accept_rule,
-    stop_rule = stop_rule)
+                      starting_assignment_rule = starting_assignment_rule,
+                      accept_rule = accept_rule,
+                      stop_rule = stop_rule)
 end
 
 """
@@ -22,9 +22,10 @@ end
 
 Internal version of `graphhist` which is type stable.
 """
-function _graphhist(A, record_trace=Val{true}(); h, maxitr, swap_rule, starting_assignment_rule, accept_rule, stop_rule)
-    
-    best, current, proposal, history = initialize(A, h, starting_assignment_rule, record_trace)
+function _graphhist(A, record_trace = Val{true}(); h, maxitr, swap_rule,
+                    starting_assignment_rule, accept_rule, stop_rule)
+    best, current, proposal, history = initialize(A, h, starting_assignment_rule,
+                                                  record_trace)
 
     for i in 1:maxitr
         proposal = create_proposal!(history, i, proposal, current, A, swap_rule)
@@ -43,10 +44,15 @@ end
 
 Formates the `graphhist` output depending on the type of `history` requested by the user.
 """
-graphhist_format_output(best, history::TraceHistory) = (graphhist = GraphHist(best), trace = history, likelihood = best.likelihood)
-graphhist_format_output(best, history::NoTraceHistory) = (graphhist = GraphHist(best), likelihood = history.best_likelihood)
+function graphhist_format_output(best, history::TraceHistory)
+    return (graphhist = GraphHist(best), trace = history, likelihood = best.likelihood)
+end
+function graphhist_format_output(best, history::NoTraceHistory)
+    return (graphhist = GraphHist(best), likelihood = history.best_likelihood)
+end
 
-function update_best!(history::GraphOptimizationHistory, iteration::Int, current::Assignment,
+function update_best!(history::GraphOptimizationHistory, iteration::Int,
+                      current::Assignment,
                       best::Assignment)
     if current.likelihood > best.likelihood
         update_best!(history, iteration, current.likelihood)

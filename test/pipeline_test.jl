@@ -24,8 +24,8 @@
                 @test all(estimated.θ .>= 0.0)
                 estimated, history = graphhist(adjacency; h = 0.3,
                                                stop_rule = PreviousBestValue(100),
-                                               starting_assignment_rule = OrderedStart(), 
-                                               record_trace=false)
+                                               starting_assignment_rule = OrderedStart(),
+                                               record_trace = false)
                 @test all(estimated.θ .>= 0.0)
             end
         end

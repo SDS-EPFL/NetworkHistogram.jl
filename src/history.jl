@@ -1,5 +1,5 @@
 abstract type GraphOptimizationHistory end
-struct TraceHistory{M<:MVHistory} <: GraphOptimizationHistory
+struct TraceHistory{M <: MVHistory} <: GraphOptimizationHistory
     history::M
 end
 mutable struct NoTraceHistory <: GraphOptimizationHistory
@@ -15,10 +15,10 @@ end
 """
 function initialize_history(best, current, proposal, ::Val{true})
     history = MVHistory(Dict([
-        :proposal_likelihood => QHistory(Float64),
-        :current_likelihood => QHistory(Float64),
-        :best_likelihood => QHistory(Float64),
-    ]))
+                                 :proposal_likelihood => QHistory(Float64),
+                                 :current_likelihood => QHistory(Float64),
+                                 :best_likelihood => QHistory(Float64),
+                             ]))
     push!(history, :proposal_likelihood, 0, proposal.likelihood)
     push!(history, :current_likelihood, 0, current.likelihood)
     push!(history, :best_likelihood, 0, best.likelihood)
@@ -31,9 +31,8 @@ end
 Initialise the history when `record_trace=false` is passed to `graphhist`.
 """
 function initialize_history(best, current, proposal, ::Val{false})
-    return NoTraceHistory(0,0,best.likelihood)
+    return NoTraceHistory(0, 0, best.likelihood)
 end
-
 
 """
     get_currentitr(history::GraphOptimizationHistory)
