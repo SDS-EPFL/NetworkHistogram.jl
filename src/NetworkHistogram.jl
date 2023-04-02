@@ -7,6 +7,7 @@ export OrderedStart, RandomStart, EigenStart
 
 include("group_numbering.jl")
 include("assignment.jl")
+include("history.jl")
 include("optimize.jl")
 include("histogram.jl")
 
