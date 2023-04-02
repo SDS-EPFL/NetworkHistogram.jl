@@ -2,6 +2,8 @@ module NetworkHistogram
 
 using ValueHistories, StatsBase, Random, LinearAlgebra
 
+using Arpack: eigs
+
 export graphhist, PreviousBestValue, Strict, RandomNodeSwap
 export OrderedStart, RandomStart, EigenStart
 
@@ -20,5 +22,6 @@ include("proposal.jl")
 
 include("utils.jl")
 
-include("data/utils.jl")
+include("data/gt.jl")
+include("data/datasets.jl")
 end
