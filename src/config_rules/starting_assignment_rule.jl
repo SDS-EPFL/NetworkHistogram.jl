@@ -4,33 +4,31 @@ struct RandomStart <: StartingAssignment end
 struct EigenStart <: StartingAssignment end
 
 """
-    initialise_node_labels(A, h, ::OrderedStart)
+    initialize_node_labels(A, h, starting_assignment_rule::StartingAssignment)
 
-Sequentially assign nodes to groups in order, starting with the first group.
+initialize node labels based on the `starting_assignment_rule`, and return a vector of
+node labels and a `GroupSize` object.
+
+# Implemenented rules
+- `OrderedStart()`: Sequentially assign nodes to groups based on the ordering of `A`.
+- `RandomStart()`: Randomly assign nodes to groups.
+- `EigenStart()`: Assign nodes to groups based on the second eigenvector of the normalized Laplacian.
 """
-function initialise_node_labels(A, h, ::OrderedStart)
+initialize_node_labels
+
+function initialize_node_labels(A, h, ::OrderedStart)
     group_size = GroupSize(size(A, 1), h)
     node_labels = inverse_rle(1:length(group_size), group_size)
     return node_labels, group_size
 end
 
-"""
-    initialise_node_labels(A, h, ::RandomStart)
-
-Randomly assign nodes to groups.
-"""
-function initialise_node_labels(A, h, ::RandomStart)
-    node_labels, group_size = initialise_node_labels(A, h, OrderedStart())
+function initialize_node_labels(A, h, ::RandomStart)
+    node_labels, group_size = initialize_node_labels(A, h, OrderedStart())
     node_labels = shuffle!(node_labels)
     return node_labels, group_size
 end
 
-"""
-    initialise_node_labels(A, h, ::EigenStart)
-
-Assign nodes to groups based on the second eigenvector of the normalized Laplacian.
-"""
-function initialise_node_labels(A, h, ::EigenStart)
+function initialize_node_labels(A, h, ::EigenStart)
     group_size = GroupSize(size(A, 1), h)
     node_labels = zeros(Int, size(A, 1))
 

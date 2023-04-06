@@ -16,10 +16,11 @@ makedocs(;
                                   assets = String[]),
          pages = [
              "Home" => "index.md",
-             "Internals" => "internals.md",
              "API Reference" => "api.md",
+             "Optimization hyperparameters" => "rules.md",
+             "Development" => "internals.md",
          ])
 
-#deploydocs(;
-#           repo = "github.com/SDS-EPFL/NetworkHistogram.jl",
-#           devbranch = "main")
+deploydocs(;
+           repo = "github.com/SDS-EPFL/NetworkHistogram.jl",
+           devbranch = "main")

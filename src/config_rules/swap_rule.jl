@@ -2,6 +2,17 @@ abstract type NodeSwapRule end
 
 struct RandomNodeSwap <: NodeSwapRule end
 
+"""
+    select_swap(node_assignment::Assignment, A, ::NodeSwapRule)
+
+Selects two nodes to swap based on the `NodeSwapRule`, the adjacency matrix `A` and the
+current assignment `node_assignment`.
+
+# Implemented rules
+- `RandomNodeSwap()`: Select two nodes at random.
+"""
+select_swap
+
 function select_swap(node_assignment::Assignment, A, ::RandomNodeSwap)
     index1 = rand(1:size(A, 1))
     label1 = node_assignment.node_labels[index1]
