@@ -13,10 +13,44 @@ end
     starting_assignment_rule = RandomStart(), accept_rule = Strict(),
     stop_rule = PreviousBestValue(3), record_trace=true)
 
-Compute the graph histogram.
+Computes the graph histogram approximation.
 
 # Arguments
-TBW
+A: adjacency matrix of a simple graph
+h: bandwidth of the graph histogram (number of nodes in a group or percentage of nodes in a
+    group)
+record_trace (optional): whether to record the trace of the optimization process and return
+    it as part of the output. Default is `true`.
+
+# Returns
+named tuple with the following fields:
+graphhist: the graph histogram approximation
+trace: the trace of the optimization process (if `record_trace` is `true`)
+likelihood: the loglikelihood of the graph histogram approximation
+
+# Examples
+```julia
+julia> A = [0 0 1 0 1 0 1 1 0 1
+             0 0 1 1 1 1 1 1 0 0
+             1 1 0 1 0 0 0 0 1 0
+             0 1 1 0 1 0 1 0 0 0
+             1 1 0 1 0 0 1 0 0 1
+             0 1 0 0 0 0 0 1 0 0
+             1 1 0 1 1 0 0 1 0 1
+             1 1 0 0 0 1 1 0 0 1
+             0 0 1 0 0 0 0 0 0 1
+             1 0 0 0 1 0 1 1 1 0]
+julia> out = graphhist(A);
+julia> graphist_approx = out.graphist
+...
+julia> trace = out.trace
+NetworkHistogram.TraceHistory{...}
+  :best_likelihood => 1 elements {Int64,Float64}
+  :proposal_likelihood => 5 elements {Int64,Float64}
+  :current_likelihood => 5 elements {Int64,Float64})
+julia> loglikelihood = out.likelihood
+-22.337057781338277
+```
 """
 function graphhist(A; h = select_bandwidth(A), maxitr = 1000,
                    swap_rule::NodeSwapRule = RandomNodeSwap(),
@@ -91,7 +125,7 @@ function initialize(A, h, starting_assignment_rule, record_trace)
     return best, current, proposal, history
 end
 
-function select_bandwith(A, type = "degs", alpha = 1, c = 1)
+function select_bandwidth(A, type = "degs", alpha = 1, c = 1)
     h = oracle_bandwidth(A, type, alpha, c)
     return sanitize_bandwidth(h, size(A, 1))
 end
@@ -106,7 +140,7 @@ function oracle_bandwidth(A, type = "degs", alpha = 1, c = min(4, sqrt(size(A, 1
     end
 
     n = size(A, 1)
-    midPt = collect(round(Int, (n ÷ 2 - c * sqrt(n))):round(Int, (n ÷ 2 + c * sqrt(n))))
+    midPt = collect(max(1,round(Int, (n ÷ 2 - c * sqrt(n)))):round(Int, (n ÷ 2 + c * sqrt(n))))
     rhoHat_inv = inv(sum(A) / (n * (n - 1)))
 
     # Rank-1 graphon estimate via fhat(x,y) = mult*u(x)*u(y)*pinv(rhoHat);
