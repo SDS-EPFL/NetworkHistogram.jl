@@ -1,5 +1,5 @@
 using NetworkHistogram
-using Test, RCall
+using Test
 
 using JLD
 
