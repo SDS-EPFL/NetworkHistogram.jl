@@ -18,6 +18,7 @@ makedocs(;
              "Home" => "index.md",
              "Internals" => "internals.md",
              "API Reference" => "api.md",
+             "Optimization hyperparameters" => "rules.md",
          ])
 
 #deploydocs(;
