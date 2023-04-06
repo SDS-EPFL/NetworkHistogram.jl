@@ -22,5 +22,4 @@ makedocs(;
          ])
 
 deploydocs(;
-           repo = "github.com/SDS-EPFL/NetworkHistogram.jl",
-           devbranch = "main")
+           repo = "github.com/SDS-EPFL/NetworkHistogram.jl.git")
