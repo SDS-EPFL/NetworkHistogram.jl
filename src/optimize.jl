@@ -75,6 +75,55 @@ function initialize(A, h, starting_assignment_rule, record_trace)
     return best, current, proposal, history
 end
 
-function select_bandwith(A)
-    error("Automatic bandwidth selection not implemented yet, please specify h manually.")
+function select_bandwith(A, type = "degs", alpha = 1, c = 1)
+    h = oracle_bandwidth(A, type, alpha, c)
+    return sanitize_bandwidth(h, size(A, 1))
+end
+
+function oracle_bandwidth(A, type = "degs", alpha = 1, c = min(4, sqrt(size(A, 1)) / 8))
+    if type ∉ ["eigs", "degs"]
+        error("Invalid input type $(type)")
+    end
+
+    if alpha != 1
+        error("Currently only supports alpha = 1")
+    end
+
+    n = size(A, 1)
+    midPt = collect(round(Int, (n ÷ 2 - c * sqrt(n))):round(Int, (n ÷ 2 + c * sqrt(n))))
+    rhoHat_inv = inv(sum(A) / (n * (n - 1)))
+
+    # Rank-1 graphon estimate via fhat(x,y) = mult*u(x)*u(y)*pinv(rhoHat);
+    if type == "eigs"
+        eig_res = eigs(A, nev = 1, which = :LM)
+        u = eig_res.vectors
+        mult = eig_res.values[1]
+    elseif type == "degs"
+        u = sum(A, dims = 2)
+        mult = (u' * A * u) / (sum(u .^ 2))^2
+    else
+        error("Invalid input type $(type)")
+    end
+
+    # Calculation bandwidth
+    u = sort(u, dims = 1)
+    uMid = u[midPt]
+    lmfit_coef = hcat(ones(length(uMid)), 1:length(uMid)) \ uMid
+
+    h = (2^(alpha + 1) * alpha * mult^2 *
+         (lmfit_coef[2] * length(uMid) / 2 + lmfit_coef[1])^2 * lmfit_coef[2]^2 *
+         rhoHat_inv)^(-1 / (2 * (alpha + 1)))
+    #estMSqrd = 2*mult^2*(lmfit_coef[2]*length(uMid)/2+lmfit_coef[1])^2*lmfit_coef[2]^2*rhoHat_inv^2*(n+1)^2
+    return h[1]
+end
+
+function sanitize_bandwidth(h::Real, n::Int)::Int
+    h = max(2, min(n, round(Int, h)))
+    lastGroupSize = n % h
+    # step down h, to avoid singleton final group
+    while lastGroupSize == 1 && h > 2
+        h -= 1
+        lastGroupSize = n % h
+    end
+    return h
 end

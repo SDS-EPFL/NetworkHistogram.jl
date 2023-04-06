@@ -1,5 +1,5 @@
 using NetworkHistogram
-using Test
+using Test, RCall
 
 using JLD
 
@@ -7,4 +7,5 @@ using JLD
     include("pipeline_test.jl")
     include("proposal_test.jl")
     include("starting_labels_test.jl")
+    include("oracle_bandwidth_test.jl")
 end
