@@ -8,4 +8,6 @@ using JLD
     include("proposal_test.jl")
     include("starting_labels_test.jl")
     include("error_handling_tests.jl")
+
+    include("config_rules/config_rule_test.jl")
 end
