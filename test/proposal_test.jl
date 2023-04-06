@@ -1,17 +1,7 @@
 @testset "Proposal" begin
-    A = [0 1 1 1 0 0 1 0
-         1 0 1 1 0 0 0 0
-         1 1 0 0 0 0 0 0
-         1 1 0 0 0 0 0 1
-         0 0 0 0 0 1 1 1
-         0 0 0 0 1 0 1 1
-         1 0 0 0 1 1 0 0
-         0 0 0 1 1 1 0 0]
+    A, node_labels, group_size, assignment = make_simple_example()
     h = 0.5
-    node_labels = [1, 1, 1, 1, 2, 2, 2, 2]
-    group_size = NetworkHistogram.GroupSize(8, 4)
     swap = (2, 5)
-    assignment = NetworkHistogram.Assignment(A, node_labels, group_size)
     proposal = deepcopy(assignment)
     NetworkHistogram.make_proposal!(proposal, assignment, swap, A)
     reference_proposal = NetworkHistogram.Assignment(A, [1, 2, 1, 1, 1, 2, 2, 2],
