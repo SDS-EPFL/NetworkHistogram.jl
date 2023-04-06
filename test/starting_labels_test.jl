@@ -17,14 +17,7 @@ function test_basic_node_labels(node_labels, group_size)
 end
 
 @testset "Initial node labels" begin
-    A = [0 1 1 1 0 0 1 0
-         1 0 1 1 0 0 0 0
-         1 1 0 0 0 0 0 0
-         1 1 0 0 0 0 0 1
-         0 0 0 0 0 1 1 1
-         0 0 0 0 1 0 1 1
-         1 0 0 0 1 1 0 0
-         0 0 0 1 1 1 0 0]
+    A, _, _, _ = make_simple_example()
     h = 0.5
 
     @testset "random start" begin
