@@ -11,12 +11,14 @@ Pkg.add("NetworkHistogram")
 
 ## Usage
 
+We fit the estimator using [`graphhist`](@ref graphhist) and then extract the estimated graphon matrix and node labels.
+
 ```julia
 using NetworkHistogram
 A = rand(0:1, 100, 100)
 
 # approximate the graphon with a network histogram
-hist = network_histogram(A)
+hist = graphhist(A)
 
 # get the graphist structure
 estimate = hist.graphist
@@ -27,3 +29,5 @@ sbm_matrix = estimate.θ
 # get the estimated node labels
 node_labels = estimate.node_labels
 ```
+
+You can control the optimization process by modifying the rules used in the optimization. Check out [Optimization hyper-parameters](@ref) for more information.

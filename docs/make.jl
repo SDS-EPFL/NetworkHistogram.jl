@@ -16,9 +16,9 @@ makedocs(;
                                   assets = String[]),
          pages = [
              "Home" => "index.md",
-             "Internals" => "internals.md",
              "API Reference" => "api.md",
              "Optimization hyperparameters" => "rules.md",
+             "Development" => "internals.md",
          ])
 
 #deploydocs(;
