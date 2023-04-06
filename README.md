@@ -16,7 +16,7 @@ Pkg.add("NetworkHistogram")
 
 ## Usage
 
-We fit the estimator using [`graphhist`](@ref graphhist) and then extract the estimated graphon matrix and node labels.
+We fit the estimator and then extract the estimated graphon matrix and node labels.
 
 ```julia
 using NetworkHistogram
