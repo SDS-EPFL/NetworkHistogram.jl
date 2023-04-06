@@ -21,6 +21,6 @@ makedocs(;
              "Development" => "internals.md",
          ])
 
-#deploydocs(;
-#           repo = "github.com/SDS-EPFL/NetworkHistogram.jl",
-#           devbranch = "main")
+deploydocs(;
+           repo = "github.com/SDS-EPFL/NetworkHistogram.jl",
+           devbranch = "main")
