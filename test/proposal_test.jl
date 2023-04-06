@@ -7,9 +7,9 @@
          0 0 0 0 1 0 1 1
          1 0 0 0 1 1 0 0
          0 0 0 1 1 1 0 0]
-    h = 0.5
     node_labels = [1, 1, 1, 1, 2, 2, 2, 2]
     group_size = NetworkHistogram.GroupSize(8, 4)
+    h = 0.5
     swap = (2, 5)
     assignment = NetworkHistogram.Assignment(A, node_labels, group_size)
     proposal = deepcopy(assignment)
