@@ -7,13 +7,13 @@ DocMeta.setdocmeta!(NetworkHistogram, :DocTestSetup, :(using NetworkHistogram);
 makedocs(;
          modules = [NetworkHistogram],
          authors = "Jake Grainger, Charles Dufour",
-         repo = "https://github.com/SDS-EPFL/NetworkHistogram.jl/blob/{commit}{path}#{line}",
+         #repo = "github.com/SDS-EPFL/NetworkHistogram.jl.git",
          sitename = "NetworkHistogram.jl",
-         format = Documenter.HTML(;
-                                  prettyurls = get(ENV, "CI", "false") == "true",
-                                  canonical = "https://SDS-EPFL.github.io/NetworkHistogram.jl",
-                                  edit_link = "main",
-                                  assets = String[]),
+         #format = Documenter.HTML(;
+         #                         prettyurls = get(ENV, "CI", "false") == "true",
+         #                         canonical = "https://SDS-EPFL.github.io/NetworkHistogram.jl",
+         #                         edit_link = "main",
+         #                         assets = String[]),
          pages = [
              "Home" => "index.md",
              "API Reference" => "api.md",
