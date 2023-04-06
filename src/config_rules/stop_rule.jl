@@ -7,7 +7,6 @@ struct PreviousBestValue <: StopRule
     end
 end
 
-
 """
     stopping_rule(history, stop_rule::StopRule)
 
