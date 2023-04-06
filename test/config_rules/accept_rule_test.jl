@@ -1,22 +1,43 @@
-import NetworkHistogram: accept_reject_update!
+import NetworkHistogram: accept_reject_update!, initialize_history
 @testset "accept rule" begin
-    accept_rules = [Strict()]
 
     iteration = 3
-    proposal = NetworkHistogram.Assignment([0 1; 1 0], [1, 2], 1)
+    A = [0 1 1 1 0 0 1 0
+         1 0 1 1 0 0 0 0
+         1 1 0 0 0 0 0 0
+         1 1 0 0 0 0 0 1
+         0 0 0 0 0 1 1 1
+         0 0 0 0 1 0 1 1
+         1 0 0 0 1 1 0 0
+         0 0 0 1 1 1 0 0]
+    node_labels = [1, 1, 1, 1, 2, 2, 2, 2]
+    group_size = NetworkHistogram.GroupSize(8, 4)
+    proposal = NetworkHistogram.Assignment(A, node_labels, group_size)
+
     proposal.likelihood = 0.0
     current = deepcopy(proposal)
     best = deepcopy(proposal)
 
     histories = [
-        initialise_history(best, current, proposal, Val{true}()),
-        initialise_history(best, current, proposal, Val{false}()),
+        initialize_history(best, current, proposal, Val{true}()),
+        initialize_history(best, current, proposal, Val{false}()),
     ]
-    proposal_likelihoods = [-0.1, 0.1]
-    for history in histories, accept_rule in accept_rules, l in proposal.likelihoods
-        proposal.likelihood = l
-        accept_reject_update!(history, iteration, proposal, current, accept_rule)
-        @test current.likelihood == max(l, 0.0)
-        current.likelihoood = 0.0
+    test_likelihoods = [-0.1, 0.1]
+    for history in histories, lik in test_likelihoods
+        proposal.likelihood = lik # set proposal
+        accept_reject_update!(history, iteration, proposal, current, Strict())
+
+        @testset "Strict with history is $(typeof(history).name.name), likelihood=$lik" begin
+            @test current.likelihood == max(lik, 0.0) # should have accepted if better
+            if history isa NetworkHistogram.TraceHistory
+                @test get(history.history, :current_likelihood)[1][end] == iteration
+                @test get(history.history, :current_likelihood)[2][end] == current.likelihood
+            else
+                @test history.current_iteration == iteration
+            end
+        end
+
+        current.likelihood = 0.0 # reset for next example
+        iteration += 1 # otherwise will get an error from history
     end
 end
