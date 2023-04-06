@@ -1,5 +1,5 @@
 abstract type StopRule end
-struct PreviousBestValue
+struct PreviousBestValue <: StopRule
     k::Int
     function PreviousBestValue(k::Int)
         @assert k > 0

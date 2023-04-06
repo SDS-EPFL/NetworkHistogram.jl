@@ -1,3 +1,13 @@
+function checkadjacency(A)
+    @assert eltype(A) <: Real
+    if !(eltype(A) === Bool)
+        @assert all(a ∈ [zero(eltype(A)), one(eltype(A))] for a in A) "All elements of the ajacency matrix should be zero or one."
+    end
+    @assert issymmetric(A)
+    @assert all(A[i, i] == zero(eltype(A)) for i in 1:size(A, 1)) "The diagonal of the adjacency matrix should all be zeros."
+    return nothing
+end
+
 """
     graphhist(A; h = select_bandwidth(A), maxitr = 1000, swap_rule = RandomNodeSwap(),
     starting_assignment_rule = RandomStart(), accept_rule = Strict(),
@@ -8,9 +18,14 @@ Compute the graph histogram.
 # Arguments
 TBW
 """
-function graphhist(A; h = select_bandwidth(A), maxitr = 1000, swap_rule = RandomNodeSwap(),
-                   starting_assignment_rule = RandomStart(), accept_rule = Strict(),
-                   stop_rule = PreviousBestValue(3), record_trace = true)
+function graphhist(A; h = select_bandwidth(A), maxitr = 1000,
+                   swap_rule::NodeSwapRule = RandomNodeSwap(),
+                   starting_assignment_rule::StartingAssignment = RandomStart(),
+                   accept_rule::AcceptRule = Strict(),
+                   stop_rule::StopRule = PreviousBestValue(3), record_trace = true)
+    checkadjacency(A)
+    @assert maxitr > 0
+
     return _graphhist(A, Val{record_trace}(), h = h, maxitr = maxitr, swap_rule = swap_rule,
                       starting_assignment_rule = starting_assignment_rule,
                       accept_rule = accept_rule,

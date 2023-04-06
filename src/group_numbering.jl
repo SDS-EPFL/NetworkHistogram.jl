@@ -11,7 +11,7 @@ struct GroupSize{T} <: AbstractVector{Int}
         GroupSize(number_nodes, standard_group)
     end
 
-    function GroupSize(number_nodes, standard_group::Int)
+    function GroupSize(number_nodes, standard_group::Integer)
         @assert 1 < standard_group < number_nodes
         number_groups = number_nodes ÷ standard_group # number of standard groups!
         if number_groups * standard_group == number_nodes
