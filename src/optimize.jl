@@ -24,6 +24,7 @@ function graphhist(A; h = select_bandwidth(A), maxitr = 1000,
                    accept_rule::AcceptRule = Strict(),
                    stop_rule::StopRule = PreviousBestValue(3), record_trace = true)
     checkadjacency(A)
+    h = sanitize_bandwidth(h, size(A, 1))
     @assert maxitr > 0
 
     return _graphhist(A, Val{record_trace}(), h = h, maxitr = maxitr, swap_rule = swap_rule,
@@ -135,6 +136,10 @@ end
 function sanitize_bandwidth(h::Real, n::Int)::Int
     h = max(2, min(n, round(Int, h)))
     lastGroupSize = n % h
+
+    if lastGroupSize == 1
+        @warn "Correcting bandwidth to avoid singleton final group."
+    end
     # step down h, to avoid singleton final group
     while lastGroupSize == 1 && h > 2
         h -= 1
