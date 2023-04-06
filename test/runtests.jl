@@ -9,6 +9,5 @@ using JLD
     include("starting_labels_test.jl")
     include("oracle_bandwidth_test.jl")
     include("error_handling_tests.jl")
-
     include("config_rules/config_rule_test.jl")
 end
