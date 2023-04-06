@@ -3,6 +3,13 @@ Pages = ["api.md"]
 Depth = 1
 ```
 
+# NetworkHistogram
+
+```@autodocs
+Modules = [NetworkHistogram]
+Pages   = ["histogram.jl","optimize.jl"]
+```
+
 # Assignment 
 
 ```@autodocs

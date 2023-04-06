@@ -16,17 +16,19 @@ end
 Computes the graph histogram approximation.
 
 # Arguments
-A: adjacency matrix of a simple graph
-h: bandwidth of the graph histogram (number of nodes in a group or percentage of nodes in a
+- `A`: adjacency matrix of a simple graph
+
+- `h`: bandwidth of the graph histogram (number of nodes in a group or percentage of nodes in a
     group)
-record_trace (optional): whether to record the trace of the optimization process and return
+
+- `record_trace` (optional): whether to record the trace of the optimization process and return
     it as part of the output. Default is `true`.
 
 # Returns
 named tuple with the following fields:
-graphhist: the graph histogram approximation
-trace: the trace of the optimization process (if `record_trace` is `true`)
-likelihood: the loglikelihood of the graph histogram approximation
+- `graphhist`: the graph histogram approximation
+- `trace`: the trace of the optimization process (if `record_trace` is `true`)
+- `likelihood`: the loglikelihood of the graph histogram approximation
 
 # Examples
 ```julia
@@ -130,6 +132,17 @@ function select_bandwidth(A, type = "degs", alpha = 1, c = 1)
     return sanitize_bandwidth(h, size(A, 1))
 end
 
+"""
+    oracle_bandwidth(A, type = "degs", alpha = 1, c = min(4, sqrt(size(A, 1)) / 8))
+
+Oracle bandwidth selection for graph histogram, using
+
+```math
+\\widehat{h^*}=\\left(2\\left(\\left(d^T d\\right)^{+}\\right)^2 d^T A d \\cdot \\hat{m} \\hat{b}\\right)^{-\\frac{1}{2}} \\hat{\\rho}_n^{\\frac{1}{4}},
+```
+
+where ``d`` is the vector of degree sorted in increasing order,``\\hat{\\rho}_n`` is the empirical edge density, and  ``m``, ``b`` are the slope and intercept fitted on ``d[n/2-c\\sqrt{n}:n/2+c\\sqrt{n}]`` for some ``c``.
+"""
 function oracle_bandwidth(A, type = "degs", alpha = 1, c = min(4, sqrt(size(A, 1)) / 8))
     if type ∉ ["eigs", "degs"]
         error("Invalid input type $(type)")
@@ -140,7 +153,8 @@ function oracle_bandwidth(A, type = "degs", alpha = 1, c = min(4, sqrt(size(A, 1
     end
 
     n = size(A, 1)
-    midPt = collect(max(1,round(Int, (n ÷ 2 - c * sqrt(n)))):round(Int, (n ÷ 2 + c * sqrt(n))))
+    midPt = collect(max(1, round(Int, (n ÷ 2 - c * sqrt(n)))):round(Int,
+                                                                    (n ÷ 2 + c * sqrt(n))))
     rhoHat_inv = inv(sum(A) / (n * (n - 1)))
 
     # Rank-1 graphon estimate via fhat(x,y) = mult*u(x)*u(y)*pinv(rhoHat);
