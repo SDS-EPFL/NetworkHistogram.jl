@@ -15,9 +15,8 @@
         end
         @test_throws AssertionError graphhist(["0" "1"; "1" "0"], h = 2)
     end
-    @testset "maxitr" begin
-        @test_throws AssertionError graphhist([0 1; 1 0], h = 2, maxitr = -1)
-    end
+    @testset "maxitr" begin @test_throws AssertionError graphhist([0 1; 1 0], h = 2,
+                                                                  maxitr = -1) end
     @testset "h" begin for h in (3, -1, 1.1, -0.1)
         @test_throws AssertionError graphhist([0 1; 1 0], h = h)
     end end
