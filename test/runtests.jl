@@ -2,6 +2,7 @@ using NetworkHistogram
 using Test
 
 using JLD
+include("simple_test_example.jl")
 
 @testset "NetworkHistogram.jl" begin
     include("pipeline_test.jl")

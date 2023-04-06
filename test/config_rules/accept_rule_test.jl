@@ -2,17 +2,7 @@ import NetworkHistogram: accept_reject_update!, initialize_history
 @testset "accept rule" begin
 
     iteration = 3
-    A = [0 1 1 1 0 0 1 0
-         1 0 1 1 0 0 0 0
-         1 1 0 0 0 0 0 0
-         1 1 0 0 0 0 0 1
-         0 0 0 0 0 1 1 1
-         0 0 0 0 1 0 1 1
-         1 0 0 0 1 1 0 0
-         0 0 0 1 1 1 0 0]
-    node_labels = [1, 1, 1, 1, 2, 2, 2, 2]
-    group_size = NetworkHistogram.GroupSize(8, 4)
-    proposal = NetworkHistogram.Assignment(A, node_labels, group_size)
+    A, node_labels, group_size, proposal = make_simple_example()
 
     proposal.likelihood = 0.0
     current = deepcopy(proposal)
