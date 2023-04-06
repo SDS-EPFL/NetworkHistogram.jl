@@ -7,4 +7,5 @@ using JLD
     include("pipeline_test.jl")
     include("proposal_test.jl")
     include("starting_labels_test.jl")
+    include("error_handling_tests.jl")
 end
