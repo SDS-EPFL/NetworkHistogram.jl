@@ -6,6 +6,7 @@ import NetworkHistogram: initialise_node_labels
         if method isa OrderedStart
             @test sort(node_labels) == node_labels
         end
-        @test all(sum(n->n==j, node_labels) == group_size[j] for j in unique(node_labels))
+        @test all(sum(n -> n == j, node_labels) == group_size[j]
+                  for j in unique(node_labels))
     end
 end

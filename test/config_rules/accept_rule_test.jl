@@ -1,6 +1,5 @@
 import NetworkHistogram: accept_reject_update!, initialize_history
 @testset "accept rule" begin
-
     iteration = 3
     A, node_labels, group_size, proposal = make_simple_example()
 
@@ -21,7 +20,8 @@ import NetworkHistogram: accept_reject_update!, initialize_history
             @test current.likelihood == max(lik, 0.0) # should have accepted if better
             if history isa NetworkHistogram.TraceHistory
                 @test get(history.history, :current_likelihood)[1][end] == iteration
-                @test get(history.history, :current_likelihood)[2][end] == current.likelihood
+                @test get(history.history, :current_likelihood)[2][end] ==
+                      current.likelihood
             else
                 @test history.current_iteration == iteration
             end
