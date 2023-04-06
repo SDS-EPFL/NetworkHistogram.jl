@@ -11,7 +11,7 @@ end
 """
     initialize_history(best, current, proposal, ::Val{true})
 
-    Initialise the history when `record_trace=true` is passed to `graphhist`.
+    initialize the history when `record_trace=true` is passed to `graphhist`.
 """
 function initialize_history(best, current, proposal, ::Val{true})
     history = MVHistory(Dict([
@@ -28,7 +28,7 @@ end
 """
     initialize_history(best, current, proposal, ::Val{false})
 
-Initialise the history when `record_trace=false` is passed to `graphhist`.
+initialize the history when `record_trace=false` is passed to `graphhist`.
 """
 function initialize_history(best, current, proposal, ::Val{false})
     return NoTraceHistory(0, 0, best.likelihood)

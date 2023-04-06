@@ -119,7 +119,7 @@ end
 Initialize the memory required for finding optimal graph histogram.
 """
 function initialize(A, h, starting_assignment_rule, record_trace)
-    node_labels, group_size = initialise_node_labels(A, h, starting_assignment_rule)
+    node_labels, group_size = initialize_node_labels(A, h, starting_assignment_rule)
     proposal = Assignment(A, node_labels, group_size)
     current = deepcopy(proposal)
     best = deepcopy(proposal)
