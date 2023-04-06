@@ -1,6 +1,8 @@
 function checkadjacency(A)
     @assert eltype(A) <: Real
-    @assert all(a ∈ [zero(eltype(A)),one(eltype(A))] for a in A) "All elements of the ajacency matrix should be zero or one."
+    if !(eltype(A) === Bool)
+        @assert all(a ∈ [zero(eltype(A)),one(eltype(A))] for a in A) "All elements of the ajacency matrix should be zero or one."
+    end
     @assert issymmetric(A)
     @assert all(A[i,i]==zero(eltype(A)) for i in 1:size(A,1)) "The diagonal of the adjacency matrix should all be zeros."
     return nothing
