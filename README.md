@@ -21,14 +21,16 @@ Pkg.add("NetworkHistogram")
 We fit the estimator and then extract the estimated graphon matrix and node labels.
 
 ```julia
-using NetworkHistogram
-A = rand(0:1, 100, 100)
+using NetworkHistogram, LinearAlgebra
+
+A = Symmetric(rand(0:1, 100, 100))
+A[diagind(A)] .= 0
 
 # approximate the graphon with a network histogram
 hist = graphhist(A)
 
 # get the graphist structure
-estimate = hist.graphist
+estimate = hist.graphhist
 
 # get the estimated graphon matrix
 sbm_matrix = estimate.θ
