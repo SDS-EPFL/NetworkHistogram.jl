@@ -1,0 +1,30 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: NetworkHistogram.jl
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Charles
+    family-names: Dufour
+    email: charles.dufour@epfl.ch
+    affiliation: EPFL
+  - given-names: Jake
+    family-names: Grainger
+    email: jake.grainger@epfl.ch
+    affiliation: EPFL
+    orcid: 'https://orcid.org/0000-0002-8808-4821'
+repository-code: 'https://github.com/SDS-EPFL/NetworkHistogram.jl'
+url: 'https://sds-epfl.github.io/NetworkHistogram.jl/stable/'
+abstract: >-
+  Implementation of the network histogram for graphon
+  estimation from the paper Network histograms and
+  universality of blockmodel approximation by Sofia C.
+  Olhede and Patrick J. Wolfe.
+license: MIT
+commit: 7f07622
+version: 0.4.0
+date-released: '2023-04-14'
