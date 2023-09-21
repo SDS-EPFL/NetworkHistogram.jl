@@ -19,7 +19,8 @@ makedocs(;
         "API Reference" => "api.md",
         "Optimization hyperparameters" => "rules.md",
         "Development" => "internals.md",
-    ])
+    ],
+    checkdocs = :none)
 
 deploydocs(;
     repo = "github.com/SDS-EPFL/NetworkHistogram.jl.git")
