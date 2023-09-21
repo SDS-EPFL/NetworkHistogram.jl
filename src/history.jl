@@ -15,10 +15,10 @@ end
 """
 function initialize_history(best, current, proposal, ::Val{true})
     history = MVHistory(Dict([
-                                 :proposal_likelihood => QHistory(Float64),
-                                 :current_likelihood => QHistory(Float64),
-                                 :best_likelihood => QHistory(Float64),
-                             ]))
+        :proposal_likelihood => QHistory(Float64),
+        :current_likelihood => QHistory(Float64),
+        :best_likelihood => QHistory(Float64),
+    ]))
     push!(history, :proposal_likelihood, 0, proposal.likelihood)
     push!(history, :current_likelihood, 0, current.likelihood)
     push!(history, :best_likelihood, 0, best.likelihood)
