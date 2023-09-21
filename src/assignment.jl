@@ -31,14 +31,14 @@ mutable struct Assignment{T}
 
         estimated_theta = realized ./ counts
         likelihood = compute_log_likelihood(number_groups, estimated_theta, counts,
-                                            size(A, 1))
+            size(A, 1))
 
         new{T}(group_size,
-               node_labels,
-               counts,
-               realized,
-               estimated_theta,
-               likelihood)
+            node_labels,
+            counts,
+            realized,
+            estimated_theta,
+            likelihood)
     end
 end
 
@@ -84,9 +84,9 @@ where ``\\hat{\\theta}_{ab}`` is the estimated probability of an edge between co
 """
 function compute_log_likelihood(assignment::Assignment)
     compute_log_likelihood(length(assignment.group_size),
-                           assignment.estimated_theta,
-                           assignment.counts,
-                           sum(assignment.group_size))
+        assignment.estimated_theta,
+        assignment.counts,
+        sum(assignment.group_size))
 end
 
 function deepcopy!(a::Assignment, b::Assignment)

@@ -15,8 +15,8 @@ Return the updated `current` assignment based on the `accept_rule`.
 accept_reject_update!
 
 function accept_reject_update!(history::GraphOptimizationHistory, iteration::Int,
-                               proposal::Assignment,
-                               current::Assignment, accept_rule::Strict)
+    proposal::Assignment,
+    current::Assignment, accept_rule::Strict)
     if proposal.likelihood > current.likelihood
         deepcopy!(current, proposal)
     end

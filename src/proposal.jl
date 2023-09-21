@@ -12,8 +12,8 @@ proposal is stored in the history.
     The `proposal` assignment is modified in place to avoid unnecessary memory allocation.
 """
 function create_proposal!(history::GraphOptimizationHistory, iteration::Int,
-                          proposal::Assignment,
-                          current::Assignment, A, swap_rule)
+    proposal::Assignment,
+    current::Assignment, A, swap_rule)
     swap = select_swap(current, A, swap_rule)
     make_proposal!(proposal, current, swap, A)
     update_proposal!(history, iteration, proposal.likelihood)
@@ -78,20 +78,20 @@ function update_observed!(proposal::Assignment, swap::Tuple{Int, Int}, A)
         if A[i, swap[1]] == 1
             proposal.realized[group_node_1, group_i] -= 1
             proposal.realized[group_i, group_node_1] = proposal.realized[group_node_1,
-                                                                         group_i]
+                group_i]
 
             proposal.realized[group_node_2, group_i] += 1
             proposal.realized[group_i, group_node_2] = proposal.realized[group_node_2,
-                                                                         group_i]
+                group_i]
         end
         if A[i, swap[2]] == 1
             proposal.realized[group_node_2, group_i] -= 1
             proposal.realized[group_i, group_node_2] = proposal.realized[group_node_2,
-                                                                         group_i]
+                group_i]
 
             proposal.realized[group_node_1, group_i] += 1
             proposal.realized[group_i, group_node_1] = proposal.realized[group_node_1,
-                                                                         group_i]
+                group_i]
         end
     end
 

@@ -22,20 +22,20 @@ end
 
     @testset "random start" begin
         node_labels, group_size = NetworkHistogram.initialize_node_labels(A, h,
-                                                                          RandomStart())
+            RandomStart())
         test_basic_node_labels(node_labels, group_size)
     end
 
     @testset "ordered start" begin
         node_labels, group_size = NetworkHistogram.initialize_node_labels(A, h,
-                                                                          OrderedStart())
+            OrderedStart())
         test_basic_node_labels(node_labels, group_size)
         @test node_labels == sort(node_labels)
     end
 
     @testset "eigenvalue start" begin
         node_labels, group_size = NetworkHistogram.initialize_node_labels(A, h,
-                                                                          EigenStart())
+            EigenStart())
         test_basic_node_labels(node_labels, group_size)
     end
 end

@@ -18,8 +18,8 @@ Computes the graph histogram approximation.
 # Arguments
 - `A`: adjacency matrix of a simple graph
 
-- `h`: bandwidth of the graph histogram (number of nodes in a group or percentage of nodes in a
-    group)
+- `h`: bandwidth of the graph histogram (number of nodes in a group or percentage (in [0,1]) of
+    nodes in a group)
 
 - `record_trace` (optional): whether to record the trace of the optimization process and return
     it as part of the output. Default is `true`.
@@ -55,18 +55,17 @@ julia> loglikelihood = out.likelihood
 ```
 """
 function graphhist(A; h = select_bandwidth(A), maxitr = 1000,
-                   swap_rule::NodeSwapRule = RandomNodeSwap(),
-                   starting_assignment_rule::StartingAssignment = RandomStart(),
-                   accept_rule::AcceptRule = Strict(),
-                   stop_rule::StopRule = PreviousBestValue(3), record_trace = true)
+    swap_rule::NodeSwapRule = RandomNodeSwap(),
+    starting_assignment_rule::StartingAssignment = RandomStart(),
+    accept_rule::AcceptRule = Strict(),
+    stop_rule::StopRule = PreviousBestValue(3), record_trace = true)
     checkadjacency(A)
-    h = sanitize_bandwidth(h, size(A, 1))
     @assert maxitr > 0
 
     return _graphhist(A, Val{record_trace}(), h = h, maxitr = maxitr, swap_rule = swap_rule,
-                      starting_assignment_rule = starting_assignment_rule,
-                      accept_rule = accept_rule,
-                      stop_rule = stop_rule)
+        starting_assignment_rule = starting_assignment_rule,
+        accept_rule = accept_rule,
+        stop_rule = stop_rule)
 end
 
 """
@@ -75,9 +74,9 @@ end
 Internal version of `graphhist` which is type stable.
 """
 function _graphhist(A, record_trace = Val{true}(); h, maxitr, swap_rule,
-                    starting_assignment_rule, accept_rule, stop_rule)
+    starting_assignment_rule, accept_rule, stop_rule)
     best, current, proposal, history = initialize(A, h, starting_assignment_rule,
-                                                  record_trace)
+        record_trace)
 
     for i in 1:maxitr
         proposal = create_proposal!(history, i, proposal, current, A, swap_rule)
@@ -104,8 +103,8 @@ function graphhist_format_output(best, history::NoTraceHistory)
 end
 
 function update_best!(history::GraphOptimizationHistory, iteration::Int,
-                      current::Assignment,
-                      best::Assignment)
+    current::Assignment,
+    best::Assignment)
     if current.likelihood > best.likelihood
         update_best!(history, iteration, current.likelihood)
         deepcopy!(best, current)
@@ -127,9 +126,9 @@ function initialize(A, h, starting_assignment_rule, record_trace)
     return best, current, proposal, history
 end
 
-function select_bandwidth(A, type = "degs", alpha = 1, c = 1)
+function select_bandwidth(A, type = "degs", alpha = 1, c = 1)::Int
     h = oracle_bandwidth(A, type, alpha, c)
-    return sanitize_bandwidth(h, size(A, 1))
+    return max(2, min(size(A)[1], round(Int, h)))
 end
 
 """
@@ -154,7 +153,7 @@ function oracle_bandwidth(A, type = "degs", alpha = 1, c = min(4, sqrt(size(A, 1
 
     n = size(A, 1)
     midPt = collect(max(1, round(Int, (n ÷ 2 - c * sqrt(n)))):round(Int,
-                                                                    (n ÷ 2 + c * sqrt(n))))
+        (n ÷ 2 + c * sqrt(n))))
     rhoHat_inv = inv(sum(A) / (n * (n - 1)))
 
     # Rank-1 graphon estimate via fhat(x,y) = mult*u(x)*u(y)*pinv(rhoHat);
@@ -179,19 +178,4 @@ function oracle_bandwidth(A, type = "degs", alpha = 1, c = min(4, sqrt(size(A, 1
          rhoHat_inv)^(-1 / (2 * (alpha + 1)))
     #estMSqrd = 2*mult^2*(lmfit_coef[2]*length(uMid)/2+lmfit_coef[1])^2*lmfit_coef[2]^2*rhoHat_inv^2*(n+1)^2
     return h[1]
-end
-
-function sanitize_bandwidth(h::Real, n::Int)::Int
-    h = max(2, min(n, round(Int, h)))
-    lastGroupSize = n % h
-
-    if lastGroupSize == 1
-        @warn "Correcting bandwidth to avoid singleton final group."
-    end
-    # step down h, to avoid singleton final group
-    while lastGroupSize == 1 && h > 2
-        h -= 1
-        lastGroupSize = n % h
-    end
-    return h
 end

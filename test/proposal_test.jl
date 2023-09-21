@@ -5,7 +5,7 @@
     proposal = deepcopy(assignment)
     NetworkHistogram.make_proposal!(proposal, assignment, swap, A)
     reference_proposal = NetworkHistogram.Assignment(A, [1, 2, 1, 1, 1, 2, 2, 2],
-                                                     group_size)
+        group_size)
 
     @testset "update labels" begin
         @test proposal.node_labels[swap[1]] == reference_proposal.node_labels[swap[1]] == 2
