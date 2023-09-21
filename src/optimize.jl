@@ -18,8 +18,8 @@ Computes the graph histogram approximation.
 # Arguments
 - `A`: adjacency matrix of a simple graph
 
-- `h`: bandwidth of the graph histogram (number of nodes in a group or percentage of nodes in a
-    group)
+- `h`: bandwidth of the graph histogram (number of nodes in a group or percentage (in [0,1]) of
+    nodes in a group)
 
 - `record_trace` (optional): whether to record the trace of the optimization process and return
     it as part of the output. Default is `true`.
@@ -181,8 +181,18 @@ function oracle_bandwidth(A, type = "degs", alpha = 1, c = min(4, sqrt(size(A, 1
     return h[1]
 end
 
+"""
+    sanitize_bandwidth(h, n)
+
+Convert bandwidth to number of nodes per groups from possible percentage expression (if necessary).
+Adapt number of nodes per group to avoid singleton final group.
+"""
 function sanitize_bandwidth(h::Real, n::Int)::Int
-    h = max(2, min(n, round(Int, h)))
+    if h <= 1
+        h = max(2, min(n, round(Int, h * n)))
+    else
+        h = max(2, min(n, round(Int, h)))
+    end
     lastGroupSize = n % h
 
     if lastGroupSize == 1
