@@ -10,7 +10,18 @@
              1 1 0 0 0 1 1 0 0 1
              0 0 1 0 0 0 0 0 0 1
              1 0 0 0 1 0 1 1 1 0]
-        estimated = graphhist(A; h = 0.5)
+        @testset "run bandwidth float" begin
+            estimated = graphhist(A; h = 0.5)
+            @test all(estimated.graphhist.θ .>= 0.0)
+            @test all(estimated.graphhist.θ .<= 1.0)
+            @test size(estimated.graphhist.θ) == (2, 2)
+        end
+        @testset "run bandwidth int" begin
+            estimated = graphhist(A; h = 5)
+            @test all(estimated.graphhist.θ .>= 0.0)
+            @test all(estimated.graphhist.θ .<= 1.0)
+            @test size(estimated.graphhist.θ) == (2, 2)
+        end
     end
 
     @testset "associative stochastic block model" begin
