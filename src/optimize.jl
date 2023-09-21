@@ -60,7 +60,6 @@ function graphhist(A; h = select_bandwidth(A), maxitr = 1000,
     accept_rule::AcceptRule = Strict(),
     stop_rule::StopRule = PreviousBestValue(3), record_trace = true)
     checkadjacency(A)
-    h = sanitize_bandwidth(h, size(A, 1))
     @assert maxitr > 0
 
     return _graphhist(A, Val{record_trace}(), h = h, maxitr = maxitr, swap_rule = swap_rule,
@@ -127,9 +126,9 @@ function initialize(A, h, starting_assignment_rule, record_trace)
     return best, current, proposal, history
 end
 
-function select_bandwidth(A, type = "degs", alpha = 1, c = 1)
+function select_bandwidth(A, type = "degs", alpha = 1, c = 1)::Int
     h = oracle_bandwidth(A, type, alpha, c)
-    return sanitize_bandwidth(h, size(A, 1))
+    return max(2, min(size(A)[1], round(Int, h)))
 end
 
 """
@@ -179,29 +178,4 @@ function oracle_bandwidth(A, type = "degs", alpha = 1, c = min(4, sqrt(size(A, 1
          rhoHat_inv)^(-1 / (2 * (alpha + 1)))
     #estMSqrd = 2*mult^2*(lmfit_coef[2]*length(uMid)/2+lmfit_coef[1])^2*lmfit_coef[2]^2*rhoHat_inv^2*(n+1)^2
     return h[1]
-end
-
-"""
-    sanitize_bandwidth(h, n)
-
-Convert bandwidth to number of nodes per groups from possible percentage expression (if necessary).
-Adapt number of nodes per group to avoid singleton final group.
-"""
-function sanitize_bandwidth(h::Real, n::Int)::Int
-    if h <= 1
-        h = max(2, min(n, round(Int, h * n)))
-    else
-        h = max(2, min(n, round(Int, h)))
-    end
-    lastGroupSize = n % h
-
-    if lastGroupSize == 1
-        @warn "Correcting bandwidth to avoid singleton final group."
-    end
-    # step down h, to avoid singleton final group
-    while lastGroupSize == 1 && h > 2
-        h -= 1
-        lastGroupSize = n % h
-    end
-    return h
 end
