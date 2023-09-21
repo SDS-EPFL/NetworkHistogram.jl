@@ -16,3 +16,11 @@
     h_clean = NetworkHistogram.sanitize_bandwidth(h, size(A, 1))
     @test h_clean == 2
 end
+
+
+@testset "bandwidth sanitization" begin
+    # ask for 50% of the nodes in each groups
+    @test NetworkHistogram.sanitize_bandwidth(0.5, 10) == 5
+    # ask for 100% of the nodes in each groups
+    @test NetworkHistogram.sanitize_bandwidth(1, 10) == 10
+end
