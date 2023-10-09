@@ -38,18 +38,3 @@ function make_multivariate_example()
     assignment = NetworkHistogram.Assignment(A, node_labels, group_size)
     return A, node_labels, group_size, assignment
 end
-
-
-
-function make_er(n,p)
-    A = zeros(Int64, n, n)
-    for i in 1:n
-        for j in i+1:n
-            if rand() < p
-                A[i,j] = 1
-                A[j,i] = 1
-            end
-        end
-    end
-    return A
-end

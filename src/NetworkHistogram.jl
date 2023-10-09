@@ -1,6 +1,6 @@
 module NetworkHistogram
 
-using ValueHistories, StatsBase, Random, LinearAlgebra
+using ValueHistories, StatsBase, Random, LinearAlgebra, Kronecker
 
 using Arpack: eigs
 
