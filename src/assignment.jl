@@ -1,16 +1,17 @@
-mutable struct Assignment{T}
+mutable struct Assignment{T, M}
     const group_size::GroupSize{T}
 
     const node_labels::Vector{Int}
     const counts::Matrix{Int}
-    const realized::Matrix{Float64}
-    const estimated_theta::Matrix{Float64}
+    const realized::Array{Float64,M}
+    const estimated_theta::Array{Float64,M}
+    const number_layers::Int
 
     likelihood::Float64
 
     function Assignment(A, node_labels, group_size::GroupSize{T}) where {T}
+        M = ndims(A)
         number_groups = length(group_size)
-        estimated_theta = zeros(Float64, size(A, 1), number_groups)
 
         counts = zeros(Int64, number_groups, number_groups)
         realized = zeros(Int64, number_groups, number_groups)
@@ -33,13 +34,79 @@ mutable struct Assignment{T}
         likelihood = compute_log_likelihood(number_groups, estimated_theta, counts,
             size(A, 1))
 
-        new{T}(group_size,
+        new{T,M}(group_size,
             node_labels,
             counts,
             realized,
             estimated_theta,
+            1,
             likelihood)
     end
+
+    function Assignment(A::Array{T,3}, node_labels, group_size::GroupSize{T}) where {T}
+        M = ndims(A)
+        number_groups = length(group_size)
+
+        counts = zeros(Int64, number_groups, number_groups)
+        realized = zeros(Int64, number_groups, number_groups, 2^size(A, 3))
+
+        A_updated = zeros(Int64, size(A, 1), size(A, 2))
+        for i in 1:size(A,1)
+            for j in i+1:size(A,2)
+                A_updated[i,j] = _binary_to_index(A[i,j,:])
+                A_updated[j,i] = A_updated[i,j]
+            end
+        end
+
+
+        @inbounds @simd for m in 1:size(realized,3)
+            for k in 1:number_groups
+                for l in k:number_groups
+                    realized[k, l, m] = sum(A_updated[node_labels .== k, node_labels .== l] .== m)
+                    realized[l, k, m] = realized[k, l, m]
+                    counts[k, l] = group_size[k] * group_size[l]
+                    counts[l, k] = counts[k, l]
+                end
+            end
+        end
+
+        @inbounds @simd for m in 1:size(realized,3)
+            for k in 1:number_groups
+                counts[k, k] = group_size[k] * (group_size[k] - 1) ÷ 2
+                realized[k, k, m] = sum(A_updated[node_labels .== k, node_labels .== k] .== m)÷2
+            end
+        end
+        estimated_theta = realized ./ counts
+        likelihood = compute_multivariate_log_likelihood(number_groups, estimated_theta, realized)
+
+        new{T, M}(group_size,
+            node_labels,
+            counts,
+            realized,
+            estimated_theta,
+            size(A, 3),
+            likelihood)
+    end
+end
+
+
+function _binary_to_index(binary_vector::Vector{Int})
+    total = 1
+    for i in 1:length(binary_vector)
+        total += binary_vector[i] * 2^(i-1)
+    end
+    return total
+end
+
+
+function _index_to_binary(index::Int, M)
+    binary_vector = zeros(Int, M)
+    index -= 1
+    for i in 1:M
+        binary_vector[i] = index % 2
+        index = index ÷ 2
+    end
+    return binary_vector
 end
 
 """
@@ -66,6 +133,23 @@ function compute_log_likelihood(number_groups, estimated_theta, counts, number_n
     return loglik
 end
 
+
+function compute_multivariate_log_likelihood(number_groups, estimated_theta, realized)
+    loglik = 0.0
+    @inbounds @simd for i in 1:number_groups
+        for j in i:number_groups
+            for m in 1:size(realized, 3)
+                if realized[i, j, m] != 0
+                    θ = estimated_theta[i, j, m]
+                    θ_c = θ <= 0 ? 1e-14 : (θ >= 1 ? 1 - 1e-14 : θ)
+                    loglik += log(θ_c) * realized[i, j, m]
+                end
+            end
+        end
+    end
+    return loglik
+end
+
 """
     compute_log_likelihood(assignment::Assignment)
 
@@ -82,11 +166,18 @@ where ``\\hat{\\theta}_{ab}`` is the estimated probability of an edge between co
     \\hat{\\theta}_{ab} = \\frac{\\sum\\limits_{i<j} A_{ij} \\mathbb{1}(z_i = a, z_j = b) }{\\sum\\limits_{i<j} \\mathbb{1}(z_i = a, z_j = b)}.
 ```
 """
-function compute_log_likelihood(assignment::Assignment)
+function compute_log_likelihood(assignment::Assignment{T,2}) where {T}
     compute_log_likelihood(length(assignment.group_size),
         assignment.estimated_theta,
         assignment.counts,
         sum(assignment.group_size))
+end
+
+
+function compute_log_likelihood(assignment::Assignment)
+    compute_multivariate_log_likelihood(length(assignment.group_size),
+        assignment.estimated_theta,
+        assignment.realized)
 end
 
 function deepcopy!(a::Assignment, b::Assignment)

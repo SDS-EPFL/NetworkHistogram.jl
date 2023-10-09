@@ -1,10 +1,10 @@
-struct GraphHist{T}
-    θ::Matrix{T}
+struct GraphHist{T,M}
+    θ::Array{T,M}
     node_labels::Vector{Int}
-    function GraphHist(a::Assignment)
+    function GraphHist(a::Assignment{T,M}) where {T,M}
         θ = a.estimated_theta
         node_labels = a.node_labels
-        new{typeof(θ[1])}(θ, node_labels)
+        new{typeof(θ[1]),M}(θ, node_labels)
     end
 end
 
