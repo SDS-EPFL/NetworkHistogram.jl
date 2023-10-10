@@ -101,9 +101,7 @@ function update_observed!(proposal::Assignment{T, 2}, swap::Tuple{Int, Int}, A) 
     return nothing
 end
 
-
-
-function update_observed!(proposal::Assignment{T,3}, swap::Tuple{Int, Int}, A) where {T}
+function update_observed!(proposal::Assignment{T, 3}, swap::Tuple{Int, Int}, A) where {T}
     group_node_1 = proposal.node_labels[swap[1]]
     group_node_2 = proposal.node_labels[swap[2]]
     if group_node_1 == group_node_2
@@ -129,7 +127,6 @@ function update_observed!(proposal::Assignment{T,3}, swap::Tuple{Int, Int}, A) w
         proposal.realized[group_node_2, group_i, A[i, swap[2]]] -= 1
         proposal.realized[group_i, group_node_2, A[i, swap[2]]] = proposal.realized[group_node_2,
             group_i, A[i, swap[2]]]
-
     end
 
     @. proposal.estimated_theta = proposal.realized / proposal.counts

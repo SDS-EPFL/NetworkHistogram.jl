@@ -1,11 +1,11 @@
-struct GraphHist{T,M}
-    θ::Array{T,M}
+struct GraphHist{T, M}
+    θ::Array{T, M}
     node_labels::Vector{Int}
     num_layers::Int
-    function GraphHist(a::Assignment{T,M}) where {T,M}
+    function GraphHist(a::Assignment{T, M}) where {T, M}
         θ = a.estimated_theta
         node_labels = a.node_labels
-        new{typeof(θ[1]),M}(θ, node_labels, a.number_layers)
+        new{typeof(θ[1]), M}(θ, node_labels, a.number_layers)
     end
 end
 
@@ -25,21 +25,19 @@ blockmodel approximation." Proceedings of the National Academy of Sciences 111.4
 """
 GraphHist
 
-
-function get_moment_representation(g::GraphHist{T,2}) where {T}
+function get_moment_representation(g::GraphHist{T, 2}) where {T}
     return g.θ
 end
 
-
-
-function get_moment_representation(g::GraphHist{T,3}) where {T}
-    moments = zeros(size(g.θ,1), size(g.θ,2), 2^g.num_layers-1)
-    transition = collect(kronecker([1 1; 0 1],g.num_layers))
-    for i in 1:size(g.θ,1)
-        for j in 1:size(g.θ,2)
-            moments[i,j,:] .= (transition*g.θ[i,j,:])[2:end]
+function get_moment_representation(g::GraphHist{T, 3}) where {T}
+    moments = zeros(size(g.θ, 1), size(g.θ, 2), 2^g.num_layers - 1)
+    transition = collect(kronecker([1 1; 0 1], g.num_layers))
+    for i in 1:size(g.θ, 1)
+        for j in 1:size(g.θ, 2)
+            moments[i, j, :] .= (transition * g.θ[i, j, :])[2:end]
         end
     end
-    indices_for_moments = [findall(x -> x == 1, _index_to_binary(e, g.num_layers)) for e in 2:size(g.θ,3)]
+    indices_for_moments = [findall(x -> x == 1, _index_to_binary(e, g.num_layers))
+                           for e in 2:size(g.θ, 3)]
     return moments, indices_for_moments
 end

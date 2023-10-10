@@ -64,7 +64,7 @@
 
         @testset "2 layers perfectly anti-correlated" begin
             A_2 = cat(A, abs.(A .- 1), dims = 3)
-            for i in 1:size(A,1)
+            for i in 1:size(A, 1)
                 A_2[i, i, 2] = 0
             end
             estimated, history = graphhist(A_2; h = 0.5)
