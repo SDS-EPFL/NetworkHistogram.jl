@@ -19,7 +19,7 @@ struct GroupSize{T} <: AbstractVector{Int}
         else
             remainder_group = number_nodes - number_groups * standard_group
             if remainder_group == 1
-                @warn "h has to be changes as only one node in remainder group"
+                @warn "h has to be changed as only one node in remainder group"
                 standard_group -= 1
                 remainder_group = number_groups + 1 # because equal to 1+number_groups because we take 1 from each standard group, and there are number_groups of them
                 if standard_group == 1
