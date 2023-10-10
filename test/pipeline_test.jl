@@ -22,6 +22,11 @@
             @test all(estimated.graphhist.θ .<= 1.0)
             @test size(estimated.graphhist.θ) == (2, 2)
         end
+        @testset "run with automatic bandwidth" begin
+            estimated = graphhist(A)
+            @test all(estimated.graphhist.θ .>= 0.0)
+            @test all(estimated.graphhist.θ .<= 1.0)
+        end
     end
 
     @testset "associative stochastic block model" begin
@@ -49,6 +54,12 @@
             @test all(estimated.θ .>= 0.0)
             @test all(estimated.θ .<= 1.0)
             @test size(estimated.θ) == (2, 2, 4)
+        end
+        @testset "run with automatic bandwidth" begin
+            A_2 = cat(A, A, dims = 3)
+            estimated, history = graphhist(A_2)
+            @test all(estimated.θ .>= 0.0)
+            @test all(estimated.θ .<= 1.0)
         end
 
         @testset "2 layers perfectly anti-correlated" begin
