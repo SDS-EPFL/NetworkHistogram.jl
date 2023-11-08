@@ -16,7 +16,7 @@ accept_reject_update!
 
 function accept_reject_update!(history::GraphOptimizationHistory, iteration::Int,
     proposal::Assignment,
-    current::Assignment, accept_rule::Strict)
+    current::Assignment, ::Strict)
     if proposal.likelihood > current.likelihood
         deepcopy!(current, proposal)
     end

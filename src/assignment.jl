@@ -181,6 +181,11 @@ function compute_log_likelihood(assignment::Assignment)
         assignment.realized)
 end
 
+"""
+    deepcopy!(a::Assignment, b::Assignment)
+
+Deep copy the attributes of `b` to `a`.
+"""
 function deepcopy!(a::Assignment, b::Assignment)
     a.node_labels .= b.node_labels
     a.counts .= b.counts
