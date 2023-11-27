@@ -6,12 +6,12 @@ end
 function normalized_laplacian(A)
     L = zeros(size(A))
     degrees = vec(sum(A, dims = 1))
-    for j in 1:size(A,1)
-        for i in 1:size(A,2)
+    for j in 1:size(A, 1)
+        for i in 1:size(A, 2)
             if i == j
-                L[i,j] = 1
+                L[i, j] = 1
             else
-                L[i,j] = A[i,j] / sqrt(degrees[i] * degrees[j])
+                L[i, j] = A[i, j] / sqrt(degrees[i] * degrees[j])
             end
         end
     end
@@ -19,7 +19,7 @@ function normalized_laplacian(A)
 end
 
 function normalized_laplacian(A::AbstractArray{T, 3}) where {T}
-    L = zeros(size(A,1), size(A,2))
+    L = zeros(size(A, 1), size(A, 2))
     for layer in eachslice(A, dims = 3)
         L .+= normalized_laplacian(layer)
     end
@@ -72,7 +72,6 @@ function pairwise_hamming_distance(matrix::AbstractArray{T, 3}) where {T}
     return dist_matrix ./ size(matrix, 3)
 end
 
-
 function spectral_clustering(A, h)
     n = size(A, 1)
 
@@ -82,7 +81,7 @@ function spectral_clustering(A, h)
     d = sum(L, dims = 2)
 
     # Compute the normalized Laplacian
-    normalized_L = sum(1.0 ./ d) .* L .- sum(d)/sqrt(sum(d .^2))
+    normalized_L = sum(1.0 ./ d) .* L .- sum(d) / sqrt(sum(d .^ 2))
 
     # Compute eigenvalues and eigenvectors of the normalized Laplacian
 
