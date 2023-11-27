@@ -2,6 +2,7 @@ abstract type StartingAssignment end
 struct OrderedStart <: StartingAssignment end
 struct RandomStart <: StartingAssignment end
 struct EigenStart <: StartingAssignment end
+struct DistStart <: StartingAssignment end
 
 """
     initialize_node_labels(A, h, starting_assignment_rule::StartingAssignment)
@@ -13,6 +14,7 @@ node labels and a `GroupSize` object.
 - `OrderedStart()`: Sequentially assign nodes to groups based on the ordering of `A`.
 - `RandomStart()`: Randomly assign nodes to groups.
 - `EigenStart()`: Assign nodes to groups based on the second eigenvector of the normalized Laplacian.
+- `DistStart()`: Assign nodes to groups based on the Hamming distance between rows of `A`.
 """
 initialize_node_labels
 
@@ -45,5 +47,11 @@ function initialize_node_labels(A, h, ::EigenStart)
         node_labels[indices[start:stop]] .= i
         start = stop + 1
     end
+    return node_labels, group_size
+end
+
+function initialize_node_labels(A, h, ::DistStart)
+    group_size = GroupSize(size(A, 1), h)
+    node_labels = spectral_clustering(A, h)
     return node_labels, group_size
 end

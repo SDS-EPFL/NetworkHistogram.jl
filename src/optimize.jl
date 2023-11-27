@@ -87,6 +87,7 @@ function graphhist(A; h = select_bandwidth(A), maxitr = 1000,
     stop_rule::StopRule = PreviousBestValue(3), record_trace = true)
     checkadjacency(A)
     @assert maxitr > 0
+    A = drop_disconnected_components(A)
 
     return _graphhist(A, Val{record_trace}(), h = h, maxitr = maxitr, swap_rule = swap_rule,
         starting_assignment_rule = starting_assignment_rule,

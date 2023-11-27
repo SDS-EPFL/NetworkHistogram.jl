@@ -3,9 +3,10 @@ module NetworkHistogram
 using ValueHistories, StatsBase, Random, LinearAlgebra, Kronecker
 
 using Arpack: eigs
+using ArnoldiMethod: partialschur, partialeigen, SR, LR
 
 export graphhist, PreviousBestValue, Strict, RandomNodeSwap
-export OrderedStart, RandomStart, EigenStart
+export OrderedStart, RandomStart, EigenStart, DistStart
 
 include("group_numbering.jl")
 include("assignment.jl")
