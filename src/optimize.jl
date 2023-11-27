@@ -80,11 +80,11 @@ julia> loglikelihood = out.likelihood
 -22.337057781338277
 ```
 """
-function graphhist(A; h = select_bandwidth(A), maxitr = 1000,
+function graphhist(A; h = select_bandwidth(A), maxitr = 10000,
     swap_rule::NodeSwapRule = RandomNodeSwap(),
-    starting_assignment_rule::StartingAssignment = RandomStart(),
+    starting_assignment_rule::StartingAssignment = EigenStart(),
     accept_rule::AcceptRule = Strict(),
-    stop_rule::StopRule = PreviousBestValue(3), record_trace = true)
+    stop_rule::StopRule = PreviousBestValue(100), record_trace = true)
     checkadjacency(A)
     @assert maxitr > 0
     A = drop_disconnected_components(A)
