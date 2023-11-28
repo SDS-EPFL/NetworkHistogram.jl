@@ -10,6 +10,7 @@
 [![CI](https://github.com/SDS-EPFL/NetworkHistogram.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/SDS-EPFL/NetworkHistogram.jl/actions/workflows/CI.yml)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://sds-epfl.github.io/NetworkHistogram.jl/dev/)
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://sds-epfl.github.io/NetworkHistogram.jl/stable/)
+[![DOI](https://zenodo.org/badge/572018079.svg)](https://zenodo.org/doi/10.5281/zenodo.10212851)
 
 
 Implementation of the network histogram for graphon estimation from the paper [Network histograms and universality of blockmodel approximation](https://doi.org/10.1073/pnas.1400374111) by Sofia C. Olhede and Patrick J. Wolfe.
