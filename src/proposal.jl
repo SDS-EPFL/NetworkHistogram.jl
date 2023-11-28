@@ -12,8 +12,8 @@ proposal is stored in the history.
     The `proposal` assignment is modified in place to avoid unnecessary memory allocation.
 """
 function create_proposal!(history::GraphOptimizationHistory, iteration::Int,
-    proposal::Assignment,
-    current::Assignment, A, swap_rule)
+        proposal::Assignment,
+        current::Assignment, A, swap_rule)
     swap = select_swap(current, A, swap_rule)
     make_proposal!(proposal, current, swap, A)
     update_proposal!(history, iteration, proposal.likelihood)

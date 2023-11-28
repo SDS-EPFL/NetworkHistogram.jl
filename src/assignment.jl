@@ -44,8 +44,8 @@ mutable struct Assignment{T, M}
     end
 
     function Assignment(A::Array{I, 3},
-        node_labels,
-        group_size::GroupSize{T}) where {I, T}
+            node_labels,
+            group_size::GroupSize{T}) where {I, T}
         M = ndims(A)
         number_groups = length(group_size)
 

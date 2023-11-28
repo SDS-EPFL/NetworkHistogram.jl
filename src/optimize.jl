@@ -81,10 +81,10 @@ julia> loglikelihood = out.likelihood
 ```
 """
 function graphhist(A; h = select_bandwidth(A), maxitr = 10000,
-    swap_rule::NodeSwapRule = RandomNodeSwap(),
-    starting_assignment_rule::StartingAssignment = EigenStart(),
-    accept_rule::AcceptRule = Strict(),
-    stop_rule::StopRule = PreviousBestValue(100), record_trace = true)
+        swap_rule::NodeSwapRule = RandomNodeSwap(),
+        starting_assignment_rule::StartingAssignment = EigenStart(),
+        accept_rule::AcceptRule = Strict(),
+        stop_rule::StopRule = PreviousBestValue(100), record_trace = true)
     checkadjacency(A)
     @assert maxitr > 0
     A = drop_disconnected_components(A)
@@ -101,7 +101,7 @@ end
 Internal version of `graphhist` which is type stable.
 """
 function _graphhist(A, record_trace = Val{true}(); h, maxitr, swap_rule,
-    starting_assignment_rule, accept_rule, stop_rule)
+        starting_assignment_rule, accept_rule, stop_rule)
     best, current, proposal, history, A = initialize(A, h, starting_assignment_rule,
         record_trace)
 
@@ -130,8 +130,8 @@ function graphhist_format_output(best, history::NoTraceHistory)
 end
 
 function update_best!(history::GraphOptimizationHistory, iteration::Int,
-    current::Assignment,
-    best::Assignment)
+        current::Assignment,
+        best::Assignment)
     if current.likelihood > best.likelihood
         update_best!(history, iteration, current.likelihood)
         deepcopy!(best, current)
