@@ -12,11 +12,15 @@ authors:
     family-names: Dufour
     email: charles.dufour@epfl.ch
     affiliation: EPFL
+    orcid: 'https://orcid.org/0009-0000-3612-7335'
   - given-names: Jake
     family-names: Grainger
     email: jake.grainger@epfl.ch
     affiliation: EPFL
     orcid: 'https://orcid.org/0000-0002-8808-4821'
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.10212852
 repository-code: 'https://github.com/SDS-EPFL/NetworkHistogram.jl'
 url: 'https://sds-epfl.github.io/NetworkHistogram.jl/stable/'
 abstract: >-
@@ -25,6 +29,6 @@ abstract: >-
   universality of blockmodel approximation by Sofia C.
   Olhede and Patrick J. Wolfe.
 license: MIT
-commit: 7f07622
-version: 0.4.0
-date-released: '2023-04-14'
+commit: f6c798223e6920725787095cb6b2de86a0f916ed
+version: 0.5.1
+date-released: '2023-11-28'
