@@ -10,6 +10,9 @@ function normalized_laplacian(A)
         for i in 1:size(A, 2)
             if i == j
                 L[i, j] = 1
+            # this should not happen, but just in case
+            elseif degrees[i] == 0 || degrees[j] == 0
+                L[i, j] = 0
             else
                 L[i, j] = A[i, j] / sqrt(degrees[i] * degrees[j])
             end
