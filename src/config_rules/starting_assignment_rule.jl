@@ -3,6 +3,7 @@ struct OrderedStart <: StartingAssignment end
 struct RandomStart <: StartingAssignment end
 struct EigenStart <: StartingAssignment end
 struct DistStart <: StartingAssignment end
+struct LSBM <: StartingAssignment end
 
 """
     initialize_node_labels(A, h, starting_assignment_rule::StartingAssignment)
@@ -53,5 +54,33 @@ end
 function initialize_node_labels(A, h, ::DistStart)
     group_size = GroupSize(size(A, 1), h)
     node_labels = spectral_clustering(A, h)
+    return node_labels, group_size
+end
+
+
+function initialize_node_labels(A::Array{I, 3}, h, ::LSBM; r=2) where {I}
+    @warn "LSBM starting point does not guarantee equally sized groups."
+    # init containers
+    group_size = GroupSize(size(A, 1), h)
+    node_labels = zeros(Int, size(A, 1))
+
+    # random weight function with 0 at the first index (all 0 vector)
+    random_function = rand(2^size(A, 3))
+    random_function[1] = 0
+
+    # build weighted adjacency matrix
+    A_categorical = update_adj(A) .+ 1
+    weighted_adjacency = zeros(Float64, size(A, 1), size(A, 2))
+    for j in 1:size(A,2)
+        for i in 1:size(A,1)
+            weighted_adjacency[j,i] = random_function[A_categorical[j,i]]
+        end
+    end
+
+    eigenvals, eigenvectors = eigs(weighted_adjacency, nev = r, which = :LR, tol = 1e-2)
+    z = eigenvectors .* (eigenvals'/eigenvals[1])
+
+    result = kmeans(transpose(z), size(group_size,1))
+    node_labels = result.assignments
     return node_labels, group_size
 end

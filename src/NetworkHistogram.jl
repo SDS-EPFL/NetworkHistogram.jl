@@ -1,6 +1,7 @@
 module NetworkHistogram
 
 using ValueHistories, StatsBase, Random, LinearAlgebra, Kronecker
+using Clustering: kmeans
 
 using Arpack: eigs
 using ArnoldiMethod: partialschur, partialeigen, SR, LR

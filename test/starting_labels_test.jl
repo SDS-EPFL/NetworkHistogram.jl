@@ -38,4 +38,15 @@ end
             EigenStart())
         test_basic_node_labels(node_labels, group_size)
     end
+
+
+
+    @testset "test LSBM starting labels" begin
+        A2, _, _, assignment2 = make_multivariate_example()
+        h = 0.5
+        node_labels, group_size = NetworkHistogram.initialize_node_labels(A2, h,
+            NetworkHistogram.LSBM())
+
+        @assert length(node_labels) == sum(group_size)
+    end
 end
