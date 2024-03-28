@@ -59,7 +59,7 @@ end
 
 
 function initialize_node_labels(A::Array{I, 3}, h, ::LSBM; r=2) where {I}
-    @warn "LSBM starting point does not guarantee equally sized groups."
+    @error "LSBM starting point does not guarantee equally sized groups, balancing is to be implemented"
     # init containers
     group_size = GroupSize(size(A, 1), h)
     node_labels = zeros(Int, size(A, 1))
@@ -69,11 +69,13 @@ function initialize_node_labels(A::Array{I, 3}, h, ::LSBM; r=2) where {I}
     random_function[1] = 0
 
     # build weighted adjacency matrix
-    A_categorical = update_adj(A) .+ 1
+    A_categorical = update_adj(A)
     weighted_adjacency = zeros(Float64, size(A, 1), size(A, 2))
     for j in 1:size(A,2)
         for i in 1:size(A,1)
-            weighted_adjacency[j,i] = random_function[A_categorical[j,i]]
+            if i != j
+                weighted_adjacency[j,i] = random_function[A_categorical[j,i]]
+            end
         end
     end
 
