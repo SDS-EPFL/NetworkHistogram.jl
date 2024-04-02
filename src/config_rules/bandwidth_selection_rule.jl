@@ -26,6 +26,7 @@ function oracle_bandwidth(A, type = "degs", alpha = 1, c = min(4, sqrt(size(A, 1
     if type ∉ ["eigs", "degs"]
         error("Invalid input type $(type)")
     end
+    A = drop_disconnected_components(A)
 
     if alpha != 1
         error("Currently only supports alpha = 1")

@@ -1,39 +1,3 @@
-function checkadjacency(A)
-    @assert eltype(A) <: Real
-    if !(eltype(A) === Bool)
-        @assert all(a ∈ [zero(eltype(A)), one(eltype(A))] for a in A) "All elements of the ajacency matrix should be zero or one."
-    end
-    check_symmetry_and_diag(A)
-    return nothing
-end
-
-function check_symmetry_and_diag(A)
-    @assert issymmetric(A)
-    @assert all(A[i, i] == zero(eltype(A)) for i in 1:size(A, 1)) "The diagonal of the adjacency matrix should all be zeros."
-end
-
-function check_symmetry_and_diag(A::Array{T, 3}) where {T}
-    for layer in eachslice(A, dims = 3)
-        check_symmetry_and_diag(layer)
-        @assert all(layer[i, i] == zero(eltype(layer)) for i in 1:size(layer, 1)) "The diagonal of the adjacency matrix should all be zeros."
-    end
-end
-
-function update_adj(A::Array{T, 2}) where {T}
-    return A
-end
-
-function update_adj(A::Array{T, 3}) where {T}
-    A_updated = zeros(Int64, size(A, 1), size(A, 2))
-    for i in 1:size(A, 1)
-        for j in (i + 1):size(A, 2)
-            A_updated[i, j] = _binary_to_index(A[i, j, :])
-            A_updated[j, i] = A_updated[i, j]
-        end
-    end
-    return A_updated
-end
-
 """
     graphhist(A; h = select_bandwidth(A), maxitr = 1000, swap_rule = RandomNodeSwap(),
     starting_assignment_rule = RandomStart(), accept_rule = Strict(),

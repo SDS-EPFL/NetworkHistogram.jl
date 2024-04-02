@@ -23,7 +23,8 @@ include("optimize.jl")
 include("histogram.jl")
 include("proposal.jl")
 
-include("utils.jl")
+include("utils/adjacency_utils.jl")
+include("utils/utils.jl")
 
 include("data/gt.jl")
 include("data/datasets.jl")
