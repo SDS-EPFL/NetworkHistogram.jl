@@ -29,7 +29,9 @@ We fit the estimator and then extract the estimated graphon matrix and node labe
 ```julia
 using NetworkHistogram, LinearAlgebra
 
-A = Symmetric(rand(0:1, 100, 100))
+A = rand(0:1, 100, 100)
+A = A + A' 
+A[A .> 1] .= 1
 A[diagind(A)] .= 0
 
 # approximate the graphon with a network histogram

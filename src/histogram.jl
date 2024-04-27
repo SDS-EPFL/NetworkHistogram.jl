@@ -9,6 +9,19 @@ struct GraphHist{T, M}
     end
 end
 
+
+function get_num_blocks(g::GraphHist{T, M}) where {T, M}
+    return size(g.θ, 1)
+end
+
+function get_num_params_per_block(::GraphHist{T, 1}) where {T}
+    return 1
+end
+
+function get_num_params_per_block(g::GraphHist{T, 2}) where {T}
+    return size(g.θ,3)
+end
+
 """
 Network Histogram approximation [1].
 

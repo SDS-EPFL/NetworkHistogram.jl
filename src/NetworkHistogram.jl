@@ -1,7 +1,7 @@
 module NetworkHistogram
 
-using ValueHistories, StatsBase, Random, LinearAlgebra, Kronecker
-using Clustering: kmeans
+using ValueHistories, StatsBase, Random, LinearAlgebra, Kronecker, ProgressMeter
+using Clustering
 
 using Arpack: eigs
 using ArnoldiMethod: partialschur, partialeigen, SR, LR
@@ -22,6 +22,7 @@ include("config_rules/bandwidth_selection_rule.jl")
 include("optimize.jl")
 include("histogram.jl")
 include("proposal.jl")
+include("ssm_conversion.jl")
 
 include("utils/adjacency_utils.jl")
 include("utils/utils.jl")

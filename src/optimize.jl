@@ -68,8 +68,7 @@ function _graphhist(A, record_trace = Val{true}(); h, maxitr, swap_rule,
         starting_assignment_rule, accept_rule, stop_rule)
     best, current, proposal, history, A = initialize(A, h, starting_assignment_rule,
         record_trace)
-
-    for i in 1:maxitr
+    @showprogress for i in 1:maxitr
         proposal = create_proposal!(history, i, proposal, current, A, swap_rule)
         current = accept_reject_update!(history, i, proposal, current, accept_rule)
         best = update_best!(history, i, current, best)
