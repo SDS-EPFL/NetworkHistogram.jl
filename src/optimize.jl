@@ -33,7 +33,7 @@ julia> A = [0 0 1 0 1 0 1 1 0 1
              0 0 1 0 0 0 0 0 0 1
              1 0 0 0 1 0 1 1 1 0]
 julia> out = graphhist(A);
-julia> graphist_approx = out.graphist
+julia> graphist_approx = out.graphhist
 ...
 julia> trace = out.trace
 NetworkHistogram.TraceHistory{...}

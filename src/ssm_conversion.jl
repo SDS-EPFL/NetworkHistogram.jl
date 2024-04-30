@@ -3,6 +3,7 @@ struct GraphShapeHist{T,M}
     node_labels::Vector{Int}
     edge_labels::Vector{Int}
     num_layers::Int
+    num_shapes::Int
 end
 
 # only work for 1D ....
@@ -64,5 +65,39 @@ function GraphShapeHist(number_shapes::Int,block_approx::GraphHist{T,M}) where {
         end
         new_theta = inter_theta
     end
-    return GraphShapeHist(new_theta, block_approx.node_labels, edge_labels, block_approx.num_layers)
+    return GraphShapeHist(new_theta, block_approx.node_labels, edge_labels, block_approx.num_layers, number_shapes)
+end
+
+function BIC(g::GraphShapeHist{T,M}, A::Array{I,M}) where {I, T, M}
+    n = length(g.node_labels)
+    number_parameters = length(unique(g.edge_labels))
+    return -2 *likelihood(g, A) + number_parameters * log(n*(n-1)/2)
+end
+
+
+function log_likelihood(g::Union{GraphShapeHist{T,M},GraphHist{T,M}}, A::Array{I,M}) where {I, T, M}
+    counts_of_group = countmap(g.node_labels)
+    group_standard = maximum(values(counts_of_group))
+    assignment = Assignment(A, g.node_labels, GroupSize(length(g.node_labels), group_standard))
+    assignment.estimated_theta .= g.θ
+    return compute_log_likelihood(assignment)
+end
+
+
+
+function get_best_smoothed_estimator(g::GraphHist{T,M}, A::Array{I,M}) where {I,T,M}
+    group_number = length(unique(g.node_labels))
+    max_shapes = group_number*(group_number+1)÷2
+    best_bic = Inf
+    best_g_shaped = nothing
+    for s in 1:max_shapes
+        g_shaped = GraphShapeHist(s, g)
+        bic_value = BIC(g_shaped, A)
+        println("BIC for $s shapes: ", bic_value)
+        if bic_value < best_bic
+            best_bic = bic_value
+            best_g_shaped = g_shaped
+        end
+    end
+    return best_g_shaped
 end
