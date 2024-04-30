@@ -29,6 +29,18 @@ struct GroupSize{T} <: AbstractVector{Int}
             new{Tuple{Int, Int}}((standard_group, remainder_group), number_groups + 1)
         end
     end
+
+    function GroupSize(node_labels::Vector{Int})
+        count_per_group = countmap(node_labels)
+        num_groups = length(unique(node_labels))
+        g1 = minimum(values(count_per_group))
+        g2 = maximum(values(count_per_group))
+        if g1 == g2
+            new{Int}(g1, num_groups)
+        else
+            new{Tuple{Int, Int}}((g2, g1), num_groups)
+        end
+    end
 end
 
 Base.size(g::GroupSize) = (g.number_groups,)

@@ -12,4 +12,5 @@ include("simple_test_example.jl")
     include("oracle_bandwidth_test.jl")
     include("error_handling_tests.jl")
     include("config_rules/config_rule_test.jl")
+    include("group_numbering_tests.jl")
 end
