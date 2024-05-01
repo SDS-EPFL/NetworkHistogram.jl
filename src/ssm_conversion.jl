@@ -6,7 +6,6 @@ struct GraphShapeHist{T,M}
     num_shapes::Int
 end
 
-# only work for 1D ....
 function GraphShapeHist(number_shapes::Int,block_approx::GraphHist{T,M}) where {T, M}
     k = get_num_blocks(block_approx)
     n = length(block_approx.node_labels)
@@ -15,9 +14,13 @@ function GraphShapeHist(number_shapes::Int,block_approx::GraphHist{T,M}) where {
     mapping_block_to_shape = Dict{Tuple{Int,Int},Int}()
     mapping_shape_to_block = Dict{Int,Array{Tuple{Int,Int}}}()
     index = 1
+    edge_labels = zeros(Int, n * (n - 1) ÷ 2)
+    new_theta = Matrix{Array{Float64, 1}}(undef, k, k)
     for i in 1:k
         for j in i:k
-            X[:,index] = block_approx.θ[i,j,:]
+            inter = block_approx.θ[i,j,:]
+            new_theta[i,j] = inter
+            X[:,index] = inter
             mapping_block_to_shape[(i,j)] = index
             if haskey(mapping_shape_to_block,index)
                 push!(mapping_shape_to_block[index],(i,j))
@@ -27,14 +30,29 @@ function GraphShapeHist(number_shapes::Int,block_approx::GraphHist{T,M}) where {
             index += 1
         end
     end
+    if number_shapes == num_shapes # no need to cluster
+        for i in 1:n
+            for j in i+1:n
+                label_i = block_approx.node_labels[i]
+                label_j = block_approx.node_labels[j]
+                if label_i > label_j
+                    label_i,label_j = label_j,label_i
+                end
+                index = mapping_block_to_shape[(label_i, label_j)]
+                edge_labels[index] = mapping_block_to_shape[(label_i, label_j)]
+            end
+        end
+        return GraphShapeHist(new_theta, block_approx.node_labels,
+            edge_labels, block_approx.num_layers, number_shapes)
+    end
+
     cluster_result = kmeans(X, number_shapes; maxiter = 1000)
     shape_labels = cluster_result.assignments
     shape_values = Matrix{T}(undef, number_shapes, get_num_params_per_block(block_approx))
     for i in 1:nclusters(cluster_result)
         shape_values[i,:] .= mean(X[:,shape_labels .== i], dims = 2)
     end
-    new_theta = Matrix{Array{T}}(undef, k, k)
-    edge_labels = zeros(Int, n*(n-1)÷2)
+
     for i in 1:k
         for j in i:k
             shape_index = shape_labels[mapping_block_to_shape[(i,j)]]
@@ -76,31 +94,52 @@ end
 
 
 function log_likelihood(g::Union{GraphShapeHist{T,M},GraphHist{T,M}}, A) where {T,M}
-    counts_of_group = countmap(g.node_labels)
-    group_standard = minimum(values(counts_of_group))
-    assignment = Assignment(A, g.node_labels, GroupSize(length(g.node_labels), group_standard))
-    println(size(assignment.estimated_theta))
-    println(size(g.θ))
-    assignment.estimated_theta .= g.θ
+    assignment = Assignment(A, g.node_labels, GroupSize(g.node_labels))
+    for i in 1:size(g.θ,1)
+        for j in i:size(g.θ,2)
+            assignment.estimated_theta[i,j,:] .= g.θ[i,j]
+            assignment.estimated_theta[j,i,:] .= g.θ[i,j]
+        end
+    end
     return compute_log_likelihood(assignment)
 end
 
 
 
 function get_best_smoothed_estimator(g::GraphHist{T,M}, A) where {T,M}
-    A = update_adj(A)
     group_number = length(unique(g.node_labels))
     max_shapes = group_number*(group_number+1)÷2
     best_bic = Inf
     best_g_shaped = nothing
-    for s in 1:max_shapes
+    bic_values = zeros(max_shapes)
+    @showprogress for s in max_shapes:-1:1
         g_shaped = GraphShapeHist(s, g)
         bic_value = bic(g_shaped, A)
-        println("BIC for $s shapes: ", bic_value)
+        bic_values[s] = bic_value
+        @debug "BIC for $s shapes: ", bic_value
         if bic_value < best_bic
             best_bic = bic_value
             best_g_shaped = g_shaped
         end
     end
-    return best_g_shaped
+    return best_g_shaped, bic_values
+end
+
+
+
+# not type stable !
+function get_moment_representation(g::GraphShapeHist{T, M}) where {T, M}
+    if g.num_layers == 1
+        return g.θ
+    end
+    moments = zeros(size(g.θ, 1), size(g.θ, 2), 2^g.num_layers - 1)
+    transition = collect(kronecker([1 1; 0 1], g.num_layers))
+    for i in 1:size(g.θ, 1)
+        for j in 1:size(g.θ, 2)
+            moments[i, j, :] .= (transition * g.θ[i, j])[2:end]
+        end
+    end
+    indices_for_moments = [findall(x -> x == 1, _index_to_binary(e, g.num_layers))
+                           for e in 2:size(g.θ[1, 1], 1)]
+    return moments, indices_for_moments
 end
