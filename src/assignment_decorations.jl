@@ -85,3 +85,16 @@ end
 get_parameters(d::Union{UnivariateDistribution, MultivariateDistribution}) = params(d)
 fit(d::Union{UnivariateDistribution, MultivariateDistribution}, x) = fit_mle(typeof(d), x)
 fit(d::Categorical, x) = fit_mle(typeof(d), length(d.p), x)
+
+
+
+function update(a::Assignments{T,D}, A::AbstractArray{S}, s) where {T,D,S}
+    new_node_labels = copy(a.node_labels)
+    if a.node_labels[s[1]] != a.node_labels[s[2]]
+        new_node_labels[s[1]] = a.node_labels[s[2]]
+        new_node_labels[s[2]] = a.node_labels[s[1]]
+        return Assignments(A, new_node_labels, a.estimated_theta[1])
+    else
+        return a
+    end
+end
