@@ -1,7 +1,7 @@
 module NetworkHistogram
 
 using ValueHistories, StatsBase, Random, LinearAlgebra, Kronecker, ProgressMeter
-using Clustering
+using Clustering, Distributions, DensityInterface
 
 using Arpack: eigs
 using ArnoldiMethod: partialschur, partialeigen, SR, LR
@@ -11,6 +11,7 @@ export OrderedStart, RandomStart, EigenStart, DistStart
 
 include("group_numbering.jl")
 include("assignment.jl")
+include("assignment_decorations.jl")
 include("history.jl")
 
 include("config_rules/starting_assignment_rule.jl")
