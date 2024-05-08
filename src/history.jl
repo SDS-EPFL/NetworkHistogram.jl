@@ -80,9 +80,18 @@ end
 
 Updates the previous value and iteration in history.
 
-Note this does not apply is `history` is a `NoTraceHistory`, so nothign happens.
+Note this does not apply if `history` is a `NoTraceHistory`, so nothign happens.
 """
 function update_proposal!(history::TraceHistory, iteration, likelihood)
     push!(history.history, :proposal_likelihood, iteration, likelihood)
 end
 update_proposal!(history::NoTraceHistory, iteration, likelihood) = nothing
+
+
+# Base functions for the modified history
+
+Base.get(history::TraceHistory, key::Symbol) = Base.get(history.history, key)
+Base.length(h::TraceHistory, key::Symbol) = Base.length(h.history, key)
+Base.enumerate(h::TraceHistory, key::Symbol) = Base.enumerate(h.history, key)
+Base.keys(h::TraceHistory) = Base.keys(h.history)
+Base.values(h::TraceHistory, key::Symbol) = get(h, key)[2]

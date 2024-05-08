@@ -98,3 +98,29 @@ function update(a::Assignments{T,D}, A::AbstractArray{S}, s) where {T,D,S}
         return a
     end
 end
+
+
+function initialize(A,d, h, starting_assignment_rule, record_trace)
+    node_labels, group_size = initialize_node_labels(A, h, starting_assignment_rule)
+    proposal = Assignments(A, node_labels, d, group_size)
+    current = deepcopy(proposal)
+    best = deepcopy(proposal)
+    history = initialize_history(best, current, proposal, record_trace)
+    return best, current, proposal, history, A
+end
+
+
+function map_to_old_format(a::Assignments)
+    return map_to_old_format(a.estimated_theta, a.map, length(a.group_size))
+end
+
+function map_to_old_format(dists, map, n_groups)
+    t = zeros(n_groups, n_groups)
+    for i in 1:n_groups
+        for j in 1:n_groups
+            tuple_ordered = i ≤ j ? (i, j) : (j, i)
+            t[i, j] = params(dists[map[tuple_ordered]])[1]
+        end
+    end
+    return t
+end
