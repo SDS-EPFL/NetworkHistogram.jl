@@ -81,6 +81,18 @@ function node_labels_to_edge_labels(node_labels::Vector{Int}, edge_indices)
 end
 
 
+"""
+    deepcopy!(a::Assignment, b::Assignment)
+
+Deep copy the attributes of `b` to `a`.
+"""
+function deepcopy!(a::Assignments, b::Assignments)
+    a.node_labels .= b.node_labels
+    a.estimated_theta .= b.estimated_theta
+    a.likelihood = b.likelihood
+    a.edge_labels .= b.edge_labels
+end
+
 
 get_parameters(d::Union{UnivariateDistribution, MultivariateDistribution}) = params(d)
 fit(d::Union{UnivariateDistribution, MultivariateDistribution}, x) = fit_mle(typeof(d), x)
@@ -123,4 +135,25 @@ function map_to_old_format(dists, map, n_groups)
         end
     end
     return t
+end
+
+
+function select_bandwidth(A, d)::Int
+    h = oracle_bandwidth(A,d)
+    return max(2, min(size(A)[1], round(Int, h)))
+end
+
+# idea is to take the least regular coordinate of the decorated graphon
+# and use it for setting the bandwidth → we take the minimum α in a sense
+function oracle_bandwidth(A::Matrix{S}, d) where {S}
+    K = unique(A)
+    h = size(A,1)÷2
+    A_inter = BitMatrix(undef, size(A)...)
+    for k in K
+        indices = findall( x -> x == k, A)
+        A_inter .= 0
+        A_inter[indices] .= 1
+        h = min(h, oracle_bandwidth(A_inter))
+    end
+    return h
 end

@@ -115,3 +115,37 @@ function initialize(A, h, starting_assignment_rule, record_trace)
     history = initialize_history(best, current, proposal, record_trace)
     return best, current, proposal, history, update_adj(A)
 end
+
+
+function update_best!(history::GraphOptimizationHistory, iteration::Int,
+        current::Assignments,
+        best::Assignments)
+    if current.likelihood > best.likelihood
+        update_best!(history, iteration, current.likelihood)
+        deepcopy!(best, current)
+    end
+    return best
+end
+
+
+
+function graphhist(A, d; h = select_bandwidth(A, d), maxitr = 10000,
+        swap_rule::NodeSwapRule = RandomNodeSwap(),
+        starting_assignment_rule::StartingAssignment = RandomStart(),
+        accept_rule::AcceptRule = Strict(),
+        stop_rule::StopRule = PreviousBestValue(100), record_trace = true)
+    @assert maxitr > 0
+    A = drop_disconnected_components(A)
+    best, current, proposal, history, A = initialize(A, d, h, starting_assignment_rule,
+        Val{record_trace}())
+    @showprogress for i in 1:maxitr
+        swap = select_swap(current, A, swap_rule)
+        proposal = update(current, A, swap)
+        current = accept_reject_update!(history, i, proposal, current, accept_rule)
+        best = update_best!(history, i, current, best)
+        if stopping_rule(history, stop_rule)
+            break
+        end
+    end
+    return best, history
+end

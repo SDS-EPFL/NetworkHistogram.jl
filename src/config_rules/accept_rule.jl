@@ -24,3 +24,15 @@ function accept_reject_update!(history::GraphOptimizationHistory, iteration::Int
     update_current!(history, iteration, current.likelihood)
     return current
 end
+
+
+function accept_reject_update!(history::GraphOptimizationHistory, iteration::Int,
+        proposal::Assignments,
+        current::Assignments, ::Strict)
+    if proposal.likelihood > current.likelihood
+        deepcopy!(current, proposal)
+    end
+
+    update_current!(history, iteration, current.likelihood)
+    return current
+end
