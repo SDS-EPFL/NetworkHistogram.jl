@@ -51,14 +51,7 @@ mutable struct Assignment{T, M}
 
         counts = zeros(Int64, number_groups, number_groups)
         realized = zeros(Int64, number_groups, number_groups, 2^size(A, 3))
-
-        A_updated = zeros(Int64, size(A, 1), size(A, 2))
-        for i in 1:size(A, 1)
-            for j in (i + 1):size(A, 2)
-                A_updated[i, j] = _binary_to_index(A[i, j, :])
-                A_updated[j, i] = A_updated[i, j]
-            end
-        end
+        A_updated = update_adj(A)
 
         @inbounds @simd for m in 1:size(realized, 3)
             for k in 1:number_groups
