@@ -1,17 +1,17 @@
-function _binary_to_index(binary_vector::Vector{Int})
-    total = 1
-    for i in 1:length(binary_vector)
-        total += binary_vector[i] * 2^(i - 1)
-    end
-    return total
+function _index_to_binary(index::Int, size::Int)
+    result = falses(size)
+    _index_to_binary!(result, index)
+    return result
 end
 
-function _index_to_binary(index::Int, M)
-    binary_vector = zeros(Int, M)
-    index -= 1
-    for i in 1:M
-        binary_vector[i] = index % 2
-        index = index ÷ 2
+function _index_to_binary!(binary_vector, index)
+    digits!(binary_vector, index - 1; base = 2)
+end
+
+function _binary_to_index(binary_vector)
+    index = 1
+    @inbounds for (i, s) in enumerate(binary_vector)
+        index += s * 2^(i - 1)
     end
-    return binary_vector
+    return index
 end
