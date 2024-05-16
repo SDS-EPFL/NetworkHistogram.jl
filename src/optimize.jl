@@ -48,7 +48,8 @@ function graphhist(A; h = select_bandwidth(A), maxitr = 10000,
         swap_rule::NodeSwapRule = RandomNodeSwap(),
         starting_assignment_rule::StartingAssignment = EigenStart(),
         accept_rule::AcceptRule = Strict(),
-        stop_rule::StopRule = PreviousBestValue(100), record_trace = true)
+        stop_rule::StopRule = PreviousBestValue(100), record_trace = true,
+        show_progress = true)
     checkadjacency(A)
     @assert maxitr > 0
     A = drop_disconnected_components(A)
@@ -56,7 +57,8 @@ function graphhist(A; h = select_bandwidth(A), maxitr = 10000,
     return _graphhist(A, Val{record_trace}(), h = h, maxitr = maxitr, swap_rule = swap_rule,
         starting_assignment_rule = starting_assignment_rule,
         accept_rule = accept_rule,
-        stop_rule = stop_rule)
+        stop_rule = stop_rule,
+        show_progress = show_progress)
 end
 
 """
@@ -65,16 +67,22 @@ end
 Internal version of `graphhist` which is type stable.
 """
 function _graphhist(A, record_trace = Val{true}(); h, maxitr, swap_rule,
-        starting_assignment_rule, accept_rule, stop_rule)
+        starting_assignment_rule, accept_rule, stop_rule, show_progress = true)
     best, current, proposal, history, A = initialize(A, h, starting_assignment_rule,
         record_trace)
-    @showprogress for i in 1:maxitr
+    p = Progress(length(maxitr); enabled = show_progress)
+    for i in 1:maxitr
         proposal = create_proposal!(history, i, proposal, current, A, swap_rule)
         current = accept_reject_update!(history, i, proposal, current, accept_rule)
         best = update_best!(history, i, current, best)
         if stopping_rule(history, stop_rule)
             break
         end
+        next!(p)
+    end
+
+    if show_progress
+        finish!(p)
     end
 
     return graphhist_format_output(best, history)
@@ -133,12 +141,14 @@ function graphhist(A, d; h = select_bandwidth(A, d), maxitr = 10000,
         swap_rule::NodeSwapRule = RandomNodeSwap(),
         starting_assignment_rule::StartingAssignment = RandomStart(),
         accept_rule::AcceptRule = Strict(),
-        stop_rule::StopRule = PreviousBestValue(100), record_trace = true)
+        stop_rule::StopRule = PreviousBestValue(100), record_trace = true,
+        show_progress = true)
     @assert maxitr > 0
     A = drop_disconnected_components(A)
     best, current, proposal, history, A = initialize(A, d, h, starting_assignment_rule,
         Val{record_trace}())
-    @showprogress for i in 1:maxitr
+    p = Progress(length(maxitr); enabled = show_progress)
+    for i in 1:maxitr
         swap = select_swap(current, A, swap_rule)
         proposal = update(current, A, swap)
         current = accept_reject_update!(history, i, proposal, current, accept_rule)
@@ -146,6 +156,10 @@ function graphhist(A, d; h = select_bandwidth(A, d), maxitr = 10000,
         if stopping_rule(history, stop_rule)
             break
         end
+        next!(p)
+    end
+    if show_progress
+        finish!(p)
     end
     return best, history
 end

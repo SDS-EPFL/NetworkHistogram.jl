@@ -4,91 +4,69 @@ struct GraphShapeHist{T,M}
     edge_labels::Vector{Int}
     num_layers::Int
     num_shapes::Int
+    shapes_labels::Vector{Int}
 end
 
-function GraphShapeHist(number_shapes::Int,block_approx::GraphHist{T,M}) where {T, M}
+function make_x_matrix(block_approx::GraphHist{T,M}) where {T, M}
     k = get_num_blocks(block_approx)
     n = length(block_approx.node_labels)
-    num_shapes = k*(k+1)÷2
-    X = Matrix{T}(undef, get_num_params_per_block(block_approx), num_shapes)
-    mapping_block_to_shape = Dict{Tuple{Int,Int},Int}()
-    mapping_shape_to_block = Dict{Int,Array{Tuple{Int,Int}}}()
-    index = 1
+    max_num_shapes = k * (k + 1) ÷ 2
+    X = Matrix{T}(undef, get_num_params_per_block(block_approx), max_num_shapes)
+    indices_shape = CartesianIndex.((i, j) for j in 1:k for i in 1:k if i ≥ j)
+    for (index, i_cart) in enumerate(indices_shape)
+        X[:, index] .= block_approx.θ[i_cart, :]
+    end
+    indices_edges = CartesianIndex.((i, j) for j in 1:n for i in 1:n if i > j)
+    return X, k, n, max_num_shapes, indices_shape, indices_edges
+end
+
+
+function GraphShapeHist(number_shapes::Int,
+        block_approx::GraphHist{T, M},
+        X,
+        k,
+        n,
+        max_num_shapes,
+        indices_shape,
+        indices_edges = CartesianIndex.((i, j) for j in 1:n for i in 1:n if i > j)) where {
+        T, M}
+     if number_shapes >= max_num_shapes
+        shape_labels = collect(1:max_num_shapes)
+        #@info "Number of shapes is greater than the maximum number of shapes"
+    else
+        cluster_result = kmeans(X, number_shapes; maxiter = 1000)
+        shape_labels = cluster_result.assignments
+        for cluster in 1:number_shapes
+            X[:,shape_labels .== cluster] .= mean(X[:,shape_labels .== cluster], dims = 2)
+        end
+    end
+    new_theta = Matrix{Array{T}}(undef, k, k)
+    for (index,tuple_indices) in enumerate(indices_shape)
+        new_theta[tuple_indices] = X[:,index]
+        new_theta[tuple_indices[2],tuple_indices[1]] = X[:,index]
+    end
     edge_labels = zeros(Int, n * (n - 1) ÷ 2)
-    new_theta = Matrix{Array{Float64, 1}}(undef, k, k)
-    for i in 1:k
-        for j in i:k
-            inter = block_approx.θ[i,j,:]
-            new_theta[i,j] = inter
-            X[:,index] = inter
-            mapping_block_to_shape[(i,j)] = index
-            if haskey(mapping_shape_to_block,index)
-                push!(mapping_shape_to_block[index],(i,j))
-            else
-                mapping_shape_to_block[index] = [(i,j)]
-            end
-            index += 1
-        end
+    for i in 1:length(edge_labels)
+        index_block = (block_approx.node_labels[indices_edges[i][1]], block_approx.node_labels[indices_edges[i][2]])
+        index_block = index_block[1] ≥ index_block[2] ? index_block : (index_block[2], index_block[1])
+        index_shape = findfirst(x -> Tuple(x) == index_block, indices_shape)
+        edge_labels[i] = shape_labels[index_shape]
     end
-    if number_shapes == num_shapes # no need to cluster
-        for i in 1:n
-            for j in i+1:n
-                label_i = block_approx.node_labels[i]
-                label_j = block_approx.node_labels[j]
-                if label_i > label_j
-                    label_i,label_j = label_j,label_i
-                end
-                index = mapping_block_to_shape[(label_i, label_j)]
-                edge_labels[index] = mapping_block_to_shape[(label_i, label_j)]
-            end
-        end
-        return GraphShapeHist(new_theta, block_approx.node_labels,
-            edge_labels, block_approx.num_layers, number_shapes)
-    end
+    return GraphShapeHist(new_theta, block_approx.node_labels, edge_labels, block_approx.num_layers, number_shapes, shape_labels)
+end
 
-    cluster_result = kmeans(X, number_shapes; maxiter = 1000)
-    shape_labels = cluster_result.assignments
-    shape_values = Matrix{T}(undef, number_shapes, get_num_params_per_block(block_approx))
-    for i in 1:nclusters(cluster_result)
-        shape_values[i,:] .= mean(X[:,shape_labels .== i], dims = 2)
-    end
 
-    for i in 1:k
-        for j in i:k
-            shape_index = shape_labels[mapping_block_to_shape[(i,j)]]
-            new_theta[i,j] = shape_values[shape_index,:]
-            new_theta[j,i] = shape_values[shape_index,:]
-        end
-    end
-
-    index = 1
-    for i in 1:n
-        for j in i+1:n
-            label_i = block_approx.node_labels[i]
-            label_j = block_approx.node_labels[j]
-            if label_i > label_j
-                label_i,label_j = label_j,label_i
-            end
-            edge_labels[index] = shape_labels[mapping_block_to_shape[(label_i,label_j)]]
-            index += 1
-        end
-    end
-    if size(new_theta[1,1],1) == 1
-        inter_theta = zeros(T, k, k)
-        for i in 1:k
-            for j in i:k
-                inter_theta[i,j] = new_theta[i,j][1]
-                inter_theta[j,i] = new_theta[i,j][1]
-            end
-        end
-        new_theta = inter_theta
-    end
-    return GraphShapeHist(new_theta, block_approx.node_labels, edge_labels, block_approx.num_layers, number_shapes)
+function GraphShapeHist(number_shapes::Int,block_approx::GraphHist{T,M}) where {T, M}
+    X, k, n, max_num_shapes, indices_shape, indices_edges = make_x_matrix(block_approx)
+    return GraphShapeHist(
+        number_shapes, block_approx, X, k, n, max_num_shapes, indices_shape, indices_edges)
 end
 
 function bic(g::GraphShapeHist{T,M}, A) where {T, M}
     n = length(g.node_labels)
-    number_parameters = length(unique(g.edge_labels))
+    k = size(g.θ,1)
+    indices = CartesianIndex.((i, j) for j in 1:k for i in 1:k if i ≥ j)
+    number_parameters = (length(g.θ[1,1])-1)*length(unique(g.θ[indices]))
     return -2 * log_likelihood(g, A) + number_parameters * log(n * (n - 1) / 2)
 end
 
@@ -106,22 +84,36 @@ end
 
 
 
-function get_best_smoothed_estimator(g::GraphHist{T,M}, A) where {T,M}
+function get_best_smoothed_estimator(g::GraphHist{T,M}, A; show_progress = true) where {T,M}
     group_number = length(unique(g.node_labels))
     max_shapes = group_number*(group_number+1)÷2
     best_bic = Inf
     best_g_shaped = nothing
     bic_values = zeros(max_shapes)
-    @showprogress for s in max_shapes:-1:1
-        g_shaped = GraphShapeHist(s, g)
+    best_n_shape = max_shapes
+    X, k, n, max_num_shapes, indices_shape, indices_edges = make_x_matrix(g)
+    p = Progress(max_shapes; enabled = show_progress)
+    for s in max_shapes:-1:1
+        g_shaped = GraphShapeHist(
+            s, g, X, k, n, max_num_shapes, indices_shape, indices_edges)
         bic_value = bic(g_shaped, A)
         bic_values[s] = bic_value
-        @debug "BIC for $s shapes: ", bic_value
         if bic_value < best_bic
             best_bic = bic_value
             best_g_shaped = g_shaped
+            best_n_shape = s
+        elseif bic_value == best_bic && s < best_n_shape
+            best_bic = bic_value
+            best_g_shaped = g_shaped
+            best_n_shape = s
         end
+        next!(p)
     end
+    if show_progress
+        finish!(p)
+        println("Best number of shapes: $best_n_shape out of $max_shapes")
+    end
+
     return best_g_shaped, bic_values
 end
 

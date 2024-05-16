@@ -157,3 +157,19 @@ function oracle_bandwidth(A::Matrix{S}, d) where {S}
     end
     return h
 end
+
+
+function from_adj_to_lower_triag_with_diag(A::AbstractMatrix)
+    return A[CartesianIndex.((i, j) for j in axes(A, 2) for i in axes(A, 1) if i ≥ j)]
+end
+
+function from_lower_triag_with_diag_to_adj(B)
+    n = Int(sqrt(2 * length(B) + 0.25) - 0.5)
+    A = similar(B, n, n)
+    A[CartesianIndex.((i, j) for j in axes(A, 2) for i in axes(A, 1) if i ≥ j)] .= B
+    A = A + A'
+    for i in 1:n
+        A[i, i] = A[i, i] .÷ 2
+    end
+    return A
+end
