@@ -146,3 +146,11 @@ function spectral_clustering(A, h)
     end
     return idxInit
 end
+
+
+function adjacency_spectral_embedding(A, d)
+    # Perform Singular Value Decomposition (SVD)
+    U, S, V = svd(A)
+    # Return the first d columns of U
+    return U[:, 1:d]
+end

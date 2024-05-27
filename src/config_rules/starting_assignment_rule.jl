@@ -4,6 +4,7 @@ struct RandomStart <: StartingAssignment end
 struct EigenStart <: StartingAssignment end
 struct DistStart <: StartingAssignment end
 struct LSBM <: StartingAssignment end
+struct MASE <: StartingAssignment end
 
 """
     initialize_node_labels(A, h, starting_assignment_rule::StartingAssignment)
@@ -50,6 +51,28 @@ function initialize_node_labels(A, h, ::EigenStart)
     end
     return node_labels, group_size
 end
+
+
+function initialize_node_labels(A::Array{I,3}, h, ::MASE; d = 5) where {I}
+    @error "MASE starting point does not guarantee equally sized groups, balancing is to be implemented"
+    group_size = GroupSize(size(A, 1), h)
+    k = group_size.group_number
+    m = size(A,3)
+
+    # Step 1: Obtain adjacency spectral embeddings for each graph
+    V_hat = [adjacency_spectral_embedding(A[:,:,i], d) for i in 1:m]
+
+    # Step 2: Concatenate the spectral embeddings
+    U_hat = hcat(V_hat...)
+
+    # Step 3: Compute the d leading left singular values of U_hat
+    U, S, V = svd(U_hat)
+    V_hat = U[:, 1:d]
+
+    kmeans_result = kmeans(transpose(V_hat), k)
+    return kmeans_result.assignments, group_size
+end
+
 
 function initialize_node_labels(A, h, ::DistStart)
     group_size = GroupSize(size(A, 1), h)

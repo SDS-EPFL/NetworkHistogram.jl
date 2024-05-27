@@ -20,6 +20,10 @@ function make_x_matrix(block_approx::GraphHist{T,M}) where {T, M}
     return X, k, n, max_num_shapes, indices_shape, indices_edges
 end
 
+function GraphShapeHist(block_approx::GraphHist{T,M}) where {T, M}
+   max_shapes = get_num_blocks(block_approx) * (get_num_blocks(block_approx) + 1) ÷ 2
+    return GraphShapeHist(max_shapes, block_approx)
+end
 
 function GraphShapeHist(number_shapes::Int,
         block_approx::GraphHist{T, M},
@@ -32,9 +36,8 @@ function GraphShapeHist(number_shapes::Int,
         T, M}
      if number_shapes >= max_num_shapes
         shape_labels = collect(1:max_num_shapes)
-        #@info "Number of shapes is greater than the maximum number of shapes"
     else
-        cluster_result = kmeans(X, number_shapes; maxiter = 1000)
+        cluster_result = kmeans(Yinyang(), X, number_shapes; maxiter = 1000)
         shape_labels = cluster_result.assignments
         for cluster in 1:number_shapes
             X[:,shape_labels .== cluster] .= mean(X[:,shape_labels .== cluster], dims = 2)
@@ -84,16 +87,33 @@ end
 
 
 
-function get_best_smoothed_estimator(g::GraphHist{T,M}, A; show_progress = true) where {T,M}
+function get_best_smoothed_estimator(g::GraphHist{T, M}, A; show_progress = true,
+    n_min = length(unique(g.θ)), n_max = binomial(get_num_blocks(g), 2), steps = 4, max_iterations_stalled = 5) where {T, M}
+
+    number_got_worse = 0
+
     group_number = length(unique(g.node_labels))
-    max_shapes = group_number*(group_number+1)÷2
+    max_num_shapes = group_number*(group_number+1)÷2
+    if n_min > max_num_shapes
+        n_min = max_num_shapes
+    elseif n_min < binomial(group_number, 2)
+        n_min = binomial(group_number, 2)
+    end
+    if n_max ≥ n_min
+        max_shapes = n_max
+    else
+        max_shapes = max_num_shapes
+    end
+
+    min_shapes = n_min
     best_bic = Inf
     best_g_shaped = nothing
     bic_values = zeros(max_shapes)
     best_n_shape = max_shapes
     X, k, n, max_num_shapes, indices_shape, indices_edges = make_x_matrix(g)
     p = Progress(max_shapes; enabled = show_progress)
-    for s in max_shapes:-1:1
+
+    for s in max_shapes:-steps:min_shapes
         g_shaped = GraphShapeHist(
             s, g, X, k, n, max_num_shapes, indices_shape, indices_edges)
         bic_value = bic(g_shaped, A)
@@ -102,10 +122,17 @@ function get_best_smoothed_estimator(g::GraphHist{T,M}, A; show_progress = true)
             best_bic = bic_value
             best_g_shaped = g_shaped
             best_n_shape = s
+            number_got_worse = 0
         elseif bic_value == best_bic && s < best_n_shape
             best_bic = bic_value
             best_g_shaped = g_shaped
             best_n_shape = s
+            number_got_worse = 0
+        else
+            number_got_worse += 1
+        end
+        if number_got_worse == max_iterations_stalled
+            break
         end
         next!(p)
     end

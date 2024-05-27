@@ -1,7 +1,7 @@
 module NetworkHistogram
 
 using ValueHistories, StatsBase, Random, LinearAlgebra, Kronecker, ProgressMeter
-using Clustering, Distributions, DensityInterface
+using ParallelKMeans, Distributions, DensityInterface
 
 using Arpack: eigs
 using ArnoldiMethod: partialschur, partialeigen, SR, LR
