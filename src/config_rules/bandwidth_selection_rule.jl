@@ -57,6 +57,5 @@ function oracle_bandwidth(A, type = "degs", alpha = 1, c = min(4, sqrt(size(A, 1
     h = (2^(alpha + 1) * alpha * mult^2 *
          (lmfit_coef[2] * length(uMid) / 2 + lmfit_coef[1])^2 * lmfit_coef[2]^2 *
          rhoHat_inv)^(-1 / (2 * (alpha + 1)))
-    #estMSqrd = 2*mult^2*(lmfit_coef[2]*length(uMid)/2+lmfit_coef[1])^2*lmfit_coef[2]^2*rhoHat_inv^2*(n+1)^2
     return h[1]
 end

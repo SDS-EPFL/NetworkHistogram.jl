@@ -37,7 +37,7 @@ function GraphShapeHist(number_shapes::Int,
      if number_shapes >= max_num_shapes
         shape_labels = collect(1:max_num_shapes)
     else
-        cluster_result = kmeans(Yinyang(), X, number_shapes; maxiter = 1000)
+        cluster_result = kmeans(Yinyang(), X, number_shapes)
         shape_labels = cluster_result.assignments
         for cluster in 1:number_shapes
             X[:,shape_labels .== cluster] .= mean(X[:,shape_labels .== cluster], dims = 2)
