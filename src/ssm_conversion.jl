@@ -32,21 +32,36 @@ function GraphShapeHist(number_shapes::Int,
         n,
         max_num_shapes,
         indices_shape,
-        indices_edges = CartesianIndex.((i, j) for j in 1:n for i in 1:n if i > j)) where {
+        indices_edges = CartesianIndex.((i, j) for j in 1:n for i in 1:n if i > j),
+        algo = Yinyang()) where {
         T, M}
-     if number_shapes >= max_num_shapes
+        Y = deepcopy(X)
+    return GraphShapeHist!(Y, number_shapes, block_approx, k, n, max_num_shapes, indices_shape, indices_edges, algo)
+end
+
+function GraphShapeHist!(Y,number_shapes::Int,
+        block_approx::GraphHist{T, M},
+        X,
+        k,
+        n,
+        max_num_shapes,
+        indices_shape,
+        indices_edges = CartesianIndex.((i, j) for j in 1:n for i in 1:n if i > j),
+        algo = Yinyang()) where {
+        T, M}
+    if number_shapes >= max_num_shapes
         shape_labels = collect(1:max_num_shapes)
     else
-        cluster_result = kmeans(Yinyang(), X, number_shapes)
+        cluster_result = kmeans(algo, X, number_shapes)
         shape_labels = cluster_result.assignments
         for cluster in 1:number_shapes
-            X[:,shape_labels .== cluster] .= mean(X[:,shape_labels .== cluster], dims = 2)
+            Y[:,shape_labels .== cluster] .= mean(X[:,shape_labels .== cluster], dims = 2)
         end
     end
     new_theta = Matrix{Array{T}}(undef, k, k)
     for (index,tuple_indices) in enumerate(indices_shape)
-        new_theta[tuple_indices] = X[:,index]
-        new_theta[tuple_indices[2],tuple_indices[1]] = X[:,index]
+        new_theta[tuple_indices] = Y[:,index]
+        new_theta[tuple_indices[2],tuple_indices[1]] = Y[:,index]
     end
     edge_labels = zeros(Int, n * (n - 1) ÷ 2)
     for i in 1:length(edge_labels)
@@ -88,46 +103,41 @@ end
 
 
 function get_best_smoothed_estimator(g::GraphHist{T, M}, A; show_progress = true,
-    n_min = 1, n_max = binomial(get_num_blocks(g)+1, 2), steps = 1, max_iterations_stalled = Inf, verbose = true) where {T, M}
+    n_min = get_num_blocks(g), n_max = binomial(get_num_blocks(g)+1, 2), steps = 1, max_iterations_stalled = 100,
+        verbose = true, algo = Yinyang()) where {T, M}
 
     number_got_worse = 0
-
-    X, k, n, max_num_shapes, indices_shape, indices_edges = make_x_matrix(g)
-    max_num_shapes = min(max_num_shapes, length(unique(eachcol(X))))
-    if n_min > max_num_shapes
-        n_min = max_num_shapes
-    elseif n_min < k
-        n_min = k
-    end
-    if n_max ≥ max_num_shapes
-        n_max = max_num_shapes
-    end
-    if n_max ≥ n_min
-        max_shapes = n_max
-    else
-        max_shapes = max_num_shapes
-    end
-
-    min_shapes = n_min
-    if verbose
-        println("Searching for the best number of shapes between $min_shapes and $max_shapes")
+    if n_min > n_max
+        n_min = n_max
     end
 
     best_bic = Inf
     best_g_shaped = nothing
-    bic_values = zeros(max_shapes)
-    best_n_shape = max_shapes
+    best_n_shape = n_max
 
+
+
+    X, k, n, max_num_shapes, indices_shape, indices_edges = make_x_matrix(g)
+    Y = deepcopy(X)
+    max_shapes = min(n_max, length(unique(eachcol(X))))
+    min_shapes = n_min
+    if verbose
+        println("Searching for the best number of shapes between $min_shapes and $max_shapes")
+    end
     p = Progress(max_shapes; enabled = show_progress)
+    n_shapes_iterator = min_shapes:steps:max_shapes
+    #n_shapes_iterator = max_shapes:-steps:min_shapes
+    bic_values = zeros(Union{Float64,Missing}, length(n_shapes_iterator))
+    bic_values .= missing
 
-    for s in max_shapes:-steps:min_shapes
-        g_shaped = GraphShapeHist(
-            s, g, X, k, n, max_num_shapes, indices_shape, indices_edges)
+    for (index, s) in enumerate(n_shapes_iterator)
+        g_shaped = GraphShapeHist!(Y,
+            s, g, X, k, n, max_num_shapes, indices_shape, indices_edges, algo)
         bic_value = bic(g_shaped, A)
-        bic_values[s] = bic_value
-        if bic_value ≤ best_bic
+        bic_values[index] = bic_value
+        if bic_value < best_bic
             best_bic = bic_value
-            best_g_shaped = g_shaped
+            best_g_shaped = deepcopy(g_shaped)
             best_n_shape = s
             number_got_worse = 0
         else
@@ -136,7 +146,14 @@ function get_best_smoothed_estimator(g::GraphHist{T, M}, A; show_progress = true
         if number_got_worse ≥ max_iterations_stalled
             break
         end
-        next!(p)
+        next!(p; showvalues = [(:threshold, max_iterations_stalled),
+                                (:stalled, number_got_worse),
+                                (:best_n_shape, best_n_shape),
+                                (:best_bic, best_bic),
+                                (:current_n_shape, s),
+                                (:current_bic, bic_value),
+                                ]
+            )
     end
     if show_progress
         finish!(p)
@@ -146,7 +163,7 @@ function get_best_smoothed_estimator(g::GraphHist{T, M}, A; show_progress = true
         println("Best number of shapes: $best_n_shape")
     end
 
-    return best_g_shaped, bic_values
+    return best_g_shaped, (n_shapes_iterator,bic_values)
 end
 
 
