@@ -88,16 +88,19 @@ end
 
 
 function get_best_smoothed_estimator(g::GraphHist{T, M}, A; show_progress = true,
-    n_min = length(unique(g.θ)), n_max = binomial(get_num_blocks(g), 2), steps = 4, max_iterations_stalled = 5) where {T, M}
+    n_min = 1, n_max = binomial(get_num_blocks(g)+1, 2), steps = 1, max_iterations_stalled = Inf, verbose = true) where {T, M}
 
     number_got_worse = 0
 
-    group_number = length(unique(g.node_labels))
-    max_num_shapes = group_number*(group_number+1)÷2
+    X, k, n, max_num_shapes, indices_shape, indices_edges = make_x_matrix(g)
+    max_num_shapes = min(max_num_shapes, length(unique(eachcol(X))))
     if n_min > max_num_shapes
         n_min = max_num_shapes
-    elseif n_min < binomial(group_number, 2)
-        n_min = binomial(group_number, 2)
+    elseif n_min < k
+        n_min = k
+    end
+    if n_max ≥ max_num_shapes
+        n_max = max_num_shapes
     end
     if n_max ≥ n_min
         max_shapes = n_max
@@ -106,11 +109,15 @@ function get_best_smoothed_estimator(g::GraphHist{T, M}, A; show_progress = true
     end
 
     min_shapes = n_min
+    if verbose
+        println("Searching for the best number of shapes between $min_shapes and $max_shapes")
+    end
+
     best_bic = Inf
     best_g_shaped = nothing
     bic_values = zeros(max_shapes)
     best_n_shape = max_shapes
-    X, k, n, max_num_shapes, indices_shape, indices_edges = make_x_matrix(g)
+
     p = Progress(max_shapes; enabled = show_progress)
 
     for s in max_shapes:-steps:min_shapes
@@ -118,12 +125,7 @@ function get_best_smoothed_estimator(g::GraphHist{T, M}, A; show_progress = true
             s, g, X, k, n, max_num_shapes, indices_shape, indices_edges)
         bic_value = bic(g_shaped, A)
         bic_values[s] = bic_value
-        if bic_value < best_bic
-            best_bic = bic_value
-            best_g_shaped = g_shaped
-            best_n_shape = s
-            number_got_worse = 0
-        elseif bic_value == best_bic && s < best_n_shape
+        if bic_value ≤ best_bic
             best_bic = bic_value
             best_g_shaped = g_shaped
             best_n_shape = s
@@ -131,14 +133,17 @@ function get_best_smoothed_estimator(g::GraphHist{T, M}, A; show_progress = true
         else
             number_got_worse += 1
         end
-        if number_got_worse == max_iterations_stalled
+        if number_got_worse ≥ max_iterations_stalled
             break
         end
         next!(p)
     end
     if show_progress
         finish!(p)
-        println("Best number of shapes: $best_n_shape out of $max_shapes")
+    end
+
+    if verbose
+        println("Best number of shapes: $best_n_shape")
     end
 
     return best_g_shaped, bic_values
