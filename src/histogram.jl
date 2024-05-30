@@ -14,7 +14,7 @@ function get_num_blocks(g::GraphHist{T, M}) where {T, M}
     return size(g.θ, 1)
 end
 
-function get_num_params_per_block(::GraphHist{T, 1}) where {T}
+function get_num_params_per_block(::GraphHist{T, 2}) where {T}
     return 1
 end
 

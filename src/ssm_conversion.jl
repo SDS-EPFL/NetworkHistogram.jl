@@ -36,7 +36,7 @@ function GraphShapeHist(number_shapes::Int,
         algo = Yinyang()) where {
         T, M}
         Y = deepcopy(X)
-    return GraphShapeHist!(Y, number_shapes, block_approx, k, n, max_num_shapes, indices_shape, indices_edges, algo)
+    return GraphShapeHist!(Y, number_shapes, block_approx, X, k, n, max_num_shapes, indices_shape, indices_edges, algo)
 end
 
 function GraphShapeHist!(Y,number_shapes::Int,
@@ -74,10 +74,10 @@ function GraphShapeHist!(Y,number_shapes::Int,
 end
 
 
-function GraphShapeHist(number_shapes::Int,block_approx::GraphHist{T,M}) where {T, M}
+function GraphShapeHist(number_shapes::Int,block_approx::GraphHist{T,M}, algo = Yinyang()) where {T, M}
     X, k, n, max_num_shapes, indices_shape, indices_edges = make_x_matrix(block_approx)
     return GraphShapeHist(
-        number_shapes, block_approx, X, k, n, max_num_shapes, indices_shape, indices_edges)
+        number_shapes, block_approx, X, k, n, max_num_shapes, indices_shape, indices_edges, algo)
 end
 
 function bic(g::GraphShapeHist{T,M}, A) where {T, M}
