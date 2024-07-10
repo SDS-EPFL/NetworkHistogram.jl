@@ -13,7 +13,7 @@
 [![DOI](https://zenodo.org/badge/572018079.svg)](https://zenodo.org/doi/10.5281/zenodo.10212851)
 
 
-Implementation of the network histogram for graphon estimation from the paper [Network histograms and universality of blockmodel approximation](https://doi.org/10.1073/pnas.1400374111) by Sofia C. Olhede and Patrick J. Wolfe.
+Implementation of the network histogram for graphon estimation from the paper [Network histograms and universality of blockmodel approximation](https://doi.org/10.1073/pnas.1400374111) by Sofia C. Olhede and Patrick J. Wolfe [[1]](#1). This approximate the graphon of an exchangeable graph by a piecewise constant function (i.e. a block model).
 
 
 ## Installation
@@ -21,6 +21,18 @@ Implementation of the network histogram for graphon estimation from the paper [N
 ```julia
 Pkg.add("NetworkHistogram")
 ```
+
+## Theory (very brief)
+
+Let $S$ be a finite set, and let $\mathcal{P}(S)$ denote the probability distributions on $S$. 
+
+Given an observed graph $G$ with $n$ nodes, we can represent it as a symmetric adjacency matrix $A \in S^{n \times n}$. Assuming the graph $G$ is exchangeable, we have that $A$ was generated from a graphon $W: [0,1] \times [0,1] \to \mathcal{P}(S) $ following:
+$$A_{ij} | \xi_i,\xi_j \overset{iid}{\sim} W(\xi_i,\xi_j),$$
+
+with latents $\xi_i \overset{iid}{\sim} U[0,1]$ for  $i = 1, \ldots, n$.
+
+The network histogram estimator is then least-square estimator of the matrix $\mathbb{E}[A_{ij}]$. See [[1]](#1) and [[2]](#2) for the case $S=\{0,1\}$, and [[3]](#3) for more general $S$.
+
 
 ## Usage
 
@@ -48,3 +60,14 @@ node_labels = estimate.node_labels
 ```
 
 You can control the optimization process by modifying the rules used in the optimization. Check out the docs for more information.
+
+## References
+
+<a id="1">[1]</a> 
+Olhede, Sofia C., and Patrick J. Wolfe. "Network histograms and universality of blockmodel approximation." Proceedings of the National Academy of Sciences 111.41 (2014): 14722-14727.
+
+<a id="2">[2]</a> 
+Verdeyme, Arthur, and Sofia C. Olhede. "Hybrid of node and link communities for graphon estimation." arXiv preprint arXiv:2401.05088 (2024).
+
+<a id="3">[3]</a> 
+Dufour, C. and Olhede Sofia C., "" (2024+).
