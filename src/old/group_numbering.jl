@@ -1,6 +1,5 @@
 """
-Array-like storage for the number of nodes in each group. Try to split the number of nodes
-into equal groups, but if it is not possible, the last group may have mode nodes.
+Array-like storage for the number of nodes in each group.
 """
 struct GroupSize{T} <: AbstractVector{Int}
     group_number::T
@@ -18,8 +17,16 @@ struct GroupSize{T} <: AbstractVector{Int}
         if number_groups * standard_group == number_nodes
             new{Int}(standard_group, number_groups)
         else
-            remainder_group = standard_group + mod(number_nodes, standard_group)
-            new{Tuple{Int, Int}}((standard_group, remainder_group), number_groups)
+            remainder_group = number_nodes - number_groups * standard_group
+            if remainder_group == 1
+                @warn "h has to be changed, only one node in remainder group"
+                standard_group -= 1
+                remainder_group = number_groups + 1 # because equal to 1+number_groups because we take 1 from each standard group, and there are number_groups of them
+                if standard_group == 1
+                    error("Standard group size now 1, please choose a new value for h.")
+                end
+            end
+            new{Tuple{Int, Int}}((standard_group, remainder_group), number_groups + 1)
         end
     end
 end
