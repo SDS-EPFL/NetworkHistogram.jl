@@ -4,13 +4,6 @@ function select_bandwidth(A::Array{T, 2}; type = "degs", alpha = 1, c = 1)::Int 
     return max(2, min(size(A)[1], round(Int, h)))
 end
 
-function select_bandwidth(A::Array{T, 3}; type = "degs", alpha = 1, c = 1)::Int where {T}
-    hs = [select_bandwidth(A[:, :, i]; type, alpha, c) for i in 1:size(A, 3)]
-    @warn "Naive bandwidth selection for multilayer graph histogram: using minimum over layers"
-    h = max(2, min(size(A, 1), round(Int, minimum(hs))))
-    return h
-end
-
 """
     oracle_bandwidth(A, type = "degs", alpha = 1, c = min(4, sqrt(size(A, 1)) / 8))
 
