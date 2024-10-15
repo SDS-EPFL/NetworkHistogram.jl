@@ -5,10 +5,10 @@ struct BasicAdditionalInformation <: AdditionalData
 end
 
 
-struct Assignment{T} <: AbstractVector{Vector{Int}}
+struct Assignment{T,B<:AdditionalData} <: AbstractVector{Vector{Int}}
     group_size::GroupSize{T}
     node_labels::Vector{Int}
-    additional_data::BasicAdditionalInformation
+    additional_data::B
 end
 
 
@@ -43,9 +43,6 @@ Base.@propagate_inbounds function Base.getindex(a::Assignment, i::Int)
 end
 
 
-
-
-
 function get_obs(g::SimpleGraph{T}, x::Tuple) where {T}
     return get_obs(g, x[1], x[2])
 end
@@ -69,8 +66,7 @@ end
 
 
 function fit(a::Assignment,g, distribution)
-    sizes = [a.group_size[i] for i in 1:number_groups(a)]/number_nodes(a)
-    dists = initialize_sbm(sizes, distribution)
+    dists = initialize_sbm(a.group_size, distribution)
     for group1 in 1:number_groups(a)
         for group2 in group1:number_groups(a)
             edges = get_edge_indices(a,group1,group2)
