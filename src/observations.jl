@@ -1,9 +1,11 @@
-# getters for observations
-
 #
-struct Observations{G,D}
+struct Observations{G, D}
     graph::G
     dist_ref::D
+end
+
+function number_nodes(g::Observations)
+    return nv(g.graph)
 end
 
 function get_obs(g::Observations, x::Tuple)

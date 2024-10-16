@@ -14,7 +14,9 @@ end
 
 function Assignment(group_size::GroupSize{T}, node_labels::Vector{Int}) where {T}
     if length(node_labels) != sum(group_size)
-        throw(ArgumentError("The length of `node_labels` must be equal to the sum of `group_size`"))
+        message = "The length of `node_labels` $(length(node_labels)) must be equal "
+        message *= "to the sum of `group_size` $(sum(group_size))"
+        throw(ArgumentError(message))
     end
     return Assignment(group_size, node_labels, nothing)
 end
@@ -47,34 +49,4 @@ Base.@propagate_inbounds function Base.getindex(a::Assignment, i::Int)
     return get_vertex_in_group(a, i)
 end
 
-function log_likelihood(a::Assignment, dists::SBM, g)
-    log_likelihood = 0.0
-    for i in 1:number_nodes(a)
-        label_a = a.node_labels[i]
-        for j in (i + 1):number_nodes(a)
-            label_b = a.node_labels[j]
-            log_likelihood += logdensityof(dists[label_a, label_b], get_obs(g, i, j))
-        end
-    end
-    return log_likelihood
-end
-
-function fit(a::Assignment, g::Observations)
-    dists = initialize_sbm(a.group_size, g.dist_ref)
-    for group1 in 1:number_groups(a)
-        for group2 in group1:number_groups(a)
-            edge_indices = get_edge_indices(a, group1, group2)
-            dists[group1, group2] = fit(g.dist_ref, g.graph, edge_indices)
-        end
-    end
-    return dists
-end
-
-function log_likelihood(a::Assignment, g::Observations)
-    dists = fit(a, g.graph, g.dist_ref)
-    return log_likelihood(a, dists, g.graph)
-end
-
-function fit(distribution, g, edges)
-    return Distributions.fit(typeof(distribution), get_obs.(Ref(g), edges))
-end
+include("fit.jl")

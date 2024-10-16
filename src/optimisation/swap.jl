@@ -5,14 +5,17 @@ mutable struct DefaultSwap <: Swap
     index2::Int
 end
 
-make_swap(::Assignment{T, Nothing}, id::Tuple{Int}) where {T} = DefaultSwap(id[1], id[2])
-function make_swap!(swap::DefaultSwap, assignment::Assignment, id::Tuple{Int})
+function make_swap(::Assignment{T, Nothing}, id::Tuple{Int, Int}) where {T}
+    return DefaultSwap(id[1], id[2])
+end
+
+function make_swap!(swap::DefaultSwap, a::Assignment, id::Tuple{Int, Int})
     swap.index1, swap.index2 = id
 end
 
-function swap!(assignment::Assignment, swap::DefaultSwap)
-    assignment.node_labels[swap.index1], assignment.node_labels[swap.index2] = assignment.node_labels[swap.index2],
-    assignment.node_labels[swap.index1]
+function apply_swap!(a::Assignment, s::DefaultSwap)
+    a.node_labels[s.index1], a.node_labels[s.index2] = a.node_labels[s.index2],
+    a.node_labels[s.index1]
 end
 
-revert_swap!(assignment::Assignment, swap::DefaultSwap) = swap!(assignment, swap)
+revert_swap!(assignment::Assignment, swap::DefaultSwap) = apply_swap!(assignment, swap)

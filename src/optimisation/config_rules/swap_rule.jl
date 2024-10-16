@@ -14,14 +14,8 @@ current assignment `node_assignment`.
 select_swap
 
 function select_swap(assignment::Assignment, ::RandomNodeSwap)
-    index1 = rand(1:number_nodes(assignment))
-    label1 = assignment.node_labels[index1]
-    index2 = index1
-    for _ in 1:10
-        index2 = rand(1:number_nodes(assignment))
-        if assignment.node_labels[index2] != label1
-            break
-        end
-    end
-    return make_swap(assignment, (index1, index2))
+    groups = StatsBase.sample(1:number_groups(assignment), 2; replace=false)
+    index1 = rand(get_vertex_in_group(assignment, groups[1]))
+    index2 = rand(get_vertex_in_group(assignment, groups[2]))
+    return (index1, index2)
 end

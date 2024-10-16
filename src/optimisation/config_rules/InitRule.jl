@@ -7,15 +7,15 @@ struct InitRule{S <: StartingAssignment, I}
     assignment_rule::I
 end
 
-function make_assignment(A, h, init_rule::InitRule{S, Nothing}) where {S}
-    return Assignment(initialize_node_labels(A, h, init_rule.starting_assignment_rule)...)
+function make_assignment(g, h, init_rule::InitRule{S, Nothing}) where {S}
+    return Assignment(initialize_node_labels(g, h, init_rule.starting_assignment_rule)...)
 end
 
 """
-    initialize_node_labels(A, h, starting_assignment_rule::StartingAssignment)
+    initialize_node_labels(g, h, starting_assignment_rule::StartingAssignment)
 
-initialize node labels based on the `starting_assignment_rule`, and return a vector of
-node labels and a `GroupSize` object.
+initialize node labels based on the `starting_assignment_rule`, and return a `GroupSize`
+objecta vector of node labels.
 
 # Implemenented rules
 - `OrderedStart()`: Sequentially assign nodes to groups based on the ordering of `A`.
@@ -23,16 +23,16 @@ node labels and a `GroupSize` object.
 """
 initialize_node_labels
 
-function initialize_node_labels(A, h, ::OrderedStart)
-    group_size = GroupSize(size(A, 1), h)
-    node_labels = inverse_rle(1:length(group_size), group_size)
-    return node_labels, group_size
+function initialize_node_labels(g, h, ::OrderedStart)
+    group_size = GroupSize(number_nodes(g), h)
+    node_labels = StatsBase.inverse_rle(1:length(group_size), group_size)
+    return group_size, node_labels
 end
 
-function initialize_node_labels(A, h, ::RandomStart)
-    node_labels, group_size = initialize_node_labels(A, h, OrderedStart())
-    node_labels = shuffle!(node_labels)
-    return node_labels, group_size
+function initialize_node_labels(g, h, ::RandomStart)
+    group_size, node_labels = initialize_node_labels(g, h, OrderedStart())
+    Random.shuffle!(node_labels)
+    return group_size, node_labels
 end
 
 # check https://github.com/TrainOfCode/LocalFennelPartitioning.jl/tree/main

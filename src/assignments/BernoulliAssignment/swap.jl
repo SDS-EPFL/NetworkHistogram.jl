@@ -18,6 +18,6 @@ function revert_swap!(assignment::BernoulliAssignment{T}, swap::BernoulliSwap{T}
     assignment = deepcopy(swap.old_assignment)
 end
 
-function swap!(assignment::BernoulliAssignment{T}, swap::BernoulliSwap{T}) where {T}
+function apply_swap!(assignment::BernoulliAssignment{T}, swap::BernoulliSwap{T}) where {T}
     # perform fast update
 end

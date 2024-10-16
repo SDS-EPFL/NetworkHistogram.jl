@@ -49,7 +49,8 @@ end
 
 ##
 
-using NetworkHistogram
+using NetworkHistogram, Random
+
 group_number = NetworkHistogram.GroupSize(nv(G), 3)
 if typeof(group_number) == NetworkHistogram.GroupSize{Tuple{Int, Int}}
     node_labels = repeat(1:(length(group_number) - 1), inner = group_number[1])
@@ -66,18 +67,33 @@ sbm_fit = NetworkHistogram.fit(a, obs)
 
 sbm = NetworkHistogram.initialize_sbm([1 / 3, 1 / 3, 1 / 3], dist)
 for i in 1:3
-    sbm[i, i] = Bernoulli(0.8)
+    sbm[i, i] = Bernoulli(0.2)
     for j in (i + 1):3
-        sbm[i, j] = Bernoulli(0.01 + 0.1 * (i + j))
+        sbm[i, j] = Bernoulli(0.01)
     end
 end
 
 size_per_block = 200
 A, node_labels = NetworkHistogram.sample(sbm, 3 * size_per_block);
 node_labels = repeat(1:3, inner = size_per_block)
+Random.shuffle!(node_labels)
 group_number = NetworkHistogram.GroupSize(size(A, 1), size_per_block)
 a_star = NetworkHistogram.Assignment(group_number, node_labels, additional_info)
 obs_star = NetworkHistogram.Observations(SimpleGraph(A), dist)
 sbm_fitted = NetworkHistogram.fit(a_star, obs_star)
 
 sbm_fitted
+
+init_rule = NetworkHistogram.InitRule(NetworkHistogram.RandomStart(), nothing)
+ll_old = NetworkHistogram.score(a_star, obs_star)
+println("Log likelihood: ", ll_old)
+a_best = NetworkHistogram.optimize(obs_star, size_per_block, max_iter = 100;
+    stop_rule = NetworkHistogram.PreviousBestValue(5),
+    initialise_rule = init_rule, progress_bar = true)
+ll_new = NetworkHistogram.score(a_best, obs_star)
+println("Log likelihood: ", ll_new)
+if ll_old < ll_new
+    println("Optimization improved the log likelihood.")
+else
+    println("Optimization did not improve the log likelihood.")
+end
