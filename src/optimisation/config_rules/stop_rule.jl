@@ -2,14 +2,15 @@ abstract type StopRule end
 mutable struct PreviousBestValue{T} <: StopRule
     k::Int
     past_values::Queue{T}
-    function PreviousBestValue(k::Int)
+    function PreviousBestValue(
+            k::Int, x::T=0.0) where {T <: Real}
         @assert k > 0
-        new{T}(k, Queue{T}(k))
+        new{T}(k, Queue{T}())
     end
 end
 
 """
-    stopping_rule(assignment::Assignment, stop_rule::StopRule)
+    stopping_rule(assignment::Assignment,G, stop_rule::StopRule)
 
 Returns a Bool with true if we should stop the optimization based on the `stop_rule`.
 
@@ -19,17 +20,17 @@ Returns a Bool with true if we should stop the optimization based on the `stop_r
 """
 stopping_rule
 
-function stopping_rule(assignment::Assignment, stop_rule::PreviousBestValue)
-    loglikelihood = loglikelihood(assignment)
+function stopping_rule(assignment::Assignment, G, stop_rule::PreviousBestValue)
+    log_likelihood = log_likelihood(assignment, G)
     if length(stop_rule.past_values) == 0
-        push!(stop_rule.past_values, loglikelihood)
+        push!(stop_rule.past_values, log_likelihood)
         return false
-    elseif loglikelihood > first(stop_rule.past_values)
+    elseif log_likelihood > first(stop_rule.past_values)
         empty!(stop_rule.past_values)
-        push!(stop_rule.past_values, loglikelihood)
+        push!(stop_rule.past_values, log_likelihood)
         return false
     else
-        push!(stop_rule.past_values, loglikelihood)
+        push!(stop_rule.past_values, log_likelihood)
         return length(stop_rule.past_values) == stop_rule.k + 1 #always keep the best value
     end
 end

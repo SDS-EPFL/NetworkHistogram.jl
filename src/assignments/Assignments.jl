@@ -47,27 +47,32 @@ Base.@propagate_inbounds function Base.getindex(a::Assignment, i::Int)
     return get_vertex_in_group(a, i)
 end
 
-function loglikelihood(a::Assignment, dists::SBM, g)
-    loglikelihood = 0.0
+function log_likelihood(a::Assignment, dists::SBM, g)
+    log_likelihood = 0.0
     for i in 1:number_nodes(a)
         label_a = a.node_labels[i]
         for j in (i + 1):number_nodes(a)
             label_b = a.node_labels[j]
-            loglikelihood += logdensityof(dists[label_a, label_b], get_obs(g, i, j))
+            log_likelihood += logdensityof(dists[label_a, label_b], get_obs(g, i, j))
         end
     end
-    return loglikelihood
+    return log_likelihood
 end
 
-function fit(a::Assignment, g, distribution)
-    dists = initialize_sbm(a.group_size, distribution)
+function fit(a::Assignment, g::Observations)
+    dists = initialize_sbm(a.group_size, g.dist_ref)
     for group1 in 1:number_groups(a)
         for group2 in group1:number_groups(a)
-            edges = get_edge_indices(a, group1, group2)
-            dists[group1, group2] = fit(distribution, g, edges)
+            edge_indices = get_edge_indices(a, group1, group2)
+            dists[group1, group2] = fit(g.dist_ref, g.graph, edge_indices)
         end
     end
     return dists
+end
+
+function log_likelihood(a::Assignment, g::Observations)
+    dists = fit(a, g.graph, g.dist_ref)
+    return log_likelihood(a, dists, g.graph)
 end
 
 function fit(distribution, g, edges)

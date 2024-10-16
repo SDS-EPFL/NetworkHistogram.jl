@@ -61,7 +61,8 @@ end
 additional_info = 1
 a = NetworkHistogram.Assignment(group_number, node_labels)
 dist = Bernoulli(0.5)
-sbm_fit = NetworkHistogram.fit(a, G, dist)
+obs = NetworkHistogram.Observations(G, dist)
+sbm_fit = NetworkHistogram.fit(a, obs)
 
 sbm = NetworkHistogram.initialize_sbm([1 / 3, 1 / 3, 1 / 3], dist)
 for i in 1:3
@@ -76,6 +77,7 @@ A, node_labels = NetworkHistogram.sample(sbm, 3 * size_per_block);
 node_labels = repeat(1:3, inner = size_per_block)
 group_number = NetworkHistogram.GroupSize(size(A, 1), size_per_block)
 a_star = NetworkHistogram.Assignment(group_number, node_labels, additional_info)
-sbm_fitted = NetworkHistogram.fit(a_star, SimpleGraph(A), dist)
+obs_star = NetworkHistogram.Observations(SimpleGraph(A), dist)
+sbm_fitted = NetworkHistogram.fit(a_star, obs_star)
 
 sbm_fitted
