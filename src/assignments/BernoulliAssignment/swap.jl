@@ -36,7 +36,8 @@ function apply_swap!(
     update_ll!(assignment)
 end
 
-function update_observed!(a::BernoulliAssignment{T, F}, swap::BernoulliSwap{F}) where {T, F}
+function update_observed_and_labels!(
+        a::BernoulliAssignment{T, F}, swap::BernoulliSwap{F}) where {T, F}
     g1 = get_group_of_vertex(a, swap.index1)
     g2 = get_group_of_vertex(a, swap.index2)
 
@@ -71,7 +72,7 @@ function update_observed!(a::BernoulliAssignment{T, F}, swap::BernoulliSwap{F}) 
 
     # swap of the labels should happen after the update of the realized and estimated_theta
     # for the above loop to work correctly
-    swap_node_labels!(assignment, swap.index1, swap.index2)
+    swap_node_labels!(a, swap.index1, swap.index2)
     return nothing
 end
 
