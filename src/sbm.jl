@@ -42,15 +42,11 @@ Base.@propagate_inbounds function Base.getindex(s::SBM, i, j)
     return getindex(s.probs, i, j)
 end
 
-function sample(rng::Random.AbstractRNG, sbm::SBM, n_nodes::Int, sorted = true)
-    n_blocks = number_blocks(sbm)
-    node_labels = StatsBase.sample(
-        rng, 1:n_blocks, StatsBase.weights(sbm.sizes), n_nodes, replace = true)
-    if sorted
-        sort!(node_labels)
-    end
+function sample(rng::Random.AbstractRNG, sbm::SBM, node_labels::Vector{Int})
+    n_nodes = length(node_labels)
     A = BitMatrix(undef, n_nodes, n_nodes)
     for i in 1:n_nodes
+        A[i, i] = zero(eltype(A))
         for j in (i + 1):n_nodes
             A[i, j] = Random.rand(rng, sbm[node_labels[i], node_labels[j]])
             A[j, i] = A[i, j]
@@ -58,4 +54,16 @@ function sample(rng::Random.AbstractRNG, sbm::SBM, n_nodes::Int, sorted = true)
     end
     return sparse(A), node_labels
 end
+
+sample(sbm::SBM, node_labels::Vector{Int}) = sample(Random.default_rng(), sbm, node_labels)
+function sample(rng::Random.AbstractRNG, sbm::SBM, n_nodes::Int, sorted = true)
+    n_blocks = number_blocks(sbm)
+    node_labels = StatsBase.sample(
+        rng, 1:n_blocks, StatsBase.weights(sbm.sizes), n_nodes, replace = true)
+    if sorted
+        sort!(node_labels)
+    end
+    return sample(rng, sbm, node_labels)
+end
+
 sample(sbm::SBM, n_nodes::Int) = sample(Random.default_rng(), sbm, n_nodes)

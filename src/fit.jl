@@ -22,7 +22,6 @@ function log_likelihood(a::Assignment, g::Observations)
     return _log_likelihood(a, dists, g.graph)
 end
 
-
 function _log_likelihood(a::Assignment, sbm::SBM, g)
     log_likelihood = 0.0
     for i in 1:number_nodes(a)

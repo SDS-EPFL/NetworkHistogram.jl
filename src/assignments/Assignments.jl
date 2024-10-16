@@ -33,6 +33,10 @@ function get_vertex_in_group(assignment::Assignment, group::Int)
     return findall(assignment.node_labels .== group)
 end
 
+function get_group_of_vertex(assignment::Assignment, vertex::Int)
+    return assignment.node_labels[vertex]
+end
+
 function get_edge_indices(a::Assignment, i::Int, j::Int)
     return [(x, y) for x in get_vertex_in_group(a, i)
             for y in get_vertex_in_group(a, j)]
