@@ -1,5 +1,4 @@
 include("config_rules/include.jl")
-include("loss.jl")
 
 function optimize(g, h = select_bandwidth(g);
         max_iter::Int = 1000,

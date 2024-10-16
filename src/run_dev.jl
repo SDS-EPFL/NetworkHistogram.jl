@@ -50,6 +50,7 @@ end
 ##
 
 using NetworkHistogram, Random
+G = Graph(20, 20)
 
 group_number = NetworkHistogram.GroupSize(nv(G), 3)
 if typeof(group_number) == NetworkHistogram.GroupSize{Tuple{Int, Int}}
