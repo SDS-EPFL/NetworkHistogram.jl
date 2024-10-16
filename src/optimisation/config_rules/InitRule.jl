@@ -2,13 +2,12 @@ abstract type StartingAssignment end
 struct OrderedStart <: StartingAssignment end
 struct RandomStart <: StartingAssignment end
 
-
 struct InitRule{S <: StartingAssignment, I}
     starting_assignment_rule::S
     assignment_rule::I
 end
 
-function make_assignment(A, h, init_rule::InitRule{S, Nothing}) where S
+function make_assignment(A, h, init_rule::InitRule{S, Nothing}) where {S}
     return Assignment(initialize_node_labels(A, h, init_rule.starting_assignment_rule)...)
 end
 

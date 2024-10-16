@@ -6,8 +6,10 @@ struct BernoulliData{T}
 end
 
 const BernoulliAssignment{T} = Assignment{T, BernoulliData}
-const BernoulliInitRule{S,T} = InitRule{S, Val{BernoulliData{T}}}
+const BernoulliInitRule{S} = InitRule{S, Val{BernoulliData}}
 
+
+# is this type stable? should this be BernoulliAssignment{T,F}? see line 8 above
 function BernoulliAssignment(
         G, node_labels::Vector{Int}, group_size::GroupSize{T}) where {T}
     k = length(group_size)
@@ -15,14 +17,10 @@ function BernoulliAssignment(
         BernoulliData(zeros(Int, k, k), zeros(Int, k, k), zeros(T, k, k), BitMatrix(G)))
 end
 
-function make_assignment(G, h, init_rule::BernoulliInitRule{S}) where S
+function make_assignment(G, h, init_rule::BernoulliInitRule{S}) where {S}
     return BernoulliAssignment(initialize_node_labels(
         G, h, init_rule.starting_assignment_rule)...)
 end
-
-
-
-
 
 mutable struct BernoulliSwap{T} <: Swap
     index1::Int
@@ -46,4 +44,17 @@ end
 
 function swap!(assignment::BernoulliAssignment{T}, swap::BernoulliSwap{T}) where {T}
     # perform fast update
+end
+
+
+
+function test_init_rule(rule::InitRule{S, Val{T}}) where {S, T <: BernoulliData}
+    println("Method with BernoulliData")
+    println("Starting assignment rule: ", rule.starting_assignment_rule)
+end
+
+
+function test_init_rule_with_alias(rule::BernoulliInitRule{S}) where {S}
+    println("Method with BernoulliData")
+    println("Starting assignment rule: ", rule.starting_assignment_rule)
 end
