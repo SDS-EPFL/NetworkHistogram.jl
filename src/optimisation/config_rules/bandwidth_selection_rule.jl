@@ -1,3 +1,4 @@
+@warn "Deprecated bandwidth selection needs to be updated"
 
 function select_bandwidth(A::Array{T, 2}; type = "degs", alpha = 1, c = 1)::Int where {T}
     h = oracle_bandwidth(A, type, alpha, c)

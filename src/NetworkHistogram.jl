@@ -17,4 +17,7 @@ include("optimisation/include.jl")
 # more specialised and faster assignment types and methods
 include("assignments/include.jl")
 
+@warn "User interface is not yet implemented"
+
+
 end
