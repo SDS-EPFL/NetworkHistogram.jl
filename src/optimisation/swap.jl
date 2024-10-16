@@ -18,5 +18,5 @@ apply_swap!(a::Assignment, s::DefaultSwap) = swap_node_labels!(a, s.index1, s.in
 revert_swap!(assignment::Assignment, swap::DefaultSwap) = apply_swap!(assignment, swap)
 
 function swap_node_labels!(a::Assignment, i, j)
-    a.node_labels[i], a.node_labels[j] = a.node_labels[j],a.node_labels[i]
+    a.node_labels[i], a.node_labels[j] = a.node_labels[j], a.node_labels[i]
 end

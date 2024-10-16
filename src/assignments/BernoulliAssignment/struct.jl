@@ -82,7 +82,7 @@ log_likelihood(a::BernoulliAssignment, g::Observations) = log_likelihood(a)
 
 function get_ordered_adjacency_matrix(a::BernoulliAssignment)
     perm = sortperm(a.node_labels)
-    return a.additional_data.A[perm,perm]
+    return a.additional_data.A[perm, perm]
 end
 
 include("swap.jl")

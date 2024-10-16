@@ -11,10 +11,6 @@ function make_swap(assignment::BernoulliAssignment{T, F}, id::Tuple{Int, Int}) w
     return BernoulliSwap(id[1], id[2], copy(assignment.additional_data.realized),
         copy(assignment.additional_data.estimated_theta),
         assignment.additional_data.log_likelihood, copy(assignment.node_labels))
-    # realized = copy(assignment.additional_data.realized)
-    # estimated_theta = copy(assignment.additional_data.estimated_theta)
-    # log_likelihood = assignment.additional_data.log_likelihood
-    # return BernoulliSwap(id[1], id[2], realized, estimated_theta, log_likelihood)
 end
 
 function make_swap!(swap::BernoulliSwap{F}, assignment::BernoulliAssignment{T, F},
@@ -22,7 +18,6 @@ function make_swap!(swap::BernoulliSwap{F}, assignment::BernoulliAssignment{T, F
     swap.index1, swap.index2 = id
     copy!(swap.realized, assignment.additional_data.realized)
     copy!(swap.estimated_theta, assignment.additional_data.estimated_theta)
-    #copy!(swap.node_labels, assignment.node_labels)
     swap.log_likelihood = assignment.additional_data.log_likelihood
 end
 
@@ -37,9 +32,7 @@ end
 
 function apply_swap!(
         assignment::BernoulliAssignment{T, F}, swap::BernoulliSwap{F}) where {T, F}
-    # swap of the labels should happen after the update of the realized and estimated_theta
-    update_observed!(assignment, swap)
-    swap_node_labels!(assignment, swap.index1, swap.index2)
+    update_observed_and_labels!(assignment, swap)
     update_ll!(assignment)
 end
 
@@ -75,6 +68,10 @@ function update_observed!(a::BernoulliAssignment{T, F}, swap::BernoulliSwap{F}) 
 
     @. a.additional_data.estimated_theta = a.additional_data.realized /
                                            a.additional_data.counts
+
+    # swap of the labels should happen after the update of the realized and estimated_theta
+    # for the above loop to work correctly
+    swap_node_labels!(assignment, swap.index1, swap.index2)
     return nothing
 end
 
@@ -84,13 +81,13 @@ function update_ll!(a::BernoulliAssignment)
     return nothing
 end
 
-
 function fit(a::BernoulliAssignment, g::Observations)
     println("Fitting BernoulliAssignment")
     dists = initialize_sbm(a.group_size, Bernoulli(0.5))
     for group1 in 1:number_groups(a)
         for group2 in 1:number_groups(a)
-            dists[group1, group2] = Bernoulli(a.additional_data.estimated_theta[group1, group2])
+            dists[group1, group2] = Bernoulli(a.additional_data.estimated_theta[
+                group1, group2])
         end
     end
     return dists
