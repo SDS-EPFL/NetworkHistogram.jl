@@ -48,5 +48,3 @@ Base.@propagate_inbounds function Base.getindex(a::Assignment, i::Int)
     @boundscheck checkbounds(a, i)
     return get_vertex_in_group(a, i)
 end
-
-include("fit.jl")

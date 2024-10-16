@@ -5,7 +5,7 @@ mutable struct DefaultSwap <: Swap
     index2::Int
 end
 
-function make_swap(::Assignment{T, Nothing}, id::Tuple{Int, Int}) where {T}
+function make_swap(::Assignment, id::Tuple{Int, Int}) where {T}
     return DefaultSwap(id[1], id[2])
 end
 

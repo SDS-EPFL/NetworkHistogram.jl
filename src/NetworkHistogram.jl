@@ -11,8 +11,8 @@ include("group_numbering.jl")
 include("sbm.jl")
 include("observations.jl")
 include("assignments/Assignments.jl")
-include("optimisation/swap.jl")
-include("optimisation/opti.jl")
+include("fit.jl")
+include("optimisation/include.jl")
 
 # more specialised and faster assignment types and methods
 include("assignments/include.jl")
