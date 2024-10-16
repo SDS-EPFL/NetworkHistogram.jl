@@ -10,21 +10,19 @@ end
 
 mutable struct PreviousBestValue{T} <: StopRule
     k::Int
-    past_values::CircularDeque{T}
+    previous_best_value::T
+    iterations_since_best::Int
     function PreviousBestValue(
             k::Int, x::T = -Inf) where {T <: Real}
         @assert k > 0
         # queue stores the best values and at most k subsequent values
-        queue = CircularDeque{T}(k + 1)
-        push!(queue, x)
-        new{T}(k, queue)
+        new{T}(k, x, 0)
     end
 end
 
 function initialise_stop_rule!(stop_rule::PreviousBestValue, a, g)
     score_value = score(a, g)
-    empty!(stop_rule.past_values)
-    push!(stop_rule.past_values, score_value)
+    stop_rule.previous_best_value = score_value
 end
 
 """
@@ -40,14 +38,11 @@ stopping_rule
 
 function stopping_rule(assignment::Assignment, g, stop_rule::PreviousBestValue)
     score_value = score(assignment, g)
-    if isempty(stop_rule.past_values)
-        push!(stop_rule.past_values, score_value)
-        return false
-    elseif score_value > first(stop_rule.past_values)
-        empty!(stop_rule.past_values)
-        push!(stop_rule.past_values, score_value)
-        return false
+    if score_value > stop_rule.previous_best_value
+        stop_rule.previous_best_value = score_value
+        stop_rule.iterations_since_best = 0
     else
-        return length(stop_rule.past_values) == capacity(stop_rule.past_values)
+        stop_rule.iterations_since_best += 1
     end
+    return stop_rule.iterations_since_best >= stop_rule.k
 end

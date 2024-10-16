@@ -2,7 +2,7 @@ mutable struct BernoulliData{F}
     counts::Matrix{Int}
     realized::Matrix{Int}
     estimated_theta::Matrix{F}
-    A::BitMatrix
+    A::BitMatrix  # possible improvement by using an adjacency list  Graphs.SimpleGraphs.adj(G)
     log_likelihood::F
 end
 
@@ -78,7 +78,11 @@ function force_recompute_ll(a::BernoulliAssignment, g::Observations)
     return log_likelihood(a_simple, g)
 end
 
-
 log_likelihood(a::BernoulliAssignment, g::Observations) = log_likelihood(a)
+
+function get_ordered_adjacency_matrix(a::BernoulliAssignment)
+    perm = sortperm(a.node_labels)
+    return a.additional_data.A[perm,perm]
+end
 
 include("swap.jl")

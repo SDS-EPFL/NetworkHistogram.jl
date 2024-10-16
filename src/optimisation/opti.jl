@@ -33,8 +33,8 @@ function greedy_improve!(a::Assignment, g; max_iter::Int = 1000,
         new_score_value = score(a, g)
         next!(p)
         if stopping_rule(a, g, stop_rule)
+            println("Stopping rule kicked in at iteration $i.")
             finish!(p)
-            println("Stopping rule kicked in")
             break
         end
     end
