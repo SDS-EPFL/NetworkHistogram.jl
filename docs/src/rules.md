@@ -12,7 +12,7 @@ Pages   = ["starting_assignment_rule.jl"]
 !!! note
     The groups will be of size `floor(h * n)` where `n` is the number of nodes if `h` is a
     float. If `h` is an integer, the groups will be of size `h`. The last group may be
-    smaller if `n` is not exactly divisible by the group size.
+    bigger if `n` is not exactly divisible by the group size.
 
 
 ## Swapping rule

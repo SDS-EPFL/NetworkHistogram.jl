@@ -18,7 +18,6 @@ makedocs(;
         "Home" => "index.md",
         "API Reference" => "api.md",
         "Optimization hyperparameters" => "rules.md",
-        "Development" => "internals.md",
     ],
     checkdocs = :none)
 

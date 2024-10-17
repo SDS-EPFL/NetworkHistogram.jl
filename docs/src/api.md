@@ -5,6 +5,7 @@ Depth = 1
 
 # NetworkHistogram
 
+<!-- 
 ```@autodocs
 Modules = [NetworkHistogram]
 Pages   = ["histogram.jl","optimize.jl"]
@@ -23,4 +24,4 @@ Pages   = ["assignment.jl", "group_numbering.jl"]
 ```@autodocs
 Modules = [NetworkHistogram]
 Pages   = ["proposal.jl"]
-```
+``` -->
