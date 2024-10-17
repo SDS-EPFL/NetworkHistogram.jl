@@ -1,7 +1,7 @@
 using NetworkHistogram
 using Test
 
-using JLD
+include("utils.jl")
 
 @testset "NetworkHistogram.jl" begin
     include("test_swap.jl")

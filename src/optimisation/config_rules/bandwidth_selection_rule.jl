@@ -11,10 +11,13 @@ end
 Oracle bandwidth selection for graph histogram, using
 
 ```math
-\\widehat{h^*}=\\left(2\\left(\\left(d^T d\\right)^{+}\\right)^2 d^T A d \\cdot \\hat{m} \\hat{b}\\right)^{-\\frac{1}{2}} \\hat{\\rho}_n^{\\frac{1}{4}},
+\\widehat{h^*}=\\left(2\\left(\\left(d^T d\\right)^{+}\\right)^2 d^T A d \\cdot \\hat{m}
+\\hat{b}\\right)^{-\\frac{1}{2}} \\hat{\\rho}_n^{\\frac{1}{4}},
 ```
 
-where ``d`` is the vector of degree sorted in increasing order,``\\hat{\\rho}_n`` is the empirical edge density, and  ``m``, ``b`` are the slope and intercept fitted on ``d[n/2-c\\sqrt{n}:n/2+c\\sqrt{n}]`` for some ``c``.
+where ``d`` is the vector of degree sorted in increasing order,``\\hat{\\rho}_n`` is the
+empirical edge density, and  ``m``, ``b`` are the slope and intercept fitted on
+``d[n/2-c\\sqrt{n}:n/2+c\\sqrt{n}]`` for some ``c``.
 """
 function oracle_bandwidth(A, type = "degs", alpha = 1, c = min(4, sqrt(size(A, 1)) / 8))
     if type ∉ ["eigs", "degs"]
@@ -26,8 +29,8 @@ function oracle_bandwidth(A, type = "degs", alpha = 1, c = min(4, sqrt(size(A, 1
     end
 
     n = size(A, 1)
-    midPt = collect(max(1, round(Int, (n ÷ 2 - c * sqrt(n)))):round(Int,
-        (n ÷ 2 + c * sqrt(n))))
+    midPt = collect(max(1, round(Int, (n÷2-c*sqrt(n)))):round(Int,
+        (n÷2+c*sqrt(n))))
     rhoHat_inv = inv(sum(A) / (n * (n - 1)))
 
     # Rank-1 graphon estimate via fhat(x,y) = mult*u(x)*u(y)*pinv(rhoHat);
@@ -50,6 +53,5 @@ function oracle_bandwidth(A, type = "degs", alpha = 1, c = min(4, sqrt(size(A, 1
     h = (2^(alpha + 1) * alpha * mult^2 *
          (lmfit_coef[2] * length(uMid) / 2 + lmfit_coef[1])^2 * lmfit_coef[2]^2 *
          rhoHat_inv)^(-1 / (2 * (alpha + 1)))
-    #estMSqrd = 2*mult^2*(lmfit_coef[2]*length(uMid)/2+lmfit_coef[1])^2*lmfit_coef[2]^2*rhoHat_inv^2*(n+1)^2
     return h[1]
 end

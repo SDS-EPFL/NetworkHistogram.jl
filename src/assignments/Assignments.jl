@@ -39,7 +39,7 @@ end
 
 function get_edge_indices(a::Assignment, i::Int, j::Int)
     return [(x, y) for x in get_vertex_in_group(a, i)
-            for y in get_vertex_in_group(a, j)]
+            for y in get_vertex_in_group(a, j) if x!=y]
 end
 
 function get_edge_indices(a::Assignment, i::Int)

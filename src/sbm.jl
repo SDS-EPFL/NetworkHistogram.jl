@@ -47,7 +47,7 @@ function sample(rng::Random.AbstractRNG, sbm::SBM, node_labels::Vector{Int})
     A = BitMatrix(undef, n_nodes, n_nodes)
     for i in 1:n_nodes
         A[i, i] = zero(eltype(A))
-        for j in (i + 1):n_nodes
+        for j in (i+1):n_nodes
             A[i, j] = Random.rand(rng, sbm[node_labels[i], node_labels[j]])
             A[j, i] = A[i, j]
         end

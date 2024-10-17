@@ -26,7 +26,7 @@ function _log_likelihood(a::Assignment, sbm::SBM, g)
     log_likelihood = 0.0
     for i in 1:number_nodes(a)
         label_a = a.node_labels[i]
-        for j in (i + 1):number_nodes(a)
+        for j in (i+1):number_nodes(a)
             label_b = a.node_labels[j]
             log_likelihood += logdensityof(sbm[label_a, label_b], get_obs(g, i, j))
         end

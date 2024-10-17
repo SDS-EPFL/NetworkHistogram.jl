@@ -17,11 +17,13 @@ function BernoulliAssignment(
 end
 
 function make_assignment(g, h, init_rule::BernoulliInitRule)
-    group_size, node_labels = initialize_node_labels(
+    group_size,
+    node_labels = initialize_node_labels(
         g, h, init_rule.starting_assignment_rule)
     return BernoulliAssignment(g, group_size, node_labels)
 end
 
+# might be worth using graph accessors instead of the adjacency matrix ?
 function make_bernoulli_data(g, node_labels, group_size)
     number_groups = length(group_size)
     n = length(node_labels)
@@ -73,12 +75,12 @@ function log_likelihood(assignment::BernoulliAssignment)
     return assignment.additional_data.log_likelihood
 end
 
+log_likelihood(a::BernoulliAssignment, g::Observations) = log_likelihood(a)
+
 function force_recompute_ll(a::BernoulliAssignment, g::Observations)
     a_simple = Assignment(a.group_size, a.node_labels)
     return log_likelihood(a_simple, g)
 end
-
-log_likelihood(a::BernoulliAssignment, g::Observations) = log_likelihood(a)
 
 function get_ordered_adjacency_matrix(a::BernoulliAssignment)
     perm = sortperm(a.node_labels)
