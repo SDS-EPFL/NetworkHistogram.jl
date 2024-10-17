@@ -1,6 +1,7 @@
 @warn "Deprecated bandwidth selection needs to be updated"
 
-function select_bandwidth(A::Array{T, 2}; type = "degs", alpha = 1, c = 1)::Int where {T}
+function select_bandwidth(
+        A::Array{T, 2}; type = "degs", alpha = 1, c = 1)::Int where {T}
     h = oracle_bandwidth(A, type, alpha, c)
     return max(2, min(size(A)[1], round(Int, h)))
 end
@@ -19,7 +20,8 @@ where ``d`` is the vector of degree sorted in increasing order,``\\hat{\\rho}_n`
 empirical edge density, and  ``m``, ``b`` are the slope and intercept fitted on
 ``d[n/2-c\\sqrt{n}:n/2+c\\sqrt{n}]`` for some ``c``.
 """
-function oracle_bandwidth(A, type = "degs", alpha = 1, c = min(4, sqrt(size(A, 1)) / 8))
+function oracle_bandwidth(
+        A, type = "degs", alpha = 1, c = min(4, sqrt(size(A, 1)) / 8))
     if type ∉ ["eigs", "degs"]
         error("Invalid input type $(type)")
     end
@@ -29,7 +31,8 @@ function oracle_bandwidth(A, type = "degs", alpha = 1, c = min(4, sqrt(size(A, 1
     end
 
     n = size(A, 1)
-    midPt = collect(max(1, round(Int, (n÷2-c*sqrt(n)))):round(Int,
+    midPt = collect(max(
+        1, round(Int, (n÷2-c*sqrt(n)))):round(Int,
         (n÷2+c*sqrt(n))))
     rhoHat_inv = inv(sum(A) / (n * (n - 1)))
 
@@ -51,7 +54,8 @@ function oracle_bandwidth(A, type = "degs", alpha = 1, c = min(4, sqrt(size(A, 1
     lmfit_coef = hcat(ones(length(uMid)), 1:length(uMid)) \ uMid
 
     h = (2^(alpha + 1) * alpha * mult^2 *
-         (lmfit_coef[2] * length(uMid) / 2 + lmfit_coef[1])^2 * lmfit_coef[2]^2 *
+         (lmfit_coef[2] * length(uMid) / 2 + lmfit_coef[1])^2 *
+         lmfit_coef[2]^2 *
          rhoHat_inv)^(-1 / (2 * (alpha + 1)))
     return h[1]
 end

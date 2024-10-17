@@ -17,5 +17,9 @@ function get_obs(g::SimpleGraph, x::Tuple)
 end
 
 function get_obs(g::SimpleGraph, i::Int, j::Int)
+    @warn "this is weird"
     return convert(Bool, has_edge(g, i, j))
 end
+
+get_obs(g::AbstractArray, x) = get_obs(g, x[1], x[2])
+get_obs(g::AbstractArray, i, j) = g[i, j]

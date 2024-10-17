@@ -6,11 +6,13 @@ using Graphs
 using PermutationSymmetricTensors
 using ProgressMeter: Progress, next!, finish!
 import StatsBase, Random
+using DensityInterface: logdensityof
 
-include("group_numbering.jl")
+import Distributions.fit
+
+include("assignments/Assignments.jl")
 include("sbm.jl")
 include("observations.jl")
-include("assignments/Assignments.jl")
 include("fit.jl")
 include("optimisation/include.jl")
 

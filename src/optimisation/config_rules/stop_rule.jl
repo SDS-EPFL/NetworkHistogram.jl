@@ -36,7 +36,8 @@ Returns a Bool with true if we should stop the optimization based on the `stop_r
 """
 stopping_rule
 
-function stopping_rule(assignment::Assignment, g, stop_rule::PreviousBestValue)
+function stopping_rule(
+        assignment::Assignment, g, stop_rule::PreviousBestValue)
     score_value = score(assignment, g)
     if score_value > stop_rule.previous_best_value
         stop_rule.previous_best_value = score_value

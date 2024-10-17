@@ -65,7 +65,8 @@ function compute_log_likelihood(estimated_theta, counts)
         for j in i:number_groups
             θ = estimated_theta[i, j]
             θ_c = θ <= 0 ? 1e-14 : (θ >= 1 ? 1 - 1e-14 : θ)
-            loglik += (θ_c * log(θ_c) + (1 - θ_c) * log(1 - θ_c)) * counts[i, j]
+            loglik += (θ_c * log(θ_c) + (1 - θ_c) * log(1 - θ_c)) *
+                      counts[i, j]
         end
     end
     return loglik

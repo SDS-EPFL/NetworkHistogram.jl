@@ -7,7 +7,8 @@ mutable struct BernoulliSwap{F} <: Swap
     node_labels::Vector{Int}
 end
 
-function make_swap(a::BernoulliAssignment{T, F}, id::Tuple{Int, Int}) where {T, F}
+function make_swap(
+        a::BernoulliAssignment{T, F}, id::Tuple{Int, Int}) where {T, F}
     return BernoulliSwap(id[1], id[2], copy(a.additional_data.realized),
         copy(a.additional_data.estimated_theta),
         a.additional_data.log_likelihood, copy(a.node_labels))
@@ -42,7 +43,8 @@ function update_observed_and_labels!(
 
     for i in axes(a.additional_data.A, 2)
         if i == swap.index1 || i == swap.index2 ||
-           a.additional_data.A[swap.index1, i] == a.additional_data.A[swap.index2, ia]
+           a.additional_data.A[swap.index1, i] ==
+           a.additional_data.A[swap.index2, i]
             continue
         end
         group_inter = get_group_of_vertex(a, i)
@@ -85,7 +87,7 @@ function update_ll!(a::BernoulliAssignment)
     return nothing
 end
 
-function fit(a::BernoulliAssignment, g::Observations)
+function fit_sbm(a::BernoulliAssignment, g::Observations)
     dists = initialize_sbm(a.group_size, Bernoulli(0.5))
     for group1 in 1:number_groups(a)
         for group2 in 1:number_groups(a)

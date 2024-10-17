@@ -1,8 +1,9 @@
-using NetworkHistogram
 using Test
 
-include("utils.jl")
+include("TestNetworkHistogram.jl")
 
-@testset "NetworkHistogram.jl" begin
-    include("test_swap.jl")
+@testset "Assignment tests" begin
+    include("assignments/default_assignment.jl")
+    include("assignments/bernoulli_assignment.jl")
+    include("assignments/categorical_assignment.jl")
 end

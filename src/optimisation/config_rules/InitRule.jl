@@ -8,7 +8,8 @@ struct InitRule{S <: StartingAssignment, I}
 end
 
 function make_assignment(g, h, init_rule::InitRule{S, Nothing}) where {S}
-    return Assignment(initialize_node_labels(g, h, init_rule.starting_assignment_rule)...)
+    return Assignment(initialize_node_labels(
+        g, h, init_rule.starting_assignment_rule)...)
 end
 
 """
