@@ -58,15 +58,13 @@ function convert_bitmatrix(g::Observations{<:AbstractMatrix, D}) where {D}
     return convert(BitMatrix, g.graph)
 end
 
-function compute_log_likelihood(estimated_theta, counts)
+function compute_log_likelihood(estimated_theta::AbstractMatrix, counts::AbstractMatrix)
     number_groups = size(estimated_theta, 1)
-    loglik = 0.0
-    @inbounds @simd for i in 1:number_groups
-        for j in i:number_groups
+    loglik = zero(eltype(estimated_theta))
+    @inbounds for j in 1:number_groups
+        @simd for i in j:number_groups
             θ = estimated_theta[i, j]
-            θ_c = θ <= 0 ? 1e-14 : (θ >= 1 ? 1 - 1e-14 : θ)
-            loglik += (θ_c * log(θ_c) + (1 - θ_c) * log(1 - θ_c)) *
-                      counts[i, j]
+            loglik += xlogx(θ) + xlogx(1 - θ) * counts[i, j]
         end
     end
     return loglik
