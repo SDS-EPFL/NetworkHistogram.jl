@@ -30,6 +30,10 @@ function make_bernoulli_data(g, node_labels, group_size)
     counts = zeros(Int, number_groups, number_groups)
     realized = zeros(Int, number_groups, number_groups)
     A = convert_bitmatrix(g)
+
+    # below needs to be abstracted: not sure how diagonal is handled if nonzero
+    # addtioally, we should be able to deal with missing values !
+    # This concerns the counts matrix above as well
     @inbounds @simd for k in 1:number_groups
         for l in k:number_groups
             realized[k, l] = sum(A[node_labels .== k, node_labels .== l])
@@ -58,13 +62,14 @@ function convert_bitmatrix(g::Observations{<:AbstractMatrix, D}) where {D}
     return convert(BitMatrix, g.graph)
 end
 
-function compute_log_likelihood(estimated_theta::AbstractMatrix, counts::AbstractMatrix)
+function compute_log_likelihood(estimated_theta::AbstractMatrix{F},
+        counts::AbstractMatrix{T}) where {F <: Real, T <: Real}
     number_groups = size(estimated_theta, 1)
     loglik = zero(eltype(estimated_theta))
     @inbounds for j in 1:number_groups
         @simd for i in j:number_groups
             θ = estimated_theta[i, j]
-            loglik += xlogx(θ) + xlogx(1 - θ) * counts[i, j]
+            loglik += (xlogx(θ) + xlogx(1 - θ)) * counts[i, j]
         end
     end
     return loglik

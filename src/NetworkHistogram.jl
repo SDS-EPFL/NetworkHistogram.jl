@@ -7,7 +7,8 @@ using PermutationSymmetricTensors
 using ProgressMeter: Progress, next!, finish!
 import StatsBase, Random
 using DensityInterface: logdensityof
-
+using StaticArrays: MVector, MMatrix
+using LogExpFunctions: xlogx, xlogy
 import Distributions.fit
 
 include("assignments/Assignments.jl")
