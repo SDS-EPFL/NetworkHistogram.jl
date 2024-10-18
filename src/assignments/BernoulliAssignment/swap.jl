@@ -4,14 +4,13 @@ mutable struct BernoulliSwap{F} <: Swap
     realized::Matrix{Int}
     estimated_theta::Matrix{F}
     log_likelihood::F
-    node_labels::Vector{Int}
 end
 
 function make_swap(
         a::BernoulliAssignment{T, F}, id::Tuple{Int, Int}) where {T, F}
     return BernoulliSwap(id[1], id[2], copy(a.additional_data.realized),
         copy(a.additional_data.estimated_theta),
-        a.additional_data.log_likelihood, copy(a.node_labels))
+        a.additional_data.log_likelihood)
 end
 
 function make_swap!(swap::BernoulliSwap{F}, a::BernoulliAssignment{T, F},
