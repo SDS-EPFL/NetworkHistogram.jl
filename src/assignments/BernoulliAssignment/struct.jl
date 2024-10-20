@@ -9,7 +9,6 @@ end
 const BernoulliAssignment{T, F} = Assignment{T, BernoulliData{F}}
 const BernoulliInitRule{S, F} = InitRule{S, Val{BernoulliData}}
 
-# is this type stable? should this be BernoulliAssignment{T,F}? see line 8 above
 function BernoulliAssignment(
         g, group_size::GroupSize, node_labels::Vector{Int})
     bernoulli_data = make_bernoulli_data(g, node_labels, group_size)

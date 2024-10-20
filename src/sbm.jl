@@ -45,7 +45,8 @@ end
 function sample(
         rng::Random.AbstractRNG, sbm::SBM, node_labels::Vector{Int})
     n_nodes = length(node_labels)
-    A = BitMatrix(undef, n_nodes, n_nodes)
+    type_input = eltype(sbm.probs[1,1])
+    A = Matrix{type_input}(undef, n_nodes, n_nodes)
     for i in 1:n_nodes
         A[i, i] = zero(eltype(A))
         for j in (i+1):n_nodes

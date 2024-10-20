@@ -10,6 +10,7 @@ using DensityInterface: logdensityof
 using StaticArrays: MVector, MMatrix
 using LogExpFunctions: xlogx, xlogy
 import Distributions.fit
+using LoopVectorization: @turbo
 
 include("assignments/Assignments.jl")
 include("sbm.jl")
