@@ -26,3 +26,11 @@ end
 
 get_obs(g::AbstractArray, x) = get_obs(g, x[1], x[2])
 get_obs(g::AbstractArray, i, j) = g[i, j]
+
+function density(g::AbstractGraph)
+    return Graphs.density(g)
+end
+
+function density(g::AbstractMatrix{Bool})
+    return sum(g) / ((size(g, 1) * (size(g, 1) - 1))*2)
+end
