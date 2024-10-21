@@ -35,7 +35,8 @@ end
          1 0 0 0 1 1 0 0
          0 0 0 1 1 1 0 0]
     obs = NH.Observations(A, Bernoulli(0.5))
-    a = NH.BernoulliAssignment(obs, NH.GroupSize(8, 4), [1, 1, 1, 1, 2, 2, 2, 2])
+    a = NH.BernoulliAssignment(
+        obs, NH.GroupSize(8, 4), [1, 1, 1, 1, 2, 2, 2, 2])
     swap = NH.make_swap(a, (1, 2))
     test_swap_revertible(a, swap, obs)
 end

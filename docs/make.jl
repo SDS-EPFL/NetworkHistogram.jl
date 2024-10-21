@@ -1,7 +1,8 @@
 using NetworkHistogram
 using Documenter
 
-DocMeta.setdocmeta!(NetworkHistogram, :DocTestSetup, :(using NetworkHistogram);
+DocMeta.setdocmeta!(
+    NetworkHistogram, :DocTestSetup, :(using NetworkHistogram);
     recursive = true)
 
 makedocs(;
@@ -19,7 +20,7 @@ makedocs(;
         "API Reference" => "api.md",
         "Optimization hyperparameters" => "rules.md",
         "Examples" => "examples.md",
-        "Internal" =>  "internal.md",
+        "Internal" => "internal.md"
     ],
     checkdocs = :none)
 

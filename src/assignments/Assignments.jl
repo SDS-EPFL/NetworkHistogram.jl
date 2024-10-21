@@ -1,6 +1,5 @@
 include("group_numbering.jl")
 
-
 """
     struct Assignment{T, B} <: AbstractVector{Vector{Int}}
 

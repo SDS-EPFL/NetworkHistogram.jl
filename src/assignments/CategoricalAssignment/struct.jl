@@ -56,7 +56,8 @@ function make_categorical_data(g, node_labels, group_size)
 end
 
 function compute_log_likelihood(
-        estimated_theta::AbstractMatrix{MVector{M, T}}, counts::AbstractMatrix{F}) where {M, T, F}
+        estimated_theta::AbstractMatrix{MVector{M, T}}, counts::AbstractMatrix{F}) where {
+        M, T, F}
     loglik = zero(T)
     number_groups = size(estimated_theta, 1)
     @inbounds for j in 1:number_groups
@@ -77,14 +78,12 @@ function categorical_matrix(A)
     return A_inter, maximum(A_inter)
 end
 
-
 function categorical_matrix(g::Observations)
     return categorical_matrix(g.graph)
 end
 
-
 function log_likelihood(a::CategoricalAssignment, g::Observations)
-   return a.additional_data.log_likelihood
+    return a.additional_data.log_likelihood
 end
 
 include("swap.jl")

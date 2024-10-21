@@ -7,7 +7,7 @@ function fit_sbm(a::Assignment, g::Observations)
         for group2 in group1:number_groups(a)
             edge_indices = get_edge_indices(a, group1, group2)
             dists[group1,
-                group2] = fit_group(g.dist_ref, g.graph, edge_indices)
+            group2] = fit_group(g.dist_ref, g.graph, edge_indices)
         end
     end
     return dists
@@ -33,7 +33,7 @@ function _log_likelihood(a::Assignment, sbm::SBM, g)
     log_likelihood = 0.0
     for i in 1:number_nodes(a)
         label_a = a.node_labels[i]
-        for j in (i+1):number_nodes(a)
+        for j in (i + 1):number_nodes(a)
             label_b = a.node_labels[j]
             log_likelihood += logdensityof(
                 sbm[label_a, label_b], get_obs(g, i, j))

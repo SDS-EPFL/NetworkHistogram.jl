@@ -97,5 +97,4 @@ function force_recompute_ll(a::BernoulliAssignment, g::Observations)
     return log_likelihood(a_simple, g)
 end
 
-
 include("swap.jl")

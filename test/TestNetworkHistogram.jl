@@ -9,7 +9,8 @@ end
 
 to_default_assignment(a::NH.Assignment{T, Nothing}) where {T} = a
 
-function test_swap_revertible(a::NH.Assignment, swap::NH.Swap, g::NH.Observations)
+function test_swap_revertible(
+        a::NH.Assignment, swap::NH.Swap, g::NH.Observations)
     a_test = deepcopy(a)
     NH.apply_swap!(a_test, swap)
     @test NH.get_group_of_vertex(a, swap.index1) ==

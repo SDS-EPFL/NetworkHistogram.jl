@@ -50,23 +50,23 @@ function update_observed_and_labels!(
         if a.additional_data.A[swap.index1, i]
             a.additional_data.realized[g1, group_inter] -= 1
             a.additional_data.realized[
-                group_inter, g1] = a.additional_data.realized[
+            group_inter, g1] = a.additional_data.realized[
                 g1, group_inter]
 
             a.additional_data.realized[g2, group_inter] += 1
             a.additional_data.realized[
-                group_inter, g2] = a.additional_data.realized[
+            group_inter, g2] = a.additional_data.realized[
                 g2, group_inter]
         end
         if a.additional_data.A[swap.index2, i]
             a.additional_data.realized[g2, group_inter] -= 1
             a.additional_data.realized[
-                group_inter, g2] = a.additional_data.realized[
+            group_inter, g2] = a.additional_data.realized[
                 g2, group_inter]
 
             a.additional_data.realized[g1, group_inter] += 1
             a.additional_data.realized[
-                group_inter, g1] = a.additional_data.realized[
+            group_inter, g1] = a.additional_data.realized[
                 g1, group_inter]
         end
     end
@@ -91,7 +91,7 @@ function fit_sbm(a::BernoulliAssignment, g::Observations)
     for group1 in 1:number_groups(a)
         for group2 in 1:number_groups(a)
             dists[group1,
-                group2] = Bernoulli(a.additional_data.estimated_theta[
+            group2] = Bernoulli(a.additional_data.estimated_theta[
                 group1, group2])
         end
     end

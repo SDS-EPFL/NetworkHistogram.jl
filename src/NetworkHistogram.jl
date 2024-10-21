@@ -11,6 +11,8 @@ using StaticArrays: MVector, MMatrix
 using LogExpFunctions: xlogx, xlogy
 import Distributions.fit
 using LoopVectorization: @turbo
+using ArnoldiMethod: LM, SR, LR, partialschur, partialeigen
+import Arpack
 
 include("assignments/Assignments.jl")
 include("sbm.jl")

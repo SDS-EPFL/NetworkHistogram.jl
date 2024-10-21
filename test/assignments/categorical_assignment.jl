@@ -1,7 +1,6 @@
 import NetworkHistogram as NH
 
-@testset "test conversion to categorical observations" begin
-end
+@testset "test conversion to categorical observations" begin end
 
 @testset "test Categorical swap" begin
     using ..TestNetworkHistogram: test_swap_revertible
@@ -19,8 +18,8 @@ end
         A[i, i] = 0
     end
     obs = NH.Observations(A, dist)
-    node_labels = repeat(1:k, inner = n÷k)
-    a = NH.CategoricalAssignment(obs, NH.GroupSize(n, n÷k), node_labels)
-    swap = NH.make_swap(a, (1, k+1))
+    node_labels = repeat(1:k, inner = n ÷ k)
+    a = NH.CategoricalAssignment(obs, NH.GroupSize(n, n ÷ k), node_labels)
+    swap = NH.make_swap(a, (1, k + 1))
     test_swap_revertible(a, swap, obs)
 end

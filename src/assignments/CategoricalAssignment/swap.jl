@@ -12,7 +12,8 @@ function make_swap(a::CategoricalAssignment, id::Tuple{Int, Int})
         a.additional_data.log_likelihood)
 end
 
-function make_swap!(swap::CategoricalSwap{M, F}, a::CategoricalAssignment{T, M, F},
+function make_swap!(
+        swap::CategoricalSwap{M, F}, a::CategoricalAssignment{T, M, F},
         id::Tuple{Int, Int}) where {T, M, F}
     swap.index1, swap.index2 = id
     copy!(swap.realized, a.additional_data.realized)
@@ -21,7 +22,8 @@ function make_swap!(swap::CategoricalSwap{M, F}, a::CategoricalAssignment{T, M, 
 end
 
 function revert_swap!(
-        a::CategoricalAssignment{T, M, F}, swap::CategoricalSwap{M, F}) where {T, M, F}
+        a::CategoricalAssignment{T, M, F}, swap::CategoricalSwap{M, F}) where {
+        T, M, F}
     swap_node_labels!(a, swap.index1, swap.index2)
     copy!(a.additional_data.realized, swap.realized)
     copy!(a.additional_data.estimated_theta, swap.estimated_theta)
@@ -29,7 +31,8 @@ function revert_swap!(
 end
 
 function apply_swap!(
-        a::CategoricalAssignment{T, M, F}, swap::CategoricalSwap{M, F}) where {T, M, F}
+        a::CategoricalAssignment{T, M, F}, swap::CategoricalSwap{M, F}) where {
+        T, M, F}
     update_observed_and_labels!(a, swap)
     update_ll!(a)
 end
@@ -40,12 +43,13 @@ function update_ll!(a::CategoricalAssignment)
     return nothing
 end
 
-function fit_sbm(a::CategoricalAssignment{T, M, F}, g::Observations) where {T, M, F}
-    dists = initialize_sbm(a.group_size, Categorical(ones(M)/M))
+function fit_sbm(
+        a::CategoricalAssignment{T, M, F}, g::Observations) where {T, M, F}
+    dists = initialize_sbm(a.group_size, Categorical(ones(M) / M))
     for group1 in 1:number_groups(a)
         for group2 in 1:number_groups(a)
             dists[group1,
-                group2] = Categorical(a.additional_data.estimated_theta[
+            group2] = Categorical(a.additional_data.estimated_theta[
                 group1, group2])
         end
     end
@@ -53,7 +57,8 @@ function fit_sbm(a::CategoricalAssignment{T, M, F}, g::Observations) where {T, M
 end
 
 function update_observed_and_labels!(
-        a::CategoricalAssignment{T, M, F}, swap::CategoricalSwap{M, F}) where {T, M, F}
+        a::CategoricalAssignment{T, M, F}, swap::CategoricalSwap{M, F}) where {
+        T, M, F}
     g1 = get_group_of_vertex(a, swap.index1)
     g2 = get_group_of_vertex(a, swap.index2)
 
@@ -99,7 +104,6 @@ function update_observed_and_labels!(
     swap_node_labels!(a, swap.index1, swap.index2)
     return nothing
 end
-
 
 function _fast_div!(theta, realized, counts)
     for j in axes(theta, 2)

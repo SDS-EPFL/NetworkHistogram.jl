@@ -18,8 +18,10 @@ struct GroupSize{T} <: AbstractVector{Int}
         if number_groups * standard_group == number_nodes
             new{Int}(standard_group, number_groups)
         else
-            remainder_group = standard_group + mod(number_nodes, standard_group)
-            new{Tuple{Int, Int}}((standard_group, remainder_group), number_groups)
+            remainder_group = standard_group +
+                              mod(number_nodes, standard_group)
+            new{Tuple{Int, Int}}(
+                (standard_group, remainder_group), number_groups)
         end
     end
 end
@@ -30,7 +32,8 @@ Base.@propagate_inbounds function Base.getindex(g::GroupSize{Int}, i::Int)
     return g.group_number
 end
 
-Base.@propagate_inbounds function Base.getindex(g::GroupSize{Tuple{Int, Int}}, i::Int)
+Base.@propagate_inbounds function Base.getindex(
+        g::GroupSize{Tuple{Int, Int}}, i::Int)
     @boundscheck checkbounds(g, i)
     return i < length(g) ? g.group_number[1] : g.group_number[2]
 end
