@@ -4,9 +4,8 @@ Here we discuss the different parameters that can be used to control the optimiz
 
 ## Starting node labels
 
-```@autodocs
-Modules = [NetworkHistogram]
-Pages   = ["starting_assignment_rule.jl"]
+```@docs; canonical=false
+NetworkHistogram.initialize_node_labels
 ```
 
 !!! note
@@ -17,22 +16,19 @@ Pages   = ["starting_assignment_rule.jl"]
 
 ## Swapping rule
 
-```@autodocs
-Modules = [NetworkHistogram]
-Pages   = ["swap_rule.jl"]
+```@docs; canonical=false
+NetworkHistogram.select_swap
 ```
 
 
 ## Acceptance rule
 
-```@autodocs
-Modules = [NetworkHistogram]
-Pages   = ["accept_rule.jl"]
+```@docs; canonical=false
+NetworkHistogram.accept_reject_update!
 ```
 
 ## Stopping rule
 
-```@autodocs
-Modules = [NetworkHistogram]
-Pages   = ["stop_rule.jl"]
+```@docs; canonical=false
+NetworkHistogram.stopping_rule
 ```
