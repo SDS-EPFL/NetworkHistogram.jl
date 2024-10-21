@@ -23,17 +23,17 @@ How to select the number of blocks `K` for the SBM model.
 # Implemented rules
 - `OracleK(K::Int)`: Use the oracle number of blocks `K`.
 - `OracleM(M::Int)`: Give the Holder constant `M` of the graphon, use the results from
-[Olhede and Wolfe (2014)](https://www.pnas.org/doi/epdf/10.1073/pnas.1400374111) to estimate
-the number of blocks `K`.
+    [Olhede and Wolfe (2014)](https://www.pnas.org/doi/epdf/10.1073/pnas.1400374111) to
+    estimate the number of blocks `K`.
 - `EstimatedEigenvalues()`: Use the estimated eigenvalues of the adjacency matrix to
-estimate the Holder constant and then use `OracleM` to estimate the number of blocks `K`.
+    estimate the Holder constant and then use `OracleM` to estimate the number of blocks `K`.
 - `EstimatedDegrees()`: Use the estimated degrees of the adjacency matrix to estimate the
-Holder constant and then use `OracleM` to estimate the number of blocks `K`.
+    Holder constant and then use `OracleM` to estimate the number of blocks `K`.
 
 
-..note:
+!!! info
     - The number of blocks `K` should be at most `n/2` where `n` is the number of nodes in
-    the graph.
+        the graph.
     - The estimated Holder constant `M` comes from equation (11) in Olhede and Wolfe (2014).
 """
 select_number_node_per_block

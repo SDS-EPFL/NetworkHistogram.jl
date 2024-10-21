@@ -16,9 +16,9 @@ end
     initialize_node_labels(g, h, starting_assignment_rule::StartingAssignment)
 
 initialize node labels based on the `starting_assignment_rule`, and return a `GroupSize`
-objecta vector of node labels.
+object and a vector of node labels.
 
-# Implemenented rules
+# Implemented rules
 - `OrderedStart()`: Sequentially assign nodes to groups based on the ordering of `A`.
 - `RandomStart()`: Randomly assign nodes to groups.
 """

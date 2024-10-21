@@ -1,3 +1,15 @@
+"""
+    mutable struct BernoulliData{F}
+
+A data structure to store information related to a Bernoulli assignment in a network.
+
+# Fields
+- `counts::Matrix{Int}`: A matrix representing the maximum number of edges between groups.
+- `realized::Matrix{Int}`: A matrix representing the number of edges between groups.
+- `estimated_theta::Matrix{F}`: A matrix of estimated parameters (theta).
+- `A::BitMatrix`: An adjacency matrix representing the network structure.
+- `log_likelihood::F`:
+"""
 mutable struct BernoulliData{F}
     counts::Matrix{Int}
     realized::Matrix{Int}
@@ -85,9 +97,5 @@ function force_recompute_ll(a::BernoulliAssignment, g::Observations)
     return log_likelihood(a_simple, g)
 end
 
-function get_ordered_adjacency_matrix(a::BernoulliAssignment)
-    perm = sortperm(a.node_labels)
-    return a.additional_data.A[perm, perm]
-end
 
 include("swap.jl")

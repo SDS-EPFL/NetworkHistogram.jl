@@ -1,6 +1,6 @@
 """
 Array-like storage for the number of nodes in each group. Try to split the number of nodes
-into equal groups, but if it is not possible, the last group may have mode nodes.
+into equal groups, but if it is not possible, the last group may have more nodes.
 """
 struct GroupSize{T} <: AbstractVector{Int}
     group_number::T

@@ -1,5 +1,29 @@
 include("group_numbering.jl")
 
+
+"""
+    struct Assignment{T, B} <: AbstractVector{Vector{Int}}
+
+A structure representing an assignment of nodes to groups.
+
+# Fields
+- `group_size::GroupSize{T}`: The size of each group.
+- `node_labels::Vector{Int}`: A vector of node labels.
+- `additional_data::B`: Additional data associated with the assignment.
+
+# Constructor
+    Assignment(group_size::GroupSize{T}, node_labels, additional_data::B) where {T, B}
+
+Creates a new `Assignment` instance.
+
+# Arguments
+- `group_size::GroupSize{T}`: The size of each group.
+- `node_labels::Vector{Int}`: A vector of node labels. The length of this vector must be equal to the sum of `group_size`.
+- `additional_data::B`: Additional data associated with the assignment.
+
+# Throws
+- `ArgumentError`: If the length of `node_labels` is not equal to the sum of `group_size`.
+"""
 struct Assignment{T, B} <: AbstractVector{Vector{Int}}
     group_size::GroupSize{T}
     node_labels::Vector{Int}
@@ -64,4 +88,9 @@ Base.size(a::Assignment) = (number_groups(a),)
 Base.@propagate_inbounds function Base.getindex(a::Assignment, i)
     @boundscheck checkbounds(a, i)
     return get_vertex_in_group(a, i)
+end
+
+function get_ordered_adjacency_matrix(a::Assignment)
+    perm = sortperm(a.node_labels)
+    return a.additional_data.A[perm, perm]
 end
