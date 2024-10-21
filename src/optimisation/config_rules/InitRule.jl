@@ -26,6 +26,9 @@ object and a vector of node labels.
 # Implemented rules
 - `OrderedStart()`: Sequentially assign nodes to groups based on the ordering of `A`.
 - `RandomStart()`: Randomly assign nodes to groups.
+- `SpectralStart()`: Assign nodes to groups based on spectral clustering.
+- `MetisStart()`: Assign nodes to groups based on Metis partitioning.
+- `FromAssignment(a)`: Assign nodes to groups based on the given assignment `a`.
 """
 initialize_node_labels
 
