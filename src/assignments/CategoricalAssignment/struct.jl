@@ -1,4 +1,4 @@
-mutable struct CategoricalData{F, M}
+mutable struct CategoricalData{M, F}
     counts::Matrix{Int}
     realized::Matrix{MVector{M, Int}}
     estimated_theta::Matrix{MVector{M, F}}
@@ -6,7 +6,7 @@ mutable struct CategoricalData{F, M}
     log_likelihood::F
 end
 
-const CategoricalAssignment{T, F} = Assignment{T, CategoricalData{F}}
+const CategoricalAssignment{T, M, F} = Assignment{T, CategoricalData{M, F}}
 const CategoricalInitRule{S, F} = InitRule{S, Val{CategoricalData}}
 
 function CategoricalAssignment(
@@ -69,7 +69,7 @@ function compute_log_likelihood(
 end
 
 # to update, just for test now
-function categorical_matrix(A::AbstractArray{<:Integer})
+function categorical_matrix(A)
     A_inter = A .- minimum(A) .+ 1
     for i in 1:size(A_inter, 1)
         A_inter[i, i] = 0
@@ -78,6 +78,13 @@ function categorical_matrix(A::AbstractArray{<:Integer})
 end
 
 
-function categorical_matrix(g::Observations{AbstractMatrix{<:Integer},I}) where {I}
+function categorical_matrix(g::Observations)
     return categorical_matrix(g.graph)
 end
+
+
+function log_likelihood(a::CategoricalAssignment, g::Observations)
+   return a.additional_data.log_likelihood
+end
+
+include("swap.jl")

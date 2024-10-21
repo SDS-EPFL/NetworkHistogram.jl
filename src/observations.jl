@@ -20,7 +20,6 @@ function get_obs(g::SimpleGraph, x::Tuple)
 end
 
 function get_obs(g::SimpleGraph, i::Int, j::Int)
-    @warn "this is weird"
     return convert(Bool, has_edge(g, i, j))
 end
 
