@@ -13,11 +13,11 @@ import Distributions.fit
 using LoopVectorization: @turbo
 using ArnoldiMethod: LM, SR, LR, partialschur, partialeigen
 import Arpack
+import Metis
 
 include("assignments/Assignments.jl")
 include("sbm.jl")
 include("observations.jl")
-include("fit.jl")
 include("optimisation/include.jl")
 
 # more specialised and faster assignment types and methods

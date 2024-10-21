@@ -1,6 +1,11 @@
 abstract type StartingAssignment end
 struct OrderedStart <: StartingAssignment end
 struct RandomStart <: StartingAssignment end
+struct SpectralStart <: StartingAssignment end
+struct MetisStart <: StartingAssignment end
+struct FromAssignment{A} <: StartingAssignment
+    assignment::A
+end
 
 struct InitRule{S <: StartingAssignment, I}
     starting_assignment_rule::S
@@ -36,5 +41,34 @@ function initialize_node_labels(g, h, ::RandomStart)
     return group_size, node_labels
 end
 
-# check https://github.com/TrainOfCode/LocalFennelPartitioning.jl/tree/main
-# check https://github.com/JuliaSparse/Metis.jl
+function initialize_node_labels(g, h, ::SpectralStart)
+    group_size = GroupSize(number_nodes(g), h)
+    node_labels = zeros(Int, number_nodes(g))
+
+    laplacian = normalized_laplacian(g)
+    _, eigenvectors = Arpack.eigs(laplacian, nev = 2, which = :LR)
+    # get 2nd eigenvector, sort its components
+    indices = sortperm(eigenvectors[:, 1])
+    # bin them into groups of correct size
+    start = 1
+    for (i, group) in enumerate(group_size)
+        stop = start + group - 1
+        node_labels[indices[start:stop]] .= i
+        start = stop + 1
+    end
+    return group_size, node_labels
+end
+
+function initialize_node_labels(g, h, ::MetisStart)
+    group_size = GroupSize(number_nodes(g), h)
+    node_labels = convert.(
+        Int, Metis.partition(Metis.graph(g.graph), length(group_size)))
+    check_compatiblity(group_size, node_labels)
+    return group_size, node_labels
+end
+
+function initialize_node_labels(g, h, rule::FromAssignment{A}) where {A}
+    group_size = GroupSize(number_nodes(g), h)
+    check_compatiblity(group_size, rule.assignment.node_labels)
+    return group_size, rule.assignment.node_labels
+end

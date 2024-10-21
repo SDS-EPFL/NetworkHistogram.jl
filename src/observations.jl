@@ -51,3 +51,27 @@ end
 function get_adj(g::Observations)
     return g.graph
 end
+
+function normalized_laplacian(g::Observations)
+    return normalized_laplacian(g.graph)
+end
+
+function normalized_laplacian(g::AbstractGraph)
+    return normalized_laplacian(Graphs.adjacency_matrix(g))
+end
+
+function normalized_laplacian(g::AbstractMatrix)
+    degrees = sum(g, dims = 1)
+    n = size(g, 1)
+    L = similar(g, Float64)
+    for j in 1:n
+        for i in 1:n
+            if i == j
+                L[i, j] = 1
+            elseif g[i, j] == 1
+                L[i, j] = -1 / sqrt(degrees[i] * degrees[j])
+            end
+        end
+    end
+    return L
+end

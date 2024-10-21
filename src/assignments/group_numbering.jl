@@ -37,3 +37,15 @@ Base.@propagate_inbounds function Base.getindex(
     @boundscheck checkbounds(g, i)
     return i < length(g) ? g.group_number[1] : g.group_number[2]
 end
+
+function check_compatiblity(g::GroupSize, node_labels)
+    counts = StatsBase.countmap(node_labels)
+    if length(counts) != g.number_groups || size(node_labels, 1) != sum(g)
+        return false
+    end
+    for (i, c) in enumerate(g)
+        if counts[i] != c
+            return false
+        end
+    end
+end
