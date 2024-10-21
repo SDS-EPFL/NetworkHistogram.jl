@@ -1,5 +1,10 @@
 @warn "Deprecated bandwidth selection needs to be updated"
 
+function select_number_node_per_bloc(g::Observations)
+    h = orcacle_bandwidth(g.graph)
+    return max(2, min(number_nodes(g), round(Int, h)))
+end
+
 function select_bandwidth(
         A::Array{T, 2}; type = "degs", alpha = 1, c = 1)::Int where {T}
     h = oracle_bandwidth(A, type, alpha, c)

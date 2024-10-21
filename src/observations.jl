@@ -11,6 +11,7 @@ end
 function number_nodes(g::Observations)
     return size(g.graph,1)
 end
+
 function get_obs(g::Observations, x::Tuple)
     return get_obs(g.graph, x[1], x[2])
 end
