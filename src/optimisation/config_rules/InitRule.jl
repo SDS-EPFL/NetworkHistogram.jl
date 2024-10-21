@@ -6,6 +6,9 @@ struct MetisStart <: StartingAssignment end
 struct FromAssignment{A} <: StartingAssignment
     assignment::A
 end
+struct HigherOrderSpectralStart <: StartingAssignment
+    k::Int
+end
 
 struct InitRule{S <: StartingAssignment, I}
     starting_assignment_rule::S
@@ -74,4 +77,16 @@ function initialize_node_labels(g, h, rule::FromAssignment{A}) where {A}
     group_size = GroupSize(number_nodes(g), h)
     check_compatiblity(group_size, rule.assignment.node_labels)
     return group_size, rule.assignment.node_labels
+end
+
+
+
+
+function initialize_node_labels(g, h, rule::HigherOrderSpectralStart)
+    group_size = GroupSize(number_nodes(g), h)
+
+    laplacian = normalized_laplacian(g)
+    results = IterativeSolvers.lobpcg(laplacian, true, rule.k)
+    throw(ArgumentError("Not implemented yet, need to finish with Clustering.jl"))
+    return group_size, node_labels
 end

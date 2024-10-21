@@ -14,6 +14,8 @@ using LoopVectorization: @turbo
 using ArnoldiMethod: LM, SR, LR, partialschur, partialeigen
 import Arpack
 import Metis
+import IterativeSolvers
+import Clustering
 
 include("assignments/Assignments.jl")
 include("sbm.jl")
