@@ -17,12 +17,12 @@ function fit_group(distribution, g, edges)
     return Distributions.fit(typeof(distribution), get_obs.(Ref(g), edges))
 end
 
-# method to compute the log likelihood of a SBM fitted according to the assignment
+# method to compute the log likelihood of a BlockModel fitted according to the assignment
 function loglikelihood(a::Assignment, g::Observations)
     return _log_likelihood(a, fit(a, g), g)
 end
 
-function _log_likelihood(a::Assignment, sbm::SBM, g)
+function _log_likelihood(a::Assignment, sbm::BlockModel, g)
     log_likelihood = 0.0
     for i in 1:number_nodes(a)
         label_a = a.node_labels[i]

@@ -13,8 +13,8 @@ function make_swap(a::CategoricalAssignment, id::Tuple{Int, Int})
 end
 
 function make_swap!(
-        swap::CategoricalSwap{M, F}, a::CategoricalAssignment{T, M, F},
-        id::Tuple{Int, Int}) where {T, M, F}
+        swap::CategoricalSwap{M, F}, a::CategoricalAssignment{T, M, F, C},
+        id::Tuple{Int, Int}) where {T, M, F, C}
     swap.index1, swap.index2 = id
     copy!(swap.realized, a.additional_data.realized)
     copy!(swap.estimated_theta, a.additional_data.estimated_theta)
@@ -22,8 +22,8 @@ function make_swap!(
 end
 
 function revert_swap!(
-        a::CategoricalAssignment{T, M, F}, swap::CategoricalSwap{M, F}) where {
-        T, M, F}
+        a::CategoricalAssignment{T, M, F, C}, swap::CategoricalSwap{M, F}) where {
+        T, M, F, C}
     swap_node_labels!(a, swap.index1, swap.index2)
     copy!(a.additional_data.realized, swap.realized)
     copy!(a.additional_data.estimated_theta, swap.estimated_theta)
@@ -31,8 +31,8 @@ function revert_swap!(
 end
 
 function apply_swap!(
-        a::CategoricalAssignment{T, M, F}, swap::CategoricalSwap{M, F}) where {
-        T, M, F}
+        a::CategoricalAssignment{T, M, F, C}, swap::CategoricalSwap{M, F}) where {
+        T, M, F, C}
     update_observed_and_labels!(a, swap)
     update_ll!(a)
 end
@@ -44,7 +44,8 @@ function update_ll!(a::CategoricalAssignment)
 end
 
 function fit(
-        a::CategoricalAssignment{T, M, F}, g::Observations) where {T, M, F}
+        a::CategoricalAssignment{T, M, F, C}, g::Observations) where {
+        T, M, F, C}
     dists = initialize_sbm(a.group_size, Categorical(ones(M) / M))
     for group1 in 1:number_groups(a)
         for group2 in 1:number_groups(a)
@@ -57,8 +58,8 @@ function fit(
 end
 
 function update_observed_and_labels!(
-        a::CategoricalAssignment{T, M, F}, swap::CategoricalSwap{M, F}) where {
-        T, M, F}
+        a::CategoricalAssignment{T, M, F, C}, swap::CategoricalSwap{M, F}) where {
+        T, M, F, C}
     g1 = get_group_of_vertex(a, swap.index1)
     g2 = get_group_of_vertex(a, swap.index2)
 

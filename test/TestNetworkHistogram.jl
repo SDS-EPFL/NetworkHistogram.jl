@@ -17,7 +17,6 @@ function test_swap_revertible(
           NH.get_group_of_vertex(a_test, swap.index2)
     @test NH.get_group_of_vertex(a, swap.index2) ==
           NH.get_group_of_vertex(a_test, swap.index1)
-
     # force recomputation of the log likelihood using default assignment
     a_new = to_default_assignment(a_test)
     @test NH.loglikelihood(a_new, g) ≈ NH.loglikelihood(a_test, g)

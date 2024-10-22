@@ -2,7 +2,7 @@ module NetworkHistogram
 
 using LinearAlgebra, SparseArrays, DataStructures
 using Distributions, DensityInterface
-using Graphs
+using Graphs, SimpleWeightedGraphs
 using PermutationSymmetricTensors
 using ProgressMeter: Progress, next!, finish!
 import StatsBase, Random
@@ -16,9 +16,9 @@ import Metis
 import IterativeSolvers
 import Clustering
 import StatsAPI: loglikelihood, fit
+using CategoricalArrays, CategoricalDistributions
 
-
-export  loglikelihood, fit
+export loglikelihood, fit
 
 include("assignments/Assignments.jl")
 include("sbm.jl")

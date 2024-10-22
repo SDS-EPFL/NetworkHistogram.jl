@@ -18,7 +18,7 @@ struct EstimatedDegrees <: EstimatedM end
 """
     select_number_node_per_block(g::Observations, rule::KSelectionRule)
 
-How to select the number of blocks `K` for the SBM model.
+How to select the number of blocks `K` for the BlockModel model.
 
 # Implemented rules
 - `OracleK(K::Int)`: Use the oracle number of blocks `K`.

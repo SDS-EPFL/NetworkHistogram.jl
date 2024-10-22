@@ -1,4 +1,4 @@
-struct SBM{T, K, F <: Real} <: AbstractMatrix{T}
+struct BlockModel{T, K, F <: Real} <: AbstractMatrix{T}
     sizes::Vector{F}
     probs::SymmetricTensor{T, K, 2}
 end
@@ -17,7 +17,7 @@ function initialize_sbm(sizes::Vector, dist, k = length(sizes))
     n_dims = binomial(k + 1, 2)
     probs = Vector{typeof(dist)}(undef, n_dims)
     fill!(probs, dist)
-    return SBM(sizes, SymmetricTensor(probs, Val(k), Val(2)))
+    return BlockModel(sizes, SymmetricTensor(probs, Val(k), Val(2)))
 end
 
 function initialize_sbm(sizes::GroupSize, dist, k = length(sizes))
@@ -25,25 +25,25 @@ function initialize_sbm(sizes::GroupSize, dist, k = length(sizes))
     n_dims = binomial(k + 1, 2)
     probs = Vector{typeof(dist)}(undef, n_dims)
     fill!(probs, dist)
-    return SBM(size_bins, SymmetricTensor(probs, Val(k), Val(2)))
+    return BlockModel(size_bins, SymmetricTensor(probs, Val(k), Val(2)))
 end
 
 function initialize_sbm(k::Int, dist)
     return initialize_sbm(ones(k) / k, dist)
 end
 
-number_blocks(::SBM{T, K}) where {T, K} = K
+number_blocks(::BlockModel{T, K, F}) where {T, K, F} = K
 
-Base.size(s::SBM) = size(s.probs)
-Base.ndims(::SBM) = 2
-Base.eltype(::SBM{T, K}) where {T, K} = T
-Base.setindex!(s::SBM, v, i, j) = setindex!(s.probs, v, i, j)
-Base.@propagate_inbounds function Base.getindex(s::SBM, i, j)
+Base.size(s::BlockModel) = size(s.probs)
+Base.ndims(::BlockModel) = 2
+Base.eltype(::BlockModel{T, K, F}) where {T, K, F} = T
+Base.setindex!(s::BlockModel, v, i, j) = setindex!(s.probs, v, i, j)
+Base.@propagate_inbounds function Base.getindex(s::BlockModel, i, j)
     return getindex(s.probs, i, j)
 end
 
 function sample(
-        rng::Random.AbstractRNG, sbm::SBM, node_labels::Vector{Int})
+        rng::Random.AbstractRNG, sbm::BlockModel, node_labels::Vector{Int})
     n_nodes = length(node_labels)
     type_input = eltype(sbm.probs[1, 1])
     A = Matrix{type_input}(undef, n_nodes, n_nodes)
@@ -57,11 +57,11 @@ function sample(
     return sparse(A), node_labels
 end
 
-function sample(sbm::SBM, node_labels::Vector{Int})
+function sample(sbm::BlockModel, node_labels::Vector{Int})
     sample(Random.default_rng(), sbm, node_labels)
 end
 function sample(
-        rng::Random.AbstractRNG, sbm::SBM, n_nodes::Int, sorted = true)
+        rng::Random.AbstractRNG, sbm::BlockModel, n_nodes::Int, sorted = true)
     n_blocks = number_blocks(sbm)
     node_labels = StatsBase.sample(
         rng, 1:n_blocks, StatsBase.weights(sbm.sizes), n_nodes, replace = true)
@@ -71,4 +71,6 @@ function sample(
     return sample(rng, sbm, node_labels)
 end
 
-sample(sbm::SBM, n_nodes::Int) = sample(Random.default_rng(), sbm, n_nodes)
+function sample(sbm::BlockModel, n_nodes::Int)
+    sample(Random.default_rng(), sbm, n_nodes)
+end

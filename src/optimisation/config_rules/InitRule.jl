@@ -69,18 +69,15 @@ function initialize_node_labels(g, h, ::MetisStart)
     group_size = GroupSize(number_nodes(g), h)
     node_labels = convert.(
         Int, Metis.partition(Metis.graph(g), length(group_size)))
-    check_compatiblity(group_size, node_labels)
+    check_compatiblity!(node_labels, group_size)
     return group_size, node_labels
 end
 
 function initialize_node_labels(g, h, rule::FromAssignment{A}) where {A}
     group_size = GroupSize(number_nodes(g), h)
-    check_compatiblity(group_size, rule.assignment.node_labels)
+    check_compatiblity!(rule.assignment.node_labels, group_size)
     return group_size, rule.assignment.node_labels
 end
-
-
-
 
 function initialize_node_labels(g, h, rule::HigherOrderSpectralStart)
     throw(ArgumentError("Not implemented yet, need to finish with Clustering.jl"))

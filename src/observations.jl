@@ -1,4 +1,4 @@
-#
+# switch to MetaGraphsNext.jl ?
 struct Observations{G, D}
     graph::G
     dist_ref::D
@@ -80,7 +80,19 @@ function normalized_laplacian(g::AbstractMatrix)
     return L
 end
 
-
-function Metis.graph(g::Observations)
+function Metis.graph(g::Observations{<:AbstractGraph, <:Bernoulli})
     return Metis.graph(g.graph)
+end
+
+function Metis.graph(g::Observations{<:AbstractMatrix, <:Bernoulli})
+    return Metis.graph(g.graph)
+end
+
+function Metis.graph(g::Observations{<:AbstractMatrix, <:Categorical})
+    return Metis.graph(adjacency_matrix(SimpleWeightedGraph(g.graph)), weights= true)
+end
+
+function Metis.graph(g::Observations{<:CategoricalMatrix, <:UnivariateFinite})
+    A, _ = categorical_matrix(g)
+    return Metis.graph(adjacency_matrix(SimpleWeightedGraph(A)), weights= true)
 end

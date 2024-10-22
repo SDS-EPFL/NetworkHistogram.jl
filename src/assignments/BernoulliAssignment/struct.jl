@@ -14,7 +14,7 @@ mutable struct BernoulliData{F}
     counts::Matrix{Int}
     realized::Matrix{Int}
     estimated_theta::Matrix{F}
-    A::BitMatrix  # possible improvement by using an adjacency list  Graphs.SimpleGraphs.adj(G)
+    A::BitMatrix  # possible improvement by using an adjacency list
     log_likelihood::F
 end
 

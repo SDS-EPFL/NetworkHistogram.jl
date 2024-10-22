@@ -1,12 +1,13 @@
-mutable struct CategoricalData{M, F}
+mutable struct CategoricalData{M, F, C}
     counts::Matrix{Int}
     realized::Matrix{MVector{M, Int}}
     estimated_theta::Matrix{MVector{M, F}}
-    A::Matrix{Int} # possible use of CategoricalArrays.jl ?
+    A::Matrix{C} # possible use of CategoricalArrays.jl ?
     log_likelihood::F
 end
 
-const CategoricalAssignment{T, M, F} = Assignment{T, CategoricalData{M, F}}
+const CategoricalAssignment{T, M, F, C} = Assignment{
+    T, CategoricalData{M, F, C}}
 const CategoricalInitRule{S, F} = InitRule{S, Val{CategoricalData}}
 
 function CategoricalAssignment(
@@ -32,7 +33,7 @@ function make_categorical_data(g, node_labels, group_size)
 
     # this is incorrect if the diagonal of the matrix is anything
     # else than 0, and that no "categories" is represented by 0
-    @inbounds @simd for k in 1:number_groups
+    @inbounds for k in 1:number_groups
         for l in k:number_groups
             for m in 1:num_categories
                 if k == l
@@ -69,17 +70,29 @@ function compute_log_likelihood(
     return loglik
 end
 
+function categorical_matrix(A::CategoricalMatrix)
+    @info "Converting CategoricalMatrix to matrix"
+    categories = levels(A)
+    return levelcode.(recode(
+        A, [l => i for (i, l) in enumerate(categories)]..., missing => 0))
+end
+
 # to update, just for test now
-function categorical_matrix(A)
-    A_inter = A .- minimum(A) .+ 1
+function categorical_matrix(A::AbstractMatrix{Int})
+    min_A = minimum(A)
+    if min_A > 1
+        A_inter = A .- min_A .+ 1
+    else
+        A_inter = copy(A)
+    end
     for i in 1:size(A_inter, 1)
         A_inter[i, i] = 0
     end
-    return A_inter, maximum(A_inter)
+    return A_inter
 end
 
 function categorical_matrix(g::Observations)
-    return categorical_matrix(g.graph)
+    return categorical_matrix(g.graph), length(support(g.dist_ref))
 end
 
 function loglikelihood(a::CategoricalAssignment, g::Observations)

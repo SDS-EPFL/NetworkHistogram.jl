@@ -12,12 +12,9 @@ import NetworkHistogram as NH
     n = 12
     k = 3
     dist = Categorical(p)
-    A = Symmetric(Random.rand(dist, n, n))
-    # set the diagonal to 0
-    for i in 1:n
-        A[i, i] = 0
-    end
-    obs = NH.Observations(A, dist)
+    sbm = NH.initialize_sbm(ones(k) ./ k, dist)
+    A, _ = NH.sample(sbm, repeat(1:k, inner = n ÷ k))
+    obs = NH.Observations(collect(A), dist)
     node_labels = repeat(1:k, inner = n ÷ k)
     a = NH.CategoricalAssignment(obs, NH.GroupSize(n, n ÷ k), node_labels)
     swap = NH.make_swap(a, (1, k + 1))
