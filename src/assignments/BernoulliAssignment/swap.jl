@@ -86,7 +86,7 @@ function update_ll!(a::BernoulliAssignment)
     return nothing
 end
 
-function fit_sbm(a::BernoulliAssignment, g::Observations)
+function fit(a::BernoulliAssignment, g::Observations)
     dists = initialize_sbm(a.group_size, Bernoulli(0.5))
     for group1 in 1:number_groups(a)
         for group2 in 1:number_groups(a)

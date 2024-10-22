@@ -9,13 +9,16 @@ import StatsBase, Random
 using DensityInterface: logdensityof
 using StaticArrays: MVector, MMatrix
 using LogExpFunctions: xlogx, xlogy
-import Distributions.fit
 using LoopVectorization: @turbo
 using ArnoldiMethod: LM, SR, LR, partialschur, partialeigen
 import Arpack
 import Metis
 import IterativeSolvers
 import Clustering
+import StatsAPI: loglikelihood, fit
+
+
+export  loglikelihood, fit
 
 include("assignments/Assignments.jl")
 include("sbm.jl")

@@ -47,7 +47,7 @@ function select_number_node_per_block(g::Observations, rule::OracleK)
 end
 
 function select_number_node_per_block(g::Observations, rule::OracleM)
-    rho = density(g.graph)
+    rho = density(g)
     n = number_nodes(g)
     k = max(2, round(Int, (2 * rule.M * rho)^(-1 / 4) * sqrt(n)))
     return select_number_node_per_block(g, OracleK(k))
@@ -71,7 +71,7 @@ end
 function estimated_number_nodes_per_block(
         g::Observations, ::EstimatedDegrees, points, rho)
     d = get_degree(g)
-    mult = ((d' * g.graph * d) / (sum(d .^ 2))^2)[1]
+    mult = ((d' * get_adj(g) * d) / (sum(d .^ 2))^2)[1]
     return _approx_k_from_delta_f(d, mult, points, rho)
 end
 

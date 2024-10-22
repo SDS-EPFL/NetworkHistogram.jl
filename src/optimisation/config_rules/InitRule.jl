@@ -68,7 +68,7 @@ end
 function initialize_node_labels(g, h, ::MetisStart)
     group_size = GroupSize(number_nodes(g), h)
     node_labels = convert.(
-        Int, Metis.partition(Metis.graph(g.graph), length(group_size)))
+        Int, Metis.partition(Metis.graph(g), length(group_size)))
     check_compatiblity(group_size, node_labels)
     return group_size, node_labels
 end
@@ -83,10 +83,9 @@ end
 
 
 function initialize_node_labels(g, h, rule::HigherOrderSpectralStart)
+    throw(ArgumentError("Not implemented yet, need to finish with Clustering.jl"))
     group_size = GroupSize(number_nodes(g), h)
-
     laplacian = normalized_laplacian(g)
     results = IterativeSolvers.lobpcg(laplacian, true, rule.k)
-    throw(ArgumentError("Not implemented yet, need to finish with Clustering.jl"))
     return group_size, node_labels
 end

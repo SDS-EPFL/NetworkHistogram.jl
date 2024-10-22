@@ -20,12 +20,12 @@ function test_swap_revertible(
 
     # force recomputation of the log likelihood using default assignment
     a_new = to_default_assignment(a_test)
-    @test NH.log_likelihood(a_new, g) ≈ NH.log_likelihood(a_test, g)
+    @test NH.loglikelihood(a_new, g) ≈ NH.loglikelihood(a_test, g)
 
     # revert the swap and check if the assignment is the same as before
     NH.revert_swap!(a_test, swap)
     @test a == a_test
-    @test NH.log_likelihood(a, g) ≈ NH.log_likelihood(a_test, g)
+    @test NH.loglikelihood(a, g) ≈ NH.loglikelihood(a_test, g)
 end
 
 end

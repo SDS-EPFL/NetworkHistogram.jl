@@ -82,7 +82,7 @@ function categorical_matrix(g::Observations)
     return categorical_matrix(g.graph)
 end
 
-function log_likelihood(a::CategoricalAssignment, g::Observations)
+function loglikelihood(a::CategoricalAssignment, g::Observations)
     return a.additional_data.log_likelihood
 end
 

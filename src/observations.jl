@@ -13,7 +13,11 @@ function number_nodes(g::Observations)
 end
 
 function get_obs(g::Observations, x::Tuple)
-    return get_obs(g.graph, x[1], x[2])
+    return get_obs(g, x[1], x[2])
+end
+
+function get_obs(g::Observations, i::Int, j::Int)
+    return get_obs(g.graph, i, j)
 end
 
 function get_obs(g::SimpleGraph, x::Tuple)
@@ -74,4 +78,9 @@ function normalized_laplacian(g::AbstractMatrix)
         end
     end
     return L
+end
+
+
+function Metis.graph(g::Observations)
+    return Metis.graph(g.graph)
 end

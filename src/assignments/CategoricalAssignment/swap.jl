@@ -43,7 +43,7 @@ function update_ll!(a::CategoricalAssignment)
     return nothing
 end
 
-function fit_sbm(
+function fit(
         a::CategoricalAssignment{T, M, F}, g::Observations) where {T, M, F}
     dists = initialize_sbm(a.group_size, Categorical(ones(M) / M))
     for group1 in 1:number_groups(a)

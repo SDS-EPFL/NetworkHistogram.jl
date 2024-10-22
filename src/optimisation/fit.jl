@@ -1,32 +1,25 @@
 # Slow fallback methods for the Assignment type
 # speed up by implementing specialized methods for the BernoulliAssignment type and others
 # method to compute estimator from node clustering as specified in assignment
-function fit_sbm(a::Assignment, g::Observations)
+function fit(a::Assignment, g::Observations)
     dists = initialize_sbm(a.group_size, g.dist_ref)
     for group1 in 1:number_groups(a)
         for group2 in group1:number_groups(a)
             edge_indices = get_edge_indices(a, group1, group2)
             dists[group1,
-            group2] = fit_group(g.dist_ref, g.graph, edge_indices)
+            group2] = fit_group(g.dist_ref, g, edge_indices)
         end
     end
     return dists
 end
 
 function fit_group(distribution, g, edges)
-    return fit(distribution, get_obs.(Ref(g), edges))
+    return Distributions.fit(typeof(distribution), get_obs.(Ref(g), edges))
 end
-
-function fit(dist, data)
-    error("NetworkHistogram.fit method not implemented for \
-            $(typeof(dist)) and $(typeof(data))")
-end
-
-fit(d::Distribution, data) = fit(typeof(d), data)
 
 # method to compute the log likelihood of a SBM fitted according to the assignment
-function log_likelihood(a::Assignment, g::Observations)
-    return _log_likelihood(a, fit_sbm(a, g), g.graph)
+function loglikelihood(a::Assignment, g::Observations)
+    return _log_likelihood(a, fit(a, g), g)
 end
 
 function _log_likelihood(a::Assignment, sbm::SBM, g)

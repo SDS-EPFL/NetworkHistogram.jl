@@ -86,15 +86,15 @@ function compute_log_likelihood(estimated_theta::AbstractMatrix{F},
     return loglik
 end
 
-function log_likelihood(assignment::BernoulliAssignment)
+function loglikelihood(assignment::BernoulliAssignment)
     return assignment.additional_data.log_likelihood
 end
 
-log_likelihood(a::BernoulliAssignment, g::Observations) = log_likelihood(a)
+loglikelihood(a::BernoulliAssignment, g::Observations) = loglikelihood(a)
 
 function force_recompute_ll(a::BernoulliAssignment, g::Observations)
     a_simple = Assignment(a.group_size, a.node_labels)
-    return log_likelihood(a_simple, g)
+    return loglikelihood(a_simple, g)
 end
 
 include("swap.jl")
