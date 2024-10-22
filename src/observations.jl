@@ -89,10 +89,12 @@ function Metis.graph(g::Observations{<:AbstractMatrix, <:Bernoulli})
 end
 
 function Metis.graph(g::Observations{<:AbstractMatrix, <:Categorical})
-    return Metis.graph(adjacency_matrix(SimpleWeightedGraph(g.graph)), weights= true)
+    return Metis.graph(
+        adjacency_matrix(SimpleWeightedGraph(g.graph)), weights = true)
 end
 
 function Metis.graph(g::Observations{<:CategoricalMatrix, <:UnivariateFinite})
     A, _ = categorical_matrix(g)
-    return Metis.graph(adjacency_matrix(SimpleWeightedGraph(A)), weights= true)
+    return Metis.graph(
+        adjacency_matrix(SimpleWeightedGraph(A)), weights = true)
 end

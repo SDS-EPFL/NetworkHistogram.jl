@@ -38,19 +38,18 @@ Base.@propagate_inbounds function Base.getindex(
     return i < length(g) ? g.group_number[1] : g.group_number[2]
 end
 
-
-function check_compatiblity!(node_labels,g::GroupSize,)
+function check_compatiblity!(node_labels, g::GroupSize)
     counts = StatsBase.countmap(node_labels)
     if length(counts) != g.number_groups || size(node_labels, 1) != sum(g)
         throw(ArgumentError("The vector of node labels is not compatible with the \
         group size: $(length(counts)) != $(g.number_groups) or $(size(node_labels, 1)) \
         != $(sum(g))"))
     end
-    unbalanced = any(((k,v),) -> v != g[k], counts)
+    unbalanced = any(((k, v),) -> v != g[k], counts)
     if unbalanced
         @info "The group size is unbalanced, trying to fix it"
         g, node_labels = try_fixing_group_size!(node_labels, g)
-        if any(((k,v),) -> v != g[k], StatsBase.countmap(node_labels))
+        if any(((k, v),) -> v != g[k], StatsBase.countmap(node_labels))
             throw(ArgumentError("Could not fix the group size"))
         else
             @info "Fixed the group size by moving nodes between groups"
@@ -58,18 +57,18 @@ function check_compatiblity!(node_labels,g::GroupSize,)
     end
 end
 
-
-function try_fixing_group_size!(node_labels,g::GroupSize)
+function try_fixing_group_size!(node_labels, g::GroupSize)
     counts = StatsBase.countmap(node_labels)
-    groups_too_small = filter(((k,v),)  -> v < g[k], counts)
-    groups_too_large = filter(((k,v),)  -> v > g[k], counts)
+    groups_too_small = filter(((k, v),) -> v < g[k], counts)
+    groups_too_large = filter(((k, v),) -> v > g[k], counts)
     amount_too_small = sum(g[k] - v for (k, v) in groups_too_small)
     amount_too_large = sum(v - g[k] for (k, v) in groups_too_large)
     if amount_too_small == amount_too_large
         nodes_to_move = []
-        for (l,v) in groups_too_large
+        for (l, v) in groups_too_large
             number_nodes_to_move = v - g[l]
-            nodes_to_move = vcat(nodes_to_move, findall(x-> x == l,node_labels)[1:number_nodes_to_move])
+            nodes_to_move = vcat(nodes_to_move,
+                findall(x -> x == l, node_labels)[1:number_nodes_to_move])
         end
         for (k, v) in groups_too_small
             number_nodes_to_move = g[k] - v
