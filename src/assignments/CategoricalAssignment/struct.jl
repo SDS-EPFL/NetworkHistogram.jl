@@ -21,9 +21,6 @@ function make_assignment(g, h, init_rule::CategoricalInitRule)
     node_labels = initialize_node_labels(
         g, h, init_rule.starting_assignment_rule)
     a = CategoricalAssignment(deepcopy(g), group_size, node_labels)
-    @show a.additional_data.log_likelihood
-    ll_test = force_recompute_ll(a, g)
-    @show ll_test
     return a
 end
 
