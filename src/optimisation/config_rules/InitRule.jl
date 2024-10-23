@@ -54,7 +54,7 @@ function initialize_node_labels(g, h, ::SpectralStart)
     laplacian = normalized_laplacian(g)
     _, eigenvectors = Arpack.eigs(laplacian, nev = 2, which = :LR)
     # get 2nd eigenvector, sort its components
-    indices = sortperm(eigenvectors[:, 1])
+    indices = sortperm(real.(eigenvectors[:, 1]))
     # bin them into groups of correct size
     start = 1
     for (i, group) in enumerate(group_size)

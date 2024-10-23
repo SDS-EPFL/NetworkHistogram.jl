@@ -1,11 +1,11 @@
 include("config_rules/include.jl")
 
-function optimize(g, h = select_bandwidth(g);
-        max_iter::Int = 1000,
-        initialise_rule::InitRule = InitRule(OrderedStart(), nothing),
+function optimize(g, h = select_number_node_per_block(g, EstimatedDegrees());
+        max_iter::Int = 10_000,
+        initialise_rule::InitRule = InitRule(RandomStart(), nothing),
         swap_rule::NodeSwapRule = RandomNodeSwap(),
         accept_rule::AcceptRule = Strict(),
-        stop_rule::StopRule = PreviousBestValue(10),
+        stop_rule::StopRule = PreviousBestValue(1000),
         progress_bar::Bool = false
 )
     a = make_assignment(g, h, initialise_rule)
@@ -15,10 +15,10 @@ function optimize(g, h = select_bandwidth(g);
     return a
 end
 
-function greedy_improve!(a::Assignment, g; max_iter::Int = 1000,
+function greedy_improve!(a::Assignment, g; max_iter::Int = 10_000,
         swap_rule::NodeSwapRule = RandomNodeSwap(),
         accept_rule::AcceptRule = Strict(),
-        stop_rule::StopRule = PreviousBestValue(10),
+        stop_rule::StopRule = PreviousBestValue(1000),
         progress_bar::Bool = false
 )
     # swap memory allocation

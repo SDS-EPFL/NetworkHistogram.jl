@@ -36,7 +36,7 @@ function density(g::AbstractGraph)
     return Graphs.density(g)
 end
 
-function density(g::AbstractMatrix{Bool})
+function density(g::AbstractMatrix)
     return sum(g) / ((size(g, 1) * (size(g, 1) - 1)))
 end
 
@@ -85,7 +85,7 @@ function Metis.graph(g::Observations{<:AbstractGraph, <:Bernoulli})
 end
 
 function Metis.graph(g::Observations{<:AbstractMatrix, <:Bernoulli})
-    return Metis.graph(g.graph)
+    return Metis.graph(SimpleGraph(g.graph))
 end
 
 function Metis.graph(g::Observations{<:AbstractMatrix, <:Categorical})

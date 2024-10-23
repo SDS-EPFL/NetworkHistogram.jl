@@ -21,7 +21,7 @@ function accept_reject_update!(a::Assignment, swap::Swap, g, ::Strict)
     # calculate the score of the new assignment
     new_score = score(a, g)
     # if the new assignment is worse, revert the swap
-    if new_score < current_score
+    if new_score <= current_score
         revert_swap!(a, swap)
     end
 end
