@@ -17,7 +17,6 @@ import IterativeSolvers
 import Clustering
 import StatsAPI: loglikelihood, fit
 using CategoricalArrays, CategoricalDistributions
-
 export loglikelihood, fit
 
 include("assignments/Assignments.jl")

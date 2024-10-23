@@ -1,7 +1,7 @@
 abstract type NodeSwapRule end
 
 struct RandomNodeSwap <: NodeSwapRule end
-
+struct RandomGroupSwap <: NodeSwapRule end
 """
     select_swap(node_assignment::Assignment, ::NodeSwapRule)
 
@@ -10,10 +10,15 @@ current assignment `node_assignment`.
 
 # Implemented rules
 - `RandomNodeSwap()`: Select two nodes at random.
+- `RandomGroupSwap()`: Select two nodes from two different groups at random.
 """
 select_swap
 
 function select_swap(assignment::Assignment, ::RandomNodeSwap)
+    return StatsBase.sample(1:number_nodes(assignment), 2; replace = false)
+end
+
+function select_swap(assignment::Assignment, ::RandomGroupSwap)
     groups = StatsBase.sample(
         1:number_groups(assignment), 2; replace = false)
     index1 = rand(get_vertex_in_group(assignment, groups[1]))

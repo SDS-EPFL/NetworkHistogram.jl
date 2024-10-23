@@ -7,14 +7,14 @@ mutable struct BernoulliSwap{F} <: Swap
 end
 
 function make_swap(
-        a::BernoulliAssignment{T, F}, id::Tuple{Int, Int}) where {T, F}
+        a::BernoulliAssignment{T, F}, id) where {T, F}
     return BernoulliSwap(id[1], id[2], copy(a.additional_data.realized),
         copy(a.additional_data.estimated_theta),
         a.additional_data.log_likelihood)
 end
 
 function make_swap!(swap::BernoulliSwap{F}, a::BernoulliAssignment{T, F},
-        id::Tuple{Int, Int}) where {T, F}
+        id) where {T, F}
     swap.index1, swap.index2 = id
     copy!(swap.realized, a.additional_data.realized)
     copy!(swap.estimated_theta, a.additional_data.estimated_theta)

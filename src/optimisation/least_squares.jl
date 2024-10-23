@@ -25,13 +25,9 @@ function greedy_improve!(a::Assignment, g; max_iter::Int = 10_000,
     swap = make_swap(a, (1, 1))
     p = Progress(max_iter; enabled = progress_bar)
     # perform local search until the stopping rule is met
-    score_value = score(a, g)
-    new_score_value = score_value
     for i in 1:max_iter
-        score_value = new_score_value
         local_search!(
             a, g, swap, swap_rule = swap_rule, accept_rule = accept_rule)
-        new_score_value = score(a, g)
         next!(p)
         if stopping_rule(a, g, stop_rule)
             println("Stopping rule kicked in at iteration $i.")

@@ -77,7 +77,7 @@ function get_edge_indices(a::Assignment, i, j)
     if i == j
         return get_edge_indices(a, i)
     else
-        return [(x,y) for x in get_vertex_in_group(a, i)
+        return [(x, y) for x in get_vertex_in_group(a, i)
                 for y in get_vertex_in_group(a, j)]
     end
 end

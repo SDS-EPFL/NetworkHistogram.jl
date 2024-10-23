@@ -1,13 +1,13 @@
-mutable struct CategoricalData{M, F, C}
+mutable struct CategoricalData{F, C}
     counts::Matrix{Int}
-    realized::Matrix{MVector{M, Int}}
-    estimated_theta::Matrix{MVector{M, F}}
+    realized::Array{Int, 3}
+    estimated_theta::Array{F, 3}
     A::Matrix{C} # possible use of CategoricalArrays.jl ?
-    log_likelihood::F
+    log_likelihood::F # need to remove this type
 end
 
-const CategoricalAssignment{T, M, F, C} = Assignment{
-    T, CategoricalData{M, F, C}}
+const CategoricalAssignment{T, F, C} = Assignment{
+    T, CategoricalData{F, C}}
 const CategoricalInitRule{S, F} = InitRule{S, Val{CategoricalData}}
 
 function CategoricalAssignment(
@@ -20,7 +20,7 @@ function make_assignment(g, h, init_rule::CategoricalInitRule)
     group_size,
     node_labels = initialize_node_labels(
         g, h, init_rule.starting_assignment_rule)
-    a = CategoricalAssignment(deepcopy(g), group_size, node_labels)
+    a = CategoricalAssignment(g, group_size, node_labels)
     return a
 end
 
@@ -28,12 +28,15 @@ function make_categorical_data(g, node_labels, group_size)
     number_groups = length(group_size)
     A, num_categories = categorical_matrix(g)
     counts = zeros(Int, number_groups, number_groups)
-    realized = [MVector{num_categories}(zeros(Int, num_categories))
-                for _ in 1:number_groups, _ in 1:number_groups]
+    realized = zeros(Int, num_categories, number_groups, number_groups)
+    estimated_theta = zeros(
+        Float64, num_categories, number_groups, number_groups)
 
-    _count_cat_occurences!(counts, realized, g, Assignment(group_size, node_labels))
+    _count_cat_occurences!(
+        counts, realized, g, Assignment(group_size, node_labels))
 
-    estimated_theta = realized ./ counts
+    _fast_div!(estimated_theta, realized, counts)
+
     ll = compute_log_likelihood(estimated_theta, realized)
     return CategoricalData(counts, realized, estimated_theta, A, ll)
 end
@@ -45,8 +48,8 @@ function _count_cat_occurences!(counts, realized, g, a_dummy)
                 Ref(g), get_edge_indices(a_dummy, k, l)))
             total = 0
             for (m, v) in counts_dict
-                realized[k, l][m] = v
-                realized[l, k][m] = v
+                realized[m, k, l] = v
+                realized[m, l, k] = v
                 total += v
             end
             counts[k, l] = total
@@ -55,22 +58,23 @@ function _count_cat_occurences!(counts, realized, g, a_dummy)
     end
 end
 
-
 function recount_occurences!(a)
-    _count_cat_occurences!(a.additional_data.counts, a.additional_data.realized, a.additional_data.A, a)
+    _count_cat_occurences!(
+        a.additional_data.counts, a.additional_data.realized, a.additional_data.A, a)
     return nothing
 end
 
 function compute_log_likelihood(
-        estimated_theta::AbstractMatrix{MVector{M, T}}, realized::AbstractMatrix{F}) where {
-        M, T, F}
+        estimated_theta::Array{T, 3}, realized::Array{F, 3}) where {
+        T, F}
     loglik = zero(T)
-    number_groups = size(estimated_theta, 1)
+    number_groups = size(estimated_theta, 2)
+    number_decorations = size(estimated_theta, 1)
     @inbounds for j in 1:number_groups
         for i in j:number_groups
-            for m in 1:length(estimated_theta[i, j])
-                if realized[i, j][m] != 0
-                    loglik += realized[i, j][m] * log(estimated_theta[i, j][m])
+            for m in 1:number_decorations
+                if realized[m, i, j] != 0
+                    loglik += realized[m, i, j] * log(estimated_theta[m, i, j])
                 end
             end
             #loglik += sum(log.(estimated_theta[i, j]) .* realized[i, j])

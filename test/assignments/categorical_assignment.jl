@@ -29,8 +29,10 @@ import NetworkHistogram as NH
     a_new = to_default_assignment(a_test)
     @test NH.loglikelihood(a_new, g) ≈ NH.loglikelihood(a_test, g)
     @test a_test.additional_data.realized != a.additional_data.realized
-    @test a_test.additional_data.estimated_theta != a.additional_data.estimated_theta
-    @test a_test.additional_data.log_likelihood != a.additional_data.log_likelihood
+    @test a_test.additional_data.estimated_theta !=
+          a.additional_data.estimated_theta
+    @test a_test.additional_data.log_likelihood !=
+          a.additional_data.log_likelihood
     # revert the swap and check if the assignment is the same as before
     NH.revert_swap!(a_test, swap)
     @test a == a_test
@@ -42,6 +44,9 @@ end
     realized = [[[1, 0, 0]] [[0, 4, 0]] [[0, 0, 4]];
                 [[0, 4, 0]] [[1, 0, 0]] [[0, 0, 4]];
                 [[0, 0, 4]] [[0, 0, 4]] [[1, 0, 0]]]
+    realized = [realized[I][k]
+                for k in eachindex(realized[1, 1]),
+    I in CartesianIndices(realized)]
     counts = [1 4 4
               4 1 4
               4 4 1]
@@ -61,15 +66,22 @@ end
     @test loglikelihood(a, g) ≈ 0
     @test a.additional_data.counts == counts
     swap_id = (1, 3)
-    realized_after_swap = [[[0, 1, 0]] [[2, 2, 0]] [[0, 0, 4]];
-                           [[2, 2, 0]] [[0, 1, 0]] [[0, 0, 4]];
-                           [[0, 0, 4]] [[0, 0, 4]] [[1, 0, 0]]]
+    ras = [[[0, 1, 0]] [[2, 2, 0]] [[0, 0, 4]];
+           [[2, 2, 0]] [[0, 1, 0]] [[0, 0, 4]];
+           [[0, 0, 4]] [[0, 0, 4]] [[1, 0, 0]]]
+    realized_after_swap = [ras[I][k]
+                           for k in eachindex(ras[1, 1]),
+    I in CartesianIndices(ras)]
+
     swap = NH.make_swap(a, swap_id)
     NH.apply_swap!(a, swap)
-    for index in eachindex(realized_after_swap)
-        @test all(realized_after_swap[index] .== a.additional_data.realized[index])
-        @test all(a.additional_data.estimated_theta[index] .≈
-                  realized_after_swap[index] ./ counts[index])
+    for j in 1:3
+        for i in 1:3
+            @test all(realized_after_swap[:, i, j] .==
+                      a.additional_data.realized[:, i, j])
+            @test all(a.additional_data.estimated_theta[:, i, j] .≈
+                      realized_after_swap[:, i, j] ./ counts[i, j])
+        end
     end
     @test loglikelihood(a, g) == 4 * log(0.5)
 end
@@ -98,15 +110,16 @@ end
          3 4 1 2 3 3 1 1 1 4 3 1 3 1 1 3 1 1 1 0]
     g = NH.Observations(A, Categorical(4))
     h = 6
-    a = NH.make_assignment(g, h, NH.InitRule(NH.OrderedStart(), Val{NH.CategoricalData}()))
-    a_ref  = deepcopy(a)
+    a = NH.make_assignment(
+        g, h, NH.InitRule(NH.OrderedStart(), Val{NH.CategoricalData}()))
+    a_ref = deepcopy(a)
     swap_indices = [(18, 5), (15, 10), (5, 13)]
     swap = NH.make_swap(a, swap_indices[1])
     for swap_index in swap_indices
         NH.make_swap!(swap, a, swap_index)
         NH.apply_swap!(a, swap)
-        @assert swap.realized == a_ref.additional_data.realized
-        @assert swap.estimated_theta == a_ref.additional_data.estimated_theta
+        @test swap.realized == a_ref.additional_data.realized
+        @test swap.estimated_theta == a_ref.additional_data.estimated_theta
         NH.revert_swap!(a, swap)
     end
 end
