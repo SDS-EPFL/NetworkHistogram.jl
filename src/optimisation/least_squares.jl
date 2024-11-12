@@ -30,7 +30,6 @@ function greedy_improve!(a::Assignment, g; max_iter::Int = 10_000,
             a, g, swap, swap_rule = swap_rule, accept_rule = accept_rule)
         next!(p)
         if stopping_rule(a, g, stop_rule)
-            println("Stopping rule kicked in at iteration $i.")
             finish!(p)
             break
         end

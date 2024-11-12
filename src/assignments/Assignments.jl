@@ -93,7 +93,7 @@ Base.@propagate_inbounds function Base.getindex(a::Assignment, i)
     return get_vertex_in_group(a, i)
 end
 
-function get_ordered_adjacency_matrix(a::Assignment)
-    perm = sortperm(a.node_labels)
-    return a.additional_data.A[perm, perm]
+function get_ordered_adjacency_matrix(a::Assignment, A, by=identity)
+    perm = sortperm(a.node_labels, by=by)
+    return A[perm, perm]
 end

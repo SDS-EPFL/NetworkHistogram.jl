@@ -119,3 +119,8 @@ function force_recompute_ll(a::CategoricalAssignment, g::Observations)
 end
 
 include("swap.jl")
+
+
+function get_ordered_adjacency_matrix(a::CategoricalAssignment, by=identity)
+    return get_ordered_adjacency_matrix(a, a.additional_data.A, by)
+end

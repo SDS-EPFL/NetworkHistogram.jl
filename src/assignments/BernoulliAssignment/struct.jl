@@ -98,3 +98,8 @@ function force_recompute_ll(a::BernoulliAssignment, g::Observations)
 end
 
 include("swap.jl")
+
+
+function get_ordered_adjacency_matrix(a::BernoulliAssignment, by=identity)
+    return get_ordered_adjacency_matrix(a, a.additional_data.A, by)
+end
