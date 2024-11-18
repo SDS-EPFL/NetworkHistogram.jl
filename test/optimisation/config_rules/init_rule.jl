@@ -1,6 +1,7 @@
 import NetworkHistogram as NH
 
 @testset "regression test" begin
+    Random.seed!(1234123)
     using Distributions: Bernoulli
     A = BitMatrix([0 0 1 0 1 0 1 1 0 1
                    0 0 1 1 1 1 1 1 0 0
@@ -26,6 +27,7 @@ import NetworkHistogram as NH
 end
 
 @testset "test oracle K" begin
+    Random.seed!(1234123)
     using Distributions: Bernoulli
     A = [0 1 1 1 0 0 1 0
          1 0 1 1 0 0 0 0

@@ -17,7 +17,7 @@ import IterativeSolvers
 import Clustering
 import StatsAPI: loglikelihood, fit
 using CategoricalArrays, CategoricalDistributions
-export loglikelihood, fit
+using Discretizers: LinearDiscretizer, binedges, DiscretizeUniformWidth, encode
 
 include("assignments/Assignments.jl")
 include("sbm.jl")
@@ -28,5 +28,28 @@ include("optimisation/include.jl")
 include("assignments/include.jl")
 
 @warn "User interface is not yet implemented"
+
+export loglikelihood, fit
+
+# export options for optimisation
+export estimate_graphon
+# starting assignment rules
+export InitRule
+export OrderedStart, RandomStart, SpectralStart, MetisStart, FromAssignment
+# accept rules
+export AcceptRule
+export Strict
+# stopping rules
+export PreviousBestValue
+# bandwidth selection rules
+export OracleK, EstimatedEigenvalues, EstimatedDegrees, select_number_node_per_block
+# random local search rules
+export RandomNodeSwap, RandomGroupSwap
+
+# export useful function for manipulating assignments
+export Assignment, number_groups, number_nodes
+export get_ordered_adjacency_matrix, get_vertex_in_group, get_group_of_vertex
+export BernoulliData, CategoricalData
+export Observations, discretise
 
 end

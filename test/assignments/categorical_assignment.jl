@@ -1,8 +1,10 @@
 import NetworkHistogram as NH
 
-@testset "test conversion to categorical observations" begin end
+using Random
+
 
 @testset "test Categorical swap" begin
+    Random.seed!(1234123)
     using ..TestNetworkHistogram: test_swap_revertible, to_default_assignment
     using Distributions: Categorical
     using LinearAlgebra: Symmetric

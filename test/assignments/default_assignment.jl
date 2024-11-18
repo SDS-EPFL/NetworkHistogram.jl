@@ -4,7 +4,7 @@ import NetworkHistogram as NH
     using ..TestNetworkHistogram: test_swap_revertible
     import Random, LinearAlgebra
     using Distributions: Bernoulli, Normal
-    Random.seed!(1234)
+    Random.seed!(1234123)
     n = 20
     k = 5
     #data = LinearAlgebra.Symmetric(Random.rand(Bool,n,n))

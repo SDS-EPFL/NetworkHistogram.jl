@@ -81,6 +81,8 @@ end
 
 function initialize_node_labels(g, h, rule::HigherOrderSpectralStart)
     throw(ArgumentError("Not implemented yet, need to finish with Clustering.jl"))
+    # this will need to have the main optim changed -> no assumption that all blocks are
+    # the same size
     group_size = GroupSize(number_nodes(g), h)
     laplacian = normalized_laplacian(g)
     results = IterativeSolvers.lobpcg(laplacian, true, rule.k)

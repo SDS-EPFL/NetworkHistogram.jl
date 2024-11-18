@@ -1,6 +1,6 @@
 include("config_rules/include.jl")
 
-function optimize(g, h = select_number_node_per_block(g, EstimatedDegrees());
+function estimate_graphon(g, h = select_number_node_per_block(g, EstimatedDegrees());
         max_iter::Int = 10_000,
         initialise_rule::InitRule = InitRule(RandomStart(), nothing),
         swap_rule::NodeSwapRule = RandomNodeSwap(),

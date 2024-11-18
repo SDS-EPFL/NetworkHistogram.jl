@@ -14,6 +14,10 @@ include("TestNetworkHistogram.jl")
         include("optimisation/config_rules/init_rule.jl")
     end
 
+    @testset "Observations tests" begin
+        include("observations/discretisation.jl")
+    end
+
     # @testset "Aqua.jl for package quality" begin
     #     using NetworkHistogram
     #     Aqua.test_all(NetworkHistogram)
