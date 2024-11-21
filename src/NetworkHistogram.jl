@@ -9,7 +9,6 @@ import StatsBase, Random
 using DensityInterface: logdensityof
 using StaticArrays: MVector, MMatrix
 using LogExpFunctions: xlogx, xlogy
-using LoopVectorization: @turbo
 using ArnoldiMethod: LM, SR, LR, partialschur, partialeigen
 import Arpack
 import Metis
