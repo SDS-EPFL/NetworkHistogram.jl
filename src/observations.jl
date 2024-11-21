@@ -66,6 +66,7 @@ end
 
 function normalized_laplacian(g::AbstractMatrix)
     degrees = sum(g, dims = 1)
+    degrees .-= minimum(degrees)
     n = size(g, 1)
     L = similar(g, Float64)
     for j in 1:n
@@ -74,7 +75,7 @@ function normalized_laplacian(g::AbstractMatrix)
                 L[i, j] = 1
             elseif degrees[i] == 0 || degrees[j] == 0
                 L[i, j] = 0
-            elseif g[i, j] == 1
+            elseif g[i, j] != 0
                 L[i, j] = -1 / sqrt(degrees[i] * degrees[j])
             end
         end
@@ -107,17 +108,21 @@ function discretise(g::Observations{<:AbstractMatrix{R}, D};
         throw(ArgumentError("Either `number_groups` or `number_levels` must be provided"))
     end
     if isnothing(number_levels)
-        number_levels = get_num_levels_from_groups(number_nodes(g), number_groups)
+        number_levels = round(Int,get_num_levels_from_groups(number_nodes(g), number_groups))
     else
         if !isnothing(number_groups)
             @warn "disregarding `number_groups` as `number_levels` is provided"
         end
     end
-    zero_locations = g.graph .== 0
+    #zero_locations = g.graph .== 0
     bin_edges = binedges(DiscretizeUniformWidth(number_levels), g.graph)
-    A_encoded = encode(LinearDiscretizer(bin_edges), g.graph)
-    A_encoded[zero_locations] .= 0
-    return Observations(A_encoded, Categorical(number_levels + 1))
+    discretizer = LinearDiscretizer(bin_edges)
+    A_encoded = encode(discretizer, g.graph)
+    for i in 1:size(A_encoded, 1)
+        A_encoded[i, i] = 0
+    end
+    #A_encoded[zero_locations] .= 0
+    return Observations(A_encoded, Categorical(number_levels + 1)), discretizer
 end
 
 function get_num_levels_from_groups(n, number_groups)

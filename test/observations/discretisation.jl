@@ -6,7 +6,7 @@ using NetworkHistogram
     for i in 1:20
         A[i, i] = 0
     end
-    g = Observations(A,Uniform(-1,1))
+    g, discretizer = Observations(A,Uniform(-1,1))
     discretised_g = discretise(g; number_levels = 5)
     @test size(discretised_g.graph) == size(g.graph)
     @test discretised_g.dist_ref == Categorical(6)

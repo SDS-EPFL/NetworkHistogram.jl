@@ -18,6 +18,7 @@ import Clustering
 import StatsAPI: loglikelihood, fit
 using CategoricalArrays, CategoricalDistributions
 using Discretizers: LinearDiscretizer, binedges, DiscretizeUniformWidth, encode
+using Combinatorics: permutations
 
 include("assignments/Assignments.jl")
 include("sbm.jl")

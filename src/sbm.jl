@@ -57,8 +57,8 @@ function sample(
     return sparse(A), node_labels
 end
 
-function sample(sbm::BlockModel, node_labels::Vector{Int})
-    sample(Random.default_rng(), sbm, node_labels)
+function sample(sbm::BlockModel, node_labels::Vector{Int}, sorted=false)
+    sample(Random.default_rng(), sbm, node_labels,sorted)
 end
 function sample(
         rng::Random.AbstractRNG, sbm::BlockModel, n_nodes::Int, sorted = true)
@@ -71,6 +71,50 @@ function sample(
     return sample(rng, sbm, node_labels)
 end
 
-function sample(sbm::BlockModel, n_nodes::Int)
-    sample(Random.default_rng(), sbm, n_nodes)
+function sample(sbm::BlockModel, n_nodes::Int, sorted=false)
+    sample(Random.default_rng(), sbm, n_nodes, sorted)
+end
+
+
+function get_probability_matrix(sbm::BlockModel, node_labels::Vector{Int})
+    return sbm.probs[node_labels, node_labels]
+end
+
+
+function _get_params_as_vec(dist::Distribution)
+    return vcat(params(dist)...)
+end
+
+
+"""
+    best_alignment(fitted_sbm::BlockModel, true_sbm::BlockModel, tol = 0.01)
+
+Find the best permutation of the blocks of `fitted_sbm` to match the blocks of `true_sbm` by
+comparing the mean absolute difference of the parameters of the two models.
+If the difference between the two models is less than `tol`, the function stops early.
+
+!!! warning
+    This function is not efficient for large numbers of blocks, as it uses brute force to
+    find the best permutation.
+"""
+function best_alignment(fitted_sbm::BlockModel, true_sbm::BlockModel, tol = 0.01)
+    k = number_blocks(fitted_sbm)
+    if k != number_blocks(true_sbm)
+        throw(ArgumentError("The number of blocks must be the same for both models"))
+    end
+    best_perm = nothing
+    best_loss = Inf
+    fitted_params = _get_params_as_vec.(fitted_sbm)
+    true_params = _get_params_as_vec.(true_sbm)
+    for perm in permutations(1:k)
+        loss = sum(map(x -> sum(abs.(x)), fitted_params[perm] .- true_params))
+        if loss < best_loss
+            best_loss = loss
+            best_perm = perm
+        end
+        if best_loss < tol
+            break
+        end
+    end
+    return best_perm
 end
