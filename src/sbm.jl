@@ -43,8 +43,11 @@ Base.@propagate_inbounds function Base.getindex(s::BlockModel, i, j)
 end
 
 function sample(
-        rng::Random.AbstractRNG, sbm::BlockModel, node_labels::Vector{Int})
+        rng::Random.AbstractRNG, sbm::BlockModel, node_labels::Vector{Int}, sorted=false)
     n_nodes = length(node_labels)
+    if sorted
+        sort!(node_labels)
+    end
     type_input = eltype(sbm.probs[1, 1])
     A = Matrix{type_input}(undef, n_nodes, n_nodes)
     for i in 1:n_nodes
@@ -58,7 +61,7 @@ function sample(
 end
 
 function sample(sbm::BlockModel, node_labels::Vector{Int}, sorted=false)
-    sample(Random.default_rng(), sbm, node_labels,sorted)
+    sample(Random.default_rng(), sbm, node_labels, sorted)
 end
 function sample(
         rng::Random.AbstractRNG, sbm::BlockModel, n_nodes::Int, sorted = true)

@@ -15,9 +15,9 @@ using Random
     k = 4
     dist = Categorical(p)
     sbm = NH.initialize_sbm(ones(k) ./ k, dist)
-    A, _ = NH.sample(sbm, repeat(1:k, inner = n ÷ k))
-    g = NH.Observations(collect(A), dist)
     node_labels = repeat(1:k, inner = n ÷ k)
+    A, _ = NH.sample(sbm, node_labels)
+    g = NH.Observations(collect(A), dist)
     a = NH.CategoricalAssignment(g, NH.GroupSize(n, n ÷ k), node_labels)
     swap = NH.make_swap(a, (1, k + 1))
     @test A[:, 1] != A[:, k + 1]

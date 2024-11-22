@@ -34,3 +34,9 @@ function _log_likelihood(a::Assignment, sbm::BlockModel, g)
     end
     return log_likelihood
 end
+
+
+function fit!(sbm::BlockModel{D,K,F}, g::Observations{G,D}) where {G,D,K,F}
+    k = number_blocks(sbm)
+
+end

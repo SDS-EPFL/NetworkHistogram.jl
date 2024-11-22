@@ -38,9 +38,9 @@ end
          1 0 0 0 1 1 0 0
          0 0 0 1 1 1 0 0]
     obs = NH.Observations(A, Bernoulli(0.5))
-    oracle = NH.OracleK(4)
+    oracle = NH.OracleH(4)
     @test NH.select_number_node_per_block(obs, oracle) == 4
-    err = ArgumentError("The number of blocks 5 is too large for the number of nodes \
-        8, it should be at most 4")
-    @test_throws err NH.select_number_node_per_block(obs, NH.OracleK(5))
+    err = ArgumentError("The number of nodes per block 5 is too large for the \
+    number of nodes 8, it should be at most 4")
+    @test_throws err NH.select_number_node_per_block(obs, NH.OracleH(5))
 end

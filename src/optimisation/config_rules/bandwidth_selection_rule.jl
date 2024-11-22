@@ -7,6 +7,11 @@ struct OracleM{F} <: KSelectionRule
     α::F
 end
 
+struct OracleH <: KSelectionRule
+    H::Int
+end
+
+
 function OracleM(M)
     return OracleM(M, 1.0)
 end
@@ -29,7 +34,7 @@ How to select the number of blocks `K` for the BlockModel model.
     estimate the Holder constant and then use `OracleM` to estimate the number of blocks `K`.
 - `EstimatedDegrees()`: Use the estimated degrees of the adjacency matrix to estimate the
     Holder constant and then use `OracleM` to estimate the number of blocks `K`.
-
+- `OracleH(H::Int)`: Use the oracle number of nodes per block `H`.
 
 !!! info
     - The number of blocks `K` should be at most `n/2` where `n` is the number of nodes in
@@ -38,19 +43,28 @@ How to select the number of blocks `K` for the BlockModel model.
 """
 select_number_node_per_block
 
-function select_number_node_per_block(g::Observations, rule::OracleK)
-    if rule.K > number_nodes(g) ÷ 2
-        throw(ArgumentError("The number of blocks $(rule.K) is too large for the number \
-        of nodes $(number_nodes(g)), it should be at most $(number_nodes(g)÷2)"))
+function select_number_node_per_block(g::Observations, rule::OracleH)
+    if rule.H > number_nodes(g)÷2
+        throw(ArgumentError("The number of nodes per block $(rule.H) is too large for the \
+        number of nodes $(number_nodes(g)), it should be at most $(number_nodes(g)÷2)"))
     end
-    return rule.K
+    if rule.H <= 1
+        throw(ArgumentError("The number of nodes per block $(rule.H) is too small, it should \
+        be at least 2"))
+    end
+    return rule.H
+end
+
+function select_number_node_per_block(g::Observations, rule::OracleK)
+    nodes_per_block = number_nodes(g) ÷ rule.K
+    return select_number_node_per_block(g, OracleH(nodes_per_block))
 end
 
 function select_number_node_per_block(g::Observations, rule::OracleM)
     rho = density(g)
     n = number_nodes(g)
     k = max(2, round(Int, (2 * rule.M * rho)^(-1 / 4) * sqrt(n)))
-    return select_number_node_per_block(g, OracleK(k))
+    return select_number_node_per_block(g, OracleH(k))
 end
 
 function select_number_node_per_block(g::Observations, rule::EstimatedM)
@@ -59,7 +73,7 @@ function select_number_node_per_block(g::Observations, rule::EstimatedM)
     number_points_from_mid = round(Int, c * sqrt(n))
     mid_points = max(1, n ÷ 2 - number_points_from_mid):(n ÷ 2 + number_points_from_mid)
     m = estimated_number_nodes_per_block(g, rule, mid_points, density(g))
-    return select_number_node_per_block(g, OracleK(m))
+    return select_number_node_per_block(g, OracleH(m))
 end
 
 function estimated_number_nodes_per_block(

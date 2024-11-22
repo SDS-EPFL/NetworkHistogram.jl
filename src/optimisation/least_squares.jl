@@ -2,7 +2,7 @@ include("config_rules/include.jl")
 
 function estimate_graphon(g, h = select_number_node_per_block(g, EstimatedDegrees());
         max_iter::Int = 10_000,
-        initialise_rule::InitRule = InitRule(RandomStart(), nothing),
+        initialise_rule::InitRule = InitRule(SpectralStart(), nothing),
         swap_rule::NodeSwapRule = RandomNodeSwap(),
         accept_rule::AcceptRule = Strict(),
         stop_rule::StopRule = PreviousBestValue(1000),
