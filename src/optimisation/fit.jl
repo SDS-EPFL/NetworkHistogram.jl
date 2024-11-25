@@ -21,6 +21,11 @@ function fit_group(distribution, g, edges)
     return Distributions.fit(typeof(distribution), get_obs.(Ref(g), edges))
 end
 
+
+function fit_group(distribution::Binomial, g, edges)
+    return Distributions.fit(typeof(distribution), ntrials(distribution), get_obs.(Ref(g), edges))
+end
+
 # method to compute the log likelihood of a BlockModel fitted according to the assignment
 function loglikelihood(a::Assignment, g::Observations)
     return _log_likelihood(a, fit(a, g), g)
