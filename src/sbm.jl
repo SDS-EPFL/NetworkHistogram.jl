@@ -121,3 +121,9 @@ function best_alignment(fitted_sbm::BlockModel, true_sbm::BlockModel, tol = 0.01
     end
     return best_perm
 end
+
+
+function align_sbm!(sbm::BlockModel, perm)
+    sbm.probs = sbm.probs[perm, perm]
+    sbm.sizes = sbm.sizes[perm]
+end
