@@ -3,14 +3,18 @@
 # method to compute estimator from node clustering as specified in assignment
 function fit(a::Assignment, g::Observations)
     dists = initialize_sbm(a.group_size, g.dist_ref)
+    fit!(dists, g, a)
+    return dists
+end
+
+function fit!(sbm::BlockModel{D,K,F}, g::Observations{G,D}, a::Assignment) where {G,D,K,F}
     for group1 in 1:number_groups(a)
         for group2 in group1:number_groups(a)
             edge_indices = get_edge_indices(a, group1, group2)
-            dists[group1,
+            sbm[group1,
             group2] = fit_group(g.dist_ref, g, edge_indices)
         end
     end
-    return dists
 end
 
 function fit_group(distribution, g, edges)
@@ -38,5 +42,6 @@ end
 
 function fit!(sbm::BlockModel{D,K,F}, g::Observations{G,D}) where {G,D,K,F}
     k = number_blocks(sbm)
-
+    a = estimate_graphon(g, select_number_node_per_block(g, OracleK(k)))
+    fit!(sbm, g, a)
 end
