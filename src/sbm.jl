@@ -124,6 +124,6 @@ end
 
 
 function align_sbm!(sbm::BlockModel, perm)
-    sbm.probs = sbm.probs[perm, perm]
-    sbm.sizes = sbm.sizes[perm]
+    sbm.probs .= sbm.probs[perm, perm]
+    sbm.sizes .= sbm.sizes[perm]
 end
