@@ -1,6 +1,6 @@
 module NetworkHistogram
 
-using LinearAlgebra, SparseArrays, DataStructures
+using LinearAlgebra, SparseArrays
 using Distributions, DensityInterface
 using Graphs, SimpleWeightedGraphs
 using PermutationSymmetricTensors
