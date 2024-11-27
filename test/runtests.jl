@@ -18,6 +18,9 @@ include("TestNetworkHistogram.jl")
         include("observations/discretisation.jl")
     end
 
+    @testset "API tests" begin
+        include("test_api.jl")
+    end
     @testset "Aqua.jl for package quality" begin
         using NetworkHistogram
         Aqua.test_all(NetworkHistogram)

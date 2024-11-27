@@ -91,9 +91,18 @@ function Metis.graph(g::Observations{<:AbstractMatrix, <:Bernoulli})
     return Metis.graph(SimpleGraph(g.graph))
 end
 
-function Metis.graph(g::Observations{<:AbstractMatrix, <:Categorical})
+function Metis.graph(g::Observations{<:AbstractGraph, <:UnivariateDistribution})
+    if minimum(g.dist_ref) < 0
+        @warn "Negative values are not allowed for MetisStart, using binary graph"
+        return Metis.graph(g.graph)
+    else
+        return Metis.graph(g.graph, weights = true)
+    end
+end
+
+function Metis.graph(g::Observations{<:AbstractMatrix, <:UnivariateDistribution})
     return Metis.graph(
-        adjacency_matrix(SimpleWeightedGraph(g.graph)), weights = true)
+        weights(SimpleWeightedGraph(g.graph)), weights = true)
 end
 
 function Metis.graph(g::Observations{<:CategoricalMatrix, <:UnivariateFinite})
@@ -102,8 +111,8 @@ function Metis.graph(g::Observations{<:CategoricalMatrix, <:UnivariateFinite})
         adjacency_matrix(SimpleWeightedGraph(A)), weights = true)
 end
 
-function discretise(g::Observations{<:AbstractMatrix{R}, D};
-        number_groups = nothing, number_levels = nothing) where {R<:Real, D}
+function discretise(g::Observations{G, D};
+        number_groups = nothing, number_levels = nothing) where {G, D}
     if isnothing(number_groups) && isnothing(number_levels)
         throw(ArgumentError("Either `number_groups` or `number_levels` must be provided"))
     end
@@ -116,13 +125,26 @@ function discretise(g::Observations{<:AbstractMatrix{R}, D};
     end
     #zero_locations = g.graph .== 0
     bin_edges = binedges(DiscretizeUniformWidth(number_levels), g.graph)
-    discretizer = LinearDiscretizer(bin_edges)
-    A_encoded = encode(discretizer, g.graph)
+    discretiser = LinearDiscretizer(bin_edges)
+    return discretise(g, discretiser)
+end
+
+function discretise(g::Observations{G, D}, discretiser ::LinearDiscretizer) where {G,D<:UnivariateDistribution}
+    A_encoded = encode(discretiser, _graph_to_mat(g))
     for i in 1:size(A_encoded, 1)
         A_encoded[i, i] = 0
     end
     #A_encoded[zero_locations] .= 0
-    return Observations(A_encoded, Categorical(number_levels + 1)), discretizer
+    return Observations(A_encoded, Categorical(discretiser.nbins + 1)), discretiser
+end
+
+
+function _graph_to_mat(g::Observations{<:AbstractGraph, D}) where {D<:UnivariateDistribution}
+    return weights(g.graph)
+end
+
+function _graph_to_mat(g::Observations{<:AbstractMatrix, D}) where {D<:UnivariateDistribution}
+    return g.graph
 end
 
 function get_num_levels_from_groups(n, number_groups)

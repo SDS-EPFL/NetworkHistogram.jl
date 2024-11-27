@@ -103,3 +103,19 @@ include("swap.jl")
 function get_ordered_adjacency_matrix(a::BernoulliAssignment, by=identity)
     return get_ordered_adjacency_matrix(a, a.additional_data.A, by)
 end
+
+
+
+# TODO: move to sparse structure to encode difference between 0 weight and absence of edge
+# from docs:
+# A = sparse(I,J,V)
+# rows = rowvals(A)
+# vals = nonzeros(A)
+# m, n = size(A)
+# for j = 1:n
+#    for i in nzrange(A, j)
+#       row = rows[i]
+#       val = vals[i]
+#       # perform sparse wizardry...
+#    end
+# end

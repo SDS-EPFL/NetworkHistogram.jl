@@ -3,6 +3,12 @@ struct BlockModel{T, K, F <: Real} <: AbstractMatrix{T}
     probs::SymmetricTensor{T, K, 2}
 end
 
+function BlockModel(θ::AbstractMatrix{T}, sizes::Vector{F}) where {T, F <: Real}
+    return BlockModel(sizes,
+        SymmetricTensor([θ[i, j] for i in 1:size(θ, 1) for j in i:size(θ, 2)],
+            Val(length(sizes)), Val(2)))
+end
+
 function _check_sizes(sizes)
     @assert sum(sizes)≈1 "Sizes must sum to 1, got $(sum(sizes))"
     return sizes
@@ -43,7 +49,7 @@ Base.@propagate_inbounds function Base.getindex(s::BlockModel, i, j)
 end
 
 function sample(
-        rng::Random.AbstractRNG, sbm::BlockModel, node_labels::Vector{Int}, sorted=false)
+        rng::Random.AbstractRNG, sbm::BlockModel, node_labels::Vector{Int}, sorted = false)
     n_nodes = length(node_labels)
     if sorted
         sort!(node_labels)
@@ -60,7 +66,7 @@ function sample(
     return sparse(A), node_labels
 end
 
-function sample(sbm::BlockModel, node_labels::Vector{Int}, sorted=false)
+function sample(sbm::BlockModel, node_labels::Vector{Int}, sorted = false)
     sample(Random.default_rng(), sbm, node_labels, sorted)
 end
 function sample(
@@ -74,20 +80,17 @@ function sample(
     return sample(rng, sbm, node_labels)
 end
 
-function sample(sbm::BlockModel, n_nodes::Int, sorted=false)
+function sample(sbm::BlockModel, n_nodes::Int, sorted = false)
     sample(Random.default_rng(), sbm, n_nodes, sorted)
 end
-
 
 function get_probability_matrix(sbm::BlockModel, node_labels::Vector{Int})
     return sbm.probs[node_labels, node_labels]
 end
 
-
 function _get_params_as_vec(dist::Distribution)
     return vcat(params(dist)...)
 end
-
 
 """
     best_alignment(fitted_sbm::BlockModel, true_sbm::BlockModel, tol = 0.01)
@@ -121,7 +124,6 @@ function best_alignment(fitted_sbm::BlockModel, true_sbm::BlockModel, tol = 0.01
     end
     return best_perm
 end
-
 
 function align_sbm!(sbm::BlockModel, perm)
     sbm.probs .= sbm.probs[perm, perm]

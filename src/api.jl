@@ -1,13 +1,74 @@
-import MLJModelInterface
-const MMI = MLJModelInterface
-using PermutationSymmetricTensors
-using Distributions
+# import MLJModelInterface
+# const MMI = MLJModelInterface
+# using PermutationSymmetricTensors
+# using Distributions
 
-MMI.@mlj_model mutable struct SBM <: MMI.Probabilistic
-    k::Int = 1::(_ > 0)
-    D::Val{<:Distribution} = Val{Bernoulli}()
+# MMI.@mlj_model mutable struct SBM <: MMI.Probabilistic
+#     k::Int = 1::(_ > 0)
+#     D::Val{<:Distribution} = Val{Bernoulli}()
+# end
+
+# function MMI.fit(model::SBM, X, y)
+#     return model
+# end
+
+function _default_init(dist::Distribution, start = MetisStart())
+    if dist isa Bernoulli
+        return InitRule(start, Val{BernoulliData}())
+    elseif dist isa Categorical
+        return InitRule(start, Val{CategoricalData}())
+    else
+        return InitRule(start, nothing)
+    end
 end
 
-function MMI.fit(model::SBM, X, y)
-    return model
+function _nethist(g::Observations{G, D}, h; kwargs...) where {G, D}
+    kwargs_dict = Dict(kwargs)
+    start_clustering = pop!(kwargs_dict, :start_clustering, MetisStart())
+    initialise_rule = pop!(
+        kwargs_dict, :initialise_rule, _default_init(g.dist_ref, start_clustering))
+    a = estimate_graphon(g, h;
+        kwargs_dict..., initialise_rule = initialise_rule)
+    return fit(a, g)
+end
+
+function nethist(g::Observations{G, D};
+        h = select_number_node_per_block(g, EstimatedDegrees()),
+        max_iter = 10_000,
+        stalled_iter = 1000,
+        swap_rule::NodeSwapRule = RandomNodeSwap(),
+        accept_rule::AcceptRule = Strict(),
+        progress_bar::Bool = false,
+        start_clustering = MetisStart()
+) where {G, D}
+    return _nethist(g, h;
+        max_iter = max_iter,
+        swap_rule = swap_rule,
+        accept_rule = accept_rule,
+        stop_rule = PreviousBestValue(stalled_iter),
+        progress_bar = progress_bar,
+        start_clustering = start_clustering)
+end
+
+function nethist_discretised(g::Observations{G, D};
+        number_levels = nothing,
+        h = select_number_node_per_block(g, EstimatedDegrees()),
+        max_iter = 10_000,
+        stalled_iter = 1000,
+        swap_rule::NodeSwapRule = RandomNodeSwap(),
+        accept_rule::AcceptRule = Strict(),
+        progress_bar::Bool = false,
+        start_clustering = MetisStart()
+) where {G, D}
+    num_groups = isnothing(number_levels) ? number_nodes(g) ÷ h : nothing
+    obs_discrete, discretiser = discretise(
+        g, number_groups = num_groups, number_levels = number_levels)
+    sbm_discretise = _nethist(obs_discrete, h;
+        max_iter = max_iter,
+        swap_rule = swap_rule,
+        accept_rule = accept_rule,
+        stop_rule = PreviousBestValue(stalled_iter),
+        progress_bar = progress_bar,
+        start_clustering = start_clustering)
+    return sbm_discretise, discretiser
 end
