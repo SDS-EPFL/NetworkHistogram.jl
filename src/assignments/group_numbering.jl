@@ -47,12 +47,12 @@ function check_compatiblity!(node_labels, g::GroupSize)
     end
     unbalanced = any(((k, v),) -> v != g[k], counts)
     if unbalanced
-        @info "The group size is unbalanced, trying to fix it : $(counts)"
+        @debug "The group size is unbalanced, trying to fix it : $(counts)"
         g, node_labels = try_fixing_group_size!(node_labels, g)
         if any(((k, v),) -> v != g[k], StatsBase.countmap(node_labels))
             throw(ArgumentError("Could not fix the group size"))
         else
-            @info "Fixed the group size by moving nodes between groups"
+            @debug "Fixed the group size by moving nodes between groups"
         end
     end
 end
