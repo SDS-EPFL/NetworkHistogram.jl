@@ -76,7 +76,7 @@ function draw_and_fill!(rng::Random.AbstractRNG, A, sbm::BlockModel, sorted = fa
     if sorted
         sort!(node_labels)
     end
-    for j in 1:n_nodes
+    @inbounds for j in 1:n_nodes
         for i in (j + 1):n_nodes
             A[i, j] = Random.rand(rng, sbm[node_labels[i], node_labels[j]])
         end

@@ -36,7 +36,7 @@ function nethist(g::Observations{G, D};
         h = select_number_node_per_block(g, EstimatedDegrees()),
         max_iter = 10_000,
         stalled_iter = 1000,
-        swap_rule::NodeSwapRule = RandomNodeSwap(),
+        swap_rule::NodeSwapRule = RandomGroupSwap(),
         accept_rule::AcceptRule = Strict(),
         progress_bar::Bool = false,
         start_clustering = MetisStart()
@@ -55,7 +55,7 @@ function nethist_discretised(g::Observations{G, D};
         h = select_number_node_per_block(g, EstimatedDegrees()),
         max_iter = 10_000,
         stalled_iter = 1000,
-        swap_rule::NodeSwapRule = RandomNodeSwap(),
+        swap_rule::NodeSwapRule = RandomGroupSwap(),
         accept_rule::AcceptRule = Strict(),
         progress_bar::Bool = false,
         start_clustering = MetisStart()

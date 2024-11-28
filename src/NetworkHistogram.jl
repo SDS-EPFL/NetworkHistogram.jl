@@ -19,6 +19,11 @@ using CategoricalArrays, CategoricalDistributions
 using Discretizers: LinearDiscretizer, binedges, DiscretizeUniformWidth, encode
 using Combinatorics: permutations
 
+
+using Bootstrap: BootstrapSampling, ParametricBootstrapSample, tx
+import Bootstrap: bootstrap
+
+
 include("assignments/Assignments.jl")
 include("sbm.jl")
 include("observations.jl")
@@ -28,6 +33,7 @@ include("optimisation/include.jl")
 include("assignments/include.jl")
 
 include("api.jl")
+include("bootstrap.jl")
 
 export nethist, nethist_discretised
 export loglikelihood, fit
@@ -52,5 +58,9 @@ export Assignment, number_groups, number_nodes
 export get_ordered_adjacency_matrix, get_vertex_in_group, get_group_of_vertex
 export BernoulliData, CategoricalData
 export Observations, discretise
+
+
+
+export bootstrap
 
 end
