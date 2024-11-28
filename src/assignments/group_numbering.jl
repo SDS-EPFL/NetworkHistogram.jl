@@ -41,10 +41,13 @@ end
 function check_compatiblity!(node_labels, g::GroupSize)
     counts = StatsBase.countmap(node_labels)
 
-    if length(counts) != g.number_groups || size(node_labels, 1) != sum(g)
+    if length(counts) != g.number_groups
         throw(ArgumentError("The vector of node labels is not compatible with the \
-        group size: group number $(length(counts)) != $(g.number_groups) or node number \
-        $(size(node_labels, 1)) != $(sum(g))"))
+        group size: number of group in labels $(length(counts)) != expected number $(g.number_groups)"))
+    end
+    if size(node_labels, 1) != sum(g)
+        throw(ArgumentError("The vector of node labels is not compatible with the \
+        group size: number of node labels  $(size(node_labels, 1)) != expected number of nodes $(sum(g))"))
     end
     unbalanced = any(((k, v),) -> v != g[k], counts)
     if unbalanced
