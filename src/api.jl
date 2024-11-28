@@ -15,7 +15,7 @@ function _nethist(g::Observations{G, D}, h; kwargs...) where {G, D}
         kwargs_dict, :initialise_rule, _default_init(g.dist_ref, start_clustering))
     a = estimate_graphon(g, h;
         kwargs_dict..., initialise_rule = initialise_rule)
-    return fit(a, g)
+    return fit(a, g), a
 end
 
 function nethist(g::Observations{G, D};
@@ -49,12 +49,12 @@ function nethist_discretised(g::Observations{G, D};
     num_groups = isnothing(number_levels) ? number_nodes(g) ÷ h : nothing
     obs_discrete, discretiser = discretise(
         g, number_groups = num_groups, number_levels = number_levels)
-    sbm_discretise = _nethist(obs_discrete, h;
+    sbm_discretise, a = _nethist(obs_discrete, h;
         max_iter = max_iter,
         swap_rule = swap_rule,
         accept_rule = accept_rule,
         stop_rule = PreviousBestValue(stalled_iter),
         progress_bar = progress_bar,
         start_clustering = start_clustering)
-    return sbm_discretise, discretiser
+    return sbm_discretise, a, discretiser
 end
