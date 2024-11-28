@@ -9,6 +9,10 @@ function BlockModel(θ::AbstractMatrix{T}, sizes::Vector{F}) where {T, F <: Real
             Val(length(sizes)), Val(2)))
 end
 
+function edge_type(::BlockModel{T, K, F}) where {T, K, F}
+    return eltype(T)
+end
+
 function _check_sizes(sizes)
     @assert sum(sizes)≈1 "Sizes must sum to 1, got $(sum(sizes))"
     return sizes
@@ -54,23 +58,39 @@ function sample(
     if sorted
         sort!(node_labels)
     end
-    type_input = eltype(sbm.probs[1, 1])
-    A = Matrix{type_input}(undef, n_nodes, n_nodes)
-    for i in 1:n_nodes
-        A[i, i] = zero(eltype(A))
-        for j in (i + 1):n_nodes
+    A = zeros(edge_type(sbm), n_nodes, n_nodes)
+    for j in 1:n_nodes
+        for i in (j + 1):n_nodes
             A[i, j] = Random.rand(rng, sbm[node_labels[i], node_labels[j]])
-            A[j, i] = A[i, j]
         end
     end
-    return sparse(A), node_labels
+    return sparse(Symmetric(A, :L)), node_labels
 end
+
+
+function draw_and_fill!(rng::Random.AbstractRNG, A, sbm::BlockModel, sorted = false)
+    n_blocks = number_blocks(sbm)
+    n_nodes = size(A, 1)
+    node_labels = StatsBase.sample(
+        rng, 1:n_blocks, StatsBase.weights(sbm.sizes), n_nodes, replace = true)
+    if sorted
+        sort!(node_labels)
+    end
+    for j in 1:n_nodes
+        for i in (j + 1):n_nodes
+            A[i, j] = Random.rand(rng, sbm[node_labels[i], node_labels[j]])
+        end
+    end
+    A .= Symmetric(A, :L)
+end
+
+draw_and_fill!(A, sbm, sorted = false) = draw_and_fill!(Random.default_rng(), A, sbm, sorted)
 
 function sample(sbm::BlockModel, node_labels::Vector{Int}, sorted = false)
     sample(Random.default_rng(), sbm, node_labels, sorted)
 end
 function sample(
-        rng::Random.AbstractRNG, sbm::BlockModel, n_nodes::Int, sorted = true)
+        rng::Random.AbstractRNG, sbm::BlockModel, n_nodes::Int, sorted = false)
     n_blocks = number_blocks(sbm)
     node_labels = StatsBase.sample(
         rng, 1:n_blocks, StatsBase.weights(sbm.sizes), n_nodes, replace = true)
