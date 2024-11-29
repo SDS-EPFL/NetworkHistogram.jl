@@ -6,12 +6,12 @@
     end
 
     g = Observations(Symmetric(A), Uniform(-1, 1))
-    sbm_fitted = nethist(g; h = 10, max_iter = 10)
+    sbm_fitted, a = nethist(g; h = 10, max_iter = 10)
 
     @test eltype(sbm_fitted) == typeof(Uniform(-1, 1))
     @test size(sbm_fitted) == (4,4)
 
-    sbm_discretised, discretizer = nethist_discretised(
+    sbm_discretised, a, discretizer = nethist_discretised(
         g; number_levels = 5, h = 10, max_iter = 10)
     @test eltype(sbm_discretised) == typeof(Categorical(5))
     @test size(sbm_discretised) == (4,4)
