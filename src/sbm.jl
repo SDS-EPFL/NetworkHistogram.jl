@@ -113,10 +113,10 @@ function _get_params_as_vec(dist::Distribution)
 end
 
 
-function latent_to_block_index(latents::Vector{T}, sbm::BlockModel) where T<:Real
+function latent_to_block_index(latents_vec, sbm::BlockModel)
     cum_sum_sizes = cumsum(sbm.sizes)
     cum_sum_sizes[end] = 1.0
-    return [findfirst(x -> x >= l, cum_sum_sizes) for l in latents]
+    return [findfirst(x -> x >= l, Ref(cum_sum_sizes)) for l in latents_vec]
 end
 
 """
