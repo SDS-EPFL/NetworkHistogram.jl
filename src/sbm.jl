@@ -116,7 +116,7 @@ end
 function latent_to_block_index(latents_vec, sbm::BlockModel)
     cum_sum_sizes = cumsum(sbm.sizes)
     cum_sum_sizes[end] = 1.0
-    return [findfirst(x -> x >= l, Ref(cum_sum_sizes)) for l in latents_vec]
+    return [findfirst(x -> x >= l, cum_sum_sizes) for l in latents_vec]
 end
 
 """
