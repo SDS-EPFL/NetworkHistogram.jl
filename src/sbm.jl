@@ -112,6 +112,13 @@ function _get_params_as_vec(dist::Distribution)
     return vcat(params(dist)...)
 end
 
+
+function latent_to_block_index(latents::Vector{T}, sbm::BlockModel) where T<:Real
+    cum_sum_sizes = cumsum(sbm.sizes)
+    cum_sum_sizes[end] = 1.0
+    return [findfirst(x -> x >= l, cum_sum_sizes) for l in latents]
+end
+
 """
     best_alignment(fitted_sbm::BlockModel, true_sbm::BlockModel, tol = 0.01)
 
