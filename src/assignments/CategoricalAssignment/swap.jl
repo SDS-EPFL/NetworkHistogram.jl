@@ -24,10 +24,6 @@ function make_swap!(
         id) where {T, F, C}
     swap.index1, swap.index2 = id
     copy_realized_and_theta!(swap, a.additional_data)
-    #copy!.(swap.realized, a.additional_data.realized)
-    #copy!.(swap.estimated_theta, a.additional_data.estimated_theta)
-    #swap.log_likelihood = a.additional_data.log_likelihood
-    #return nothing
 end
 
 function revert_swap!(

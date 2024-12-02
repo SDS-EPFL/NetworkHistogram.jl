@@ -3,6 +3,8 @@ struct OrderedStart <: StartingAssignment end
 struct RandomStart <: StartingAssignment end
 struct SpectralStart <: StartingAssignment end
 struct MetisStart <: StartingAssignment end
+struct BiasAdjustedSoS <: StartingAssignment end
+
 struct FromAssignment{A} <: StartingAssignment
     assignment::A
 end
@@ -87,4 +89,12 @@ function initialize_node_labels(g, h, rule::HigherOrderSpectralStart)
     laplacian = normalized_laplacian(g)
     results = IterativeSolvers.lobpcg(laplacian, true, rule.k)
     return group_size, node_labels
+end
+
+
+
+function initialize_node_labels(g, h, ::BiasAdjustedSoS)
+    # implement method from Bias-adjusted spectral clustering in multilayer stochastic block
+    # models
+
 end
