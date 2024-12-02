@@ -40,8 +40,8 @@ end
 function apply_swap!(
         a::CategoricalAssignment{T, F, C}, swap::CategoricalSwap{F}) where {
         T, F, C}
-    #update_observed_and_labels!(a, swap)
-    new_update_observed_and_labels!(a, swap)
+    update_observed_and_labels!(a, swap)
+    #new_update_observed_and_labels!(a, swap)
     update_ll!(a)
 end
 
