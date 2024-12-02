@@ -23,7 +23,7 @@ function greedy_improve!(a::Assignment, g; max_iter::Int = 10_000,
 )
     # swap memory allocation
     swap = make_swap(a, (1, 1))
-    p = Progress(max_iter; enabled = progress_bar, showspeed = true)
+    p = ProgressUnknown(enabled = progress_bar, showspeed = true, desc = "Greedy search: ")
     # perform local search until the stopping rule is met
     for i in 1:max_iter
         local_search!(
