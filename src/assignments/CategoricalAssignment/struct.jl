@@ -4,6 +4,7 @@ mutable struct CategoricalData{F, C}
     estimated_theta::Array{F, 3}
     A::Matrix{C} # possible use of CategoricalArrays.jl ?
     log_likelihood::F # need to remove this type
+    scratch::Matrix{Int}
 end
 
 const CategoricalAssignment{T, F, C} = Assignment{
@@ -36,9 +37,10 @@ function make_categorical_data(g, node_labels, group_size)
         counts, realized, g, Assignment(group_size, node_labels))
 
     _fast_div!(estimated_theta, realized, counts)
+    scratch = zeros(Int, num_categories, number_groups)
 
     ll = compute_log_likelihood(estimated_theta, realized)
-    return CategoricalData(counts, realized, estimated_theta, A, ll)
+    return CategoricalData(counts, realized, estimated_theta, A, ll, scratch)
 end
 
 function _count_cat_occurences!(counts, realized, g, a_dummy)
@@ -120,7 +122,6 @@ end
 
 include("swap.jl")
 
-
-function get_ordered_adjacency_matrix(a::CategoricalAssignment, by=identity)
+function get_ordered_adjacency_matrix(a::CategoricalAssignment, by = identity)
     return get_ordered_adjacency_matrix(a, a.additional_data.A, by)
 end

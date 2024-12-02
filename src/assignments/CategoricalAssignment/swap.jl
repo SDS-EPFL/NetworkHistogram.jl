@@ -41,6 +41,7 @@ function apply_swap!(
         a::CategoricalAssignment{T, F, C}, swap::CategoricalSwap{F}) where {
         T, F, C}
     update_observed_and_labels!(a, swap)
+    #new_update_observed_and_labels!(a, swap)
     update_ll!(a)
 end
 
@@ -65,6 +66,61 @@ function fit(
     return dists
 end
 
+function _move_connection!(realized, group_origin, group_dest, scratch)
+    for group in axes(realized, 2)
+        for label in axes(realized, 1)
+            realized[label, group, group_origin] -= scratch[label, group]
+            realized[label, group, group_dest] += scratch[label, group]
+            realized[label, group_origin, group] = realized[label, group, group_origin]
+            realized[label, group_dest, group] = realized[label, group, group_dest]
+        end
+    end
+end
+
+function new_update_observed_and_labels!(
+        a::CategoricalAssignment{T, F, C}, swap::CategoricalSwap{F}) where {
+        T, F, C}
+    g1 = get_group_of_vertex(a, swap.index1)
+    g2 = get_group_of_vertex(a, swap.index2)
+    if g1 == g2
+        return nothing
+    end
+
+    a.additional_data.scratch .= 0
+    for i in axes(a.additional_data.A, 1)
+        if i == swap.index1 || i == swap.index2
+            continue
+        end
+        obs = a.additional_data.A[i, swap.index1]
+        if obs != 0
+            group_inter = get_group_of_vertex(a, i)
+            a.additional_data.scratch[obs, group_inter] += 1
+        end
+    end
+    _move_connection!(a.additional_data.realized, g1, g2, a.additional_data.scratch)
+
+    a.additional_data.scratch .= 0
+    for i in axes(a.additional_data.A, 1)
+        if i == swap.index1 || i == swap.index2
+            continue
+        end
+        obs = a.additional_data.A[i, swap.index2]
+        if obs != 0
+            group_inter = get_group_of_vertex(a, i)
+            a.additional_data.scratch[obs, group_inter] += 1
+        end
+    end
+    _move_connection!(a.additional_data.realized, g2, g1, a.additional_data.scratch)
+
+    _fast_div!(a.additional_data.estimated_theta, a.additional_data.realized,
+        a.additional_data.counts)
+
+    # swap of the labels should happen after the update of the realized and estimated_theta
+    # for the above loop to work correctly
+    swap_node_labels!(a, swap.index1, swap.index2)
+    return nothing
+end
+
 function update_observed_and_labels!(
         a::CategoricalAssignment{T, F, C}, swap::CategoricalSwap{F}) where {
         T, F, C}
@@ -85,30 +141,6 @@ function update_observed_and_labels!(
             _fast_update!!(
                 a.additional_data.realized, g1, g2, obs_1, obs_2, group_inter)
         end
-
-        # if i == swap.index1 || i == swap.index2 || obs_1 == obs_2
-        #     continue
-        # else
-
-        #     a_g1_g_inter = a.additional_data.realized[g1, group_inter]
-        #     a_g2_g_inter = a.additional_data.realized[g2, group_inter]
-        #     a_g_inter_g1 = realized_g1[group_inter]
-        #     a_g_inter_g2 = realized_g2[group_inter]
-
-        #     # send from group 1 to group 2
-        #     a_g1_g_inter[obs_1] -= 1
-        #     a_g_inter_g1[obs_1] = a_g1_g_inter[obs_1]
-
-        #     a_g2_g_inter[obs_1] += 1
-        #     a_g_inter_g2[obs_1] = a_g2_g_inter[obs_1]
-
-        #     # send from group 2 to group 1
-        #     a_g2_g_inter[obs_2] -= 1
-        #     a_g_inter_g2[obs_2] = a_g2_g_inter[obs_2]
-
-        #     a_g1_g_inter[obs_2] += 1
-        #     a_g_inter_g1[obs_2] = a_g1_g_inter[obs_2]
-        # end
     end
 
     _fast_div!(a.additional_data.estimated_theta, a.additional_data.realized,

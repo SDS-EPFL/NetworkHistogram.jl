@@ -20,7 +20,7 @@ end
 
 function nethist(g::Observations{G, D};
         h = select_number_node_per_block(g, EstimatedDegrees()),
-        max_iter = 10_000,
+        max_iter = 100_000,
         stalled_iter = 1000,
         swap_rule::NodeSwapRule = RandomGroupSwap(),
         accept_rule::AcceptRule = Strict(),
@@ -39,7 +39,7 @@ end
 function nethist_discretised(g::Observations{G, D};
         number_levels = nothing,
         h = select_number_node_per_block(g, EstimatedDegrees()),
-        max_iter = 10_000,
+        max_iter = 100_000,
         stalled_iter = 1000,
         swap_rule::NodeSwapRule = RandomGroupSwap(),
         accept_rule::AcceptRule = Strict(),
