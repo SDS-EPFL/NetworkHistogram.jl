@@ -4,7 +4,7 @@ using LinearAlgebra, SparseArrays
 using Distributions, DensityInterface
 using Graphs, SimpleWeightedGraphs
 using PermutationSymmetricTensors
-using ProgressMeter: Progress, next!, finish!
+using ProgressMeter: Progress, next!, finish!, ProgressUnknown
 import StatsBase, Random
 using DensityInterface: logdensityof
 using StaticArrays: MVector, MMatrix
