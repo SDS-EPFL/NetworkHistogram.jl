@@ -10,7 +10,6 @@ using DensityInterface: logdensityof
 using StaticArrays: MVector, MMatrix
 using LogExpFunctions: xlogx, xlogy
 using ArnoldiMethod: LM, SR, LR, partialschur, partialeigen
-import Arpack
 import Metis
 import IterativeSolvers
 import Clustering

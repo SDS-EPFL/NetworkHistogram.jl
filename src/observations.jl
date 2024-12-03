@@ -64,6 +64,9 @@ function normalized_laplacian(g::AbstractGraph)
     return normalized_laplacian(Graphs.adjacency_matrix(g))
 end
 
+
+normalized_laplacian(g::CategoricalArray) = normalized_laplacian(levelcode.(g))
+
 function normalized_laplacian(g::AbstractMatrix)
     degrees = sum(g, dims = 1)
     degrees .-= minimum(degrees)

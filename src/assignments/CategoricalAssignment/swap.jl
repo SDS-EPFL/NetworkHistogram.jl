@@ -67,7 +67,7 @@ function fit(
 end
 
 function _move_connection!(realized, group_origin, group_dest, scratch)
-    for group in axes(realized, 2)
+    @inbounds for group in axes(realized, 2)
         for label in axes(realized, 1)
             realized[label, group, group_origin] -= scratch[label, group]
             realized[label, group, group_dest] += scratch[label, group]
@@ -77,6 +77,9 @@ function _move_connection!(realized, group_origin, group_dest, scratch)
     end
 end
 
+
+# need to rethink if want to use muli-threading
+# check https://juliafolds.github.io/Transducers.jl/dev/tutorials/words/
 function new_update_observed_and_labels!(
         a::CategoricalAssignment{T, F, C}, swap::CategoricalSwap{F}) where {
         T, F, C}
@@ -91,7 +94,7 @@ function new_update_observed_and_labels!(
         if i == swap.index1 || i == swap.index2
             continue
         end
-        obs = a.additional_data.A[i, swap.index1]
+        @inbounds obs = a.additional_data.A[i, swap.index1]
         if obs != 0
             group_inter = get_group_of_vertex(a, i)
             a.additional_data.scratch[obs, group_inter] += 1
@@ -104,7 +107,7 @@ function new_update_observed_and_labels!(
         if i == swap.index1 || i == swap.index2
             continue
         end
-        obs = a.additional_data.A[i, swap.index2]
+        @inbounds obs = a.additional_data.A[i, swap.index2]
         if obs != 0
             group_inter = get_group_of_vertex(a, i)
             a.additional_data.scratch[obs, group_inter] += 1

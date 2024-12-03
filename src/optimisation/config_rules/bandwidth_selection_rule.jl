@@ -78,8 +78,10 @@ end
 
 function estimated_number_nodes_per_block(
         g::Observations, ::EstimatedEigenvalues, points, rho)
-    λ, u = Arpack.eigs(get_adj(g), nev = 1, which = :LM)
-    return _approx_k_from_delta_f(u, λ[1], points, rho)
+    @warn "Check this method again"
+    decomp, = partialschur(get_adj(g), nev = 1, which = :LR)
+    u, λ = real.(decomp.Q), decomp.eigenvalues[1]
+    return _approx_k_from_delta_f(u, λ, points, rho)
 end
 
 function estimated_number_nodes_per_block(
@@ -90,7 +92,7 @@ function estimated_number_nodes_per_block(
 end
 
 function _approx_k_from_delta_f(u, mult, midpoints, ρ, α = 1.0)
-    sort!(u, dims = 1)
+    sort!(u, dims=1)
     uMid = u[midpoints]
     β₀, β₁ = hcat(ones(length(uMid)), 1:length(uMid)) \ uMid
     # from Olhede and Wolfe (2014), equation (11)

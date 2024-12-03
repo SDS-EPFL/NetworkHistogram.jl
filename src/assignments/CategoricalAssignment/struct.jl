@@ -12,7 +12,7 @@ const CategoricalAssignment{T, F, C} = Assignment{
 const CategoricalInitRule{S, F} = InitRule{S, Val{CategoricalData}}
 
 function CategoricalAssignment(
-        g, group_size::GroupSize, node_labels::Vector{Int})
+        g::Observations{G,D}, group_size::GroupSize, node_labels::Vector{Int}) where {G,D}
     categorical_data = make_categorical_data(g, node_labels, group_size)
     return Assignment(group_size, node_labels, categorical_data)
 end
