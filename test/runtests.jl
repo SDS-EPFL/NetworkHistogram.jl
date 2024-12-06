@@ -1,6 +1,6 @@
 using Test
 using Aqua
-
+using SparseArrays
 include("TestNetworkHistogram.jl")
 
 @testset "Tests" begin
@@ -12,6 +12,7 @@ include("TestNetworkHistogram.jl")
         include("assignments/default_assignment.jl")
         include("assignments/bernoulli_assignment.jl")
         include("assignments/categorical_assignment.jl")
+        include("assignments/sparse_assignment.jl")
     end
 
     @testset "Rule optimization tests" begin

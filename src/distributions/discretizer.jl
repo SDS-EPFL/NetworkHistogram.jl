@@ -114,9 +114,24 @@ struct HybridDiscretizer{F, F2, T, L} <: Discretizer
     cat::CategoryDiscretizer{F2, T}
 end
 
+
+# change so that atoms can be packed together if wanted
 function HybridDiscretizer(n_bins, lower_bound, upper_bound, atoms)
     cat_to_bin = Dict(a => n_bins + i for (i, a) in enumerate(atoms))
     bin_to_cat = Dict(n_bins + i => a for (i, a) in enumerate(atoms))
+    bin_width = (upper_bound - lower_bound) / n_bins
+    return HybridDiscretizer(
+        RegularDiscretizer{typeof(bin_width), Int, n_bins}(
+            n_bins, lower_bound, upper_bound, MVector{n_bins}(1:n_bins),
+            (upper_bound - lower_bound) / n_bins),
+        CategoryDiscretizer(cat_to_bin, bin_to_cat)
+    )
+end
+
+
+function DiscretizerZeroToZero(n_bins, lower_bound, upper_bound)
+    cat_to_bin = Dict([0 => 0])
+    bin_to_cat = Dict([0 => 0])
     bin_width = (upper_bound - lower_bound) / n_bins
     return HybridDiscretizer(
         RegularDiscretizer{typeof(bin_width), Int, n_bins}(
