@@ -9,6 +9,7 @@ using NetworkHistogram
     g = Observations(A, Uniform(-1, 1))
     discretised_g, discretizer = discretise(g; number_levels = 6)
     @test size(discretised_g.graph) == size(g.graph)
-    @test discretised_g.dist_ref == Categorical(6)
+    @test discretised_g.dist_ref isa NetworkHistogram.DiscretizedDistribution
+    @test ncategories(discretised_g.dist_ref) == 6
     @test all(discretised_g.graph .∈ Ref(0:6))
 end

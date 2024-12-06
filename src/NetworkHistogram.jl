@@ -20,6 +20,8 @@ using Bootstrap: BootstrapSampling, ParametricBootstrapSample, tx
 import Bootstrap: bootstrap
 import Base.maximum, Base.minimum
 import Random: rand
+import Base.convert
+import Distributions: pdf,logpdf, ncategories
 
 include("distributions/include.jl")
 include("assignments/Assignments.jl")
@@ -56,7 +58,7 @@ export Assignment, number_groups, number_nodes
 export get_ordered_adjacency_matrix, get_vertex_in_group, get_group_of_vertex
 export BernoulliData, CategoricalData
 export Observations, discretise
-
+export DiscretizedDistribution
 
 
 export bootstrap

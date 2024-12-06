@@ -131,13 +131,12 @@ function discretise(g::Observations{G, D};
             @warn "disregarding `number_groups` as `number_levels` is provided"
         end
     end
-    discretiser = HybridDiscretizer(number_levels-1, extrema(g.graph)..., 0.0)
-    return discretise(g, discretiser)
+    return discretise(g, HybridDiscretizer(number_levels-1, extrema(g.graph)..., 0.0))
 end
 
 function discretise(g::Observations{G, D}, discretiser ::Discretizer) where {G,D<:UnivariateDistribution}
     A_encoded = encode(discretiser, _graph_to_mat(g))
-    return Observations(A_encoded, Categorical(nlabels(discretiser))), discretiser
+    return Observations(A_encoded, DiscretizedDistribution(discretiser)), discretiser
 end
 
 

@@ -108,7 +108,7 @@ function categorical_matrix(A::AbstractMatrix{Int})
 end
 
 function categorical_matrix(g::Observations)
-    return categorical_matrix(g.graph), length(support(g.dist_ref))
+    return categorical_matrix(g.graph), ncategories(g.dist_ref)
 end
 
 function loglikelihood(a::CategoricalAssignment, g::Observations)

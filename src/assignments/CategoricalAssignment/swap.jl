@@ -55,12 +55,28 @@ function fit(
         a::CategoricalAssignment{T, F, C}, g::Observations) where {
         T, F, C}
     dists = initialize_sbm(
-        a.group_size, Categorical(length(support(g.dist_ref))))
+        a.group_size, g.dist_ref)
     for group1 in 1:number_groups(a)
         for group2 in 1:number_groups(a)
             dists[group1,
             group2] = Categorical(a.additional_data.estimated_theta[:,
                 group1, group2])
+        end
+    end
+    return dists
+end
+
+function fit(
+        a::CategoricalAssignment{T, F, C}, g::Observations{G, <:DiscretizedDistribution}) where {
+        T, F, C, G}
+    dists = initialize_sbm(
+        a.group_size, g.dist_ref)
+    for group1 in 1:number_groups(a)
+        for group2 in 1:number_groups(a)
+            set_params!(
+                dists[group1,
+                    group2], a.additional_data.estimated_theta[:,
+                    group1, group2])
         end
     end
     return dists
@@ -76,7 +92,6 @@ function _move_connection!(realized, group_origin, group_dest, scratch)
         end
     end
 end
-
 
 # need to rethink if want to use muli-threading
 # check https://juliafolds.github.io/Transducers.jl/dev/tutorials/words/

@@ -1,5 +1,5 @@
-struct DiscretizedDistribution{D, L} <: ContinuousUnivariateDistribution where {D, L}
-    disc::D
+mutable struct DiscretizedDistribution{D, L} <: ContinuousUnivariateDistribution where {D, L}
+    discretizer::D
     probs::L
 end
 
@@ -8,6 +8,11 @@ function DiscretizedDistribution(d::D, n_bins::Int, support_bound = extrema(d)) 
     # for now we keep track of the non-edges as well
     probs = Distributions.Categorical(nlabels(discretizer))
     return DiscretizedDistribution(disc, probs)
+end
+
+function DiscretizedDistribution(discretizer::Discretizer)
+    return DiscretizedDistribution(
+        discretizer, Distributions.Categorical(nlabels(discretizer)))
 end
 
 function pdf(d::DiscretizedDistribution, x::Real)
@@ -28,7 +33,6 @@ function logpdf(d::DiscretizedDistribution, x::Real)
     return log(pdf(d.probs, bin)) - log(binwidth(d.discretizer))
 end
 
-
 function rand(rng::Random.AbstractRNG, d::DiscretizedDistribution)
     bin = rand(rng, d.probs)
     return _decode_randomly(rng, d.discretizer, bin)
@@ -44,4 +48,22 @@ end
 
 function insupport(d::DiscretizedDistribution, x::Real)
     return supports_encoding(d.discretizer, x)
+end
+
+function Base.convert(::Type{DiscretizedDistribution}, d::D) where {D}
+    return DiscretizedDistribution(d, 10)
+end
+
+
+function Distributions.ncategories(d::DiscretizedDistribution)
+    return ncategories(d.probs)
+end
+
+
+function Distributions.fit(::Type{<:DiscretizedDistribution{D,L}},data) where {D,L}
+    return fit(L, data)
+end
+
+function set_params!(d::DiscretizedDistribution{D, L}, params) where {D,L}
+    d.probs = L(params)
 end

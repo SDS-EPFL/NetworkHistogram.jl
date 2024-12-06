@@ -13,6 +13,7 @@
 
     sbm_discretised, a, discretizer = nethist_discretised(
         g; number_levels = 5, h = 10, max_iter = 10)
-    @test eltype(sbm_discretised) == typeof(Categorical(5))
+    @test sbm_discretised[1,1] isa DiscretizedDistribution
+    @test ncategories(sbm_discretised[1,1]) == 5
     @test size(sbm_discretised) == (4,4)
 end
