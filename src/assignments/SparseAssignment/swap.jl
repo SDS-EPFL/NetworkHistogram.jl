@@ -2,8 +2,8 @@ mutable struct SparseSwap{F} <: Swap
     index1::Int
     index2::Int
     realized::Array{Int, 3}
-    counts::Matrix{Int}
     estimated_theta::Array{F, 3}
+    counts::Matrix{Int}
     log_likelihood::F
 end
 
@@ -55,9 +55,9 @@ function update_observed_and_labels!(
     g1 = get_group_of_vertex(a, swap.index1)
     g2 = get_group_of_vertex(a, swap.index2)
 
-    rows = rowvals(a.addtional_data.A)
-    vals = nonzeros(a.addtional_data.A)
-    m, n = size(a.addtional_data.A)
+    rows = rowvals(a.additional_data.A)
+    vals = nonzeros(a.additional_data.A)
+    m, n = size(a.additional_data.A)
     @inbounds for j in [swap.index1, swap.index2]
         a.additional_data.scratch_count .= 0
         a.additional_data.scratch_missing .= 0
@@ -71,10 +71,10 @@ function update_observed_and_labels!(
                 a.additional_data.scratch_missing[groupi] += 1
             end
 
-            a.additional_data.scratch[val, groupi] += 1
+            a.additional_data.scratch_count[val, groupi] += 1
         end
-        move_connection!(
-            a.additional_data.realized, g_from, g_to, a.additional_data.scratch)
+        _move_connection!(
+            a.additional_data.realized, g_from, g_to, a.additional_data.scratch_count)
         _update_counts!(
             a.additional_data.counts, g_from, g_to, a.additional_data.scratch_missing)
     end
@@ -89,7 +89,7 @@ function update_observed_and_labels!(
 end
 
 function _update_counts!(counts, g_from, g_to, missing_update)
-    for i in 1:axes(counts, 1)
+    for i in axes(counts, 1)
         counts[i, g_to] += missing_update[i]
         counts[i, g_from] -= missing_update[i]
     end

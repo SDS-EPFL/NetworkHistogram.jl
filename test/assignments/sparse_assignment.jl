@@ -2,6 +2,33 @@ import NetworkHistogram as NH
 
 using Random
 
+@testset "test sparse give the same as categorical" begin
+    using Distributions, LinearAlgebra, SparseArrays
+    k = 2
+    m = 5
+    level_count = 4
+    n = 20
+    tau = [0.8, 0.1, 0.1, 0.1, 0.1]
+    sbm = NH.initialize_sbm(ones(k) ./ k, Categorical(tau ./ sum(tau)))
+    A, _ = NH.sample(sbm, n)
+    A_dense = collect(A)
+    A = sparse(A_dense .- 1)
+    for i in 1:n
+        A[i, i] = 0
+    end
+    dropzeros!(A)
+    g = NH.Observations(A_dense, Categorical(m))
+    sbm_fitted, a = nethist(g; h = n ÷ k, max_iter = 10)
+    sparse_a = NH.SparseAssignment(
+        NH.Observations(A, Categorical(m)), a.group_size, a.node_labels)
+    @test a.additional_data.counts == sparse_a.additional_data.counts
+    for (l,m_index) in enumerate(2:m)
+        @test a.additional_data.realized[m_index, :, :] == sparse_a.additional_data.realized[l, :, :]
+        @test a.additional_data.estimated_theta[m_index, :, :] ==
+            sparse_a.additional_data.estimated_theta[l, :, :]
+    end
+    @test a.additional_data.log_likelihood ≈ sparse_a.additional_data.log_likelihood
+end
 
 @testset "test sparse swap" begin
     Random.seed!(1234123)
@@ -30,6 +57,7 @@ using Random
     # force recomputation of the log likelihood using default assignment
     a_new = to_default_assignment(a_test)
     @test NH.loglikelihood(a_new, g) ≈ NH.loglikelihood(a_test, g)
+    println(typeof(a), typeof(a_test))
     @test a_test.additional_data.realized != a.additional_data.realized
     @test a_test.additional_data.estimated_theta !=
           a.additional_data.estimated_theta
@@ -53,17 +81,17 @@ end
               4 1 4
               4 4 1]
     A = sparse([0 1 2 2 3 3
-         1 0 2 2 3 3
-         2 2 0 1 3 3
-         2 2 1 0 3 3
-         3 3 3 3 0 1
-         3 3 3 3 1 0])
+                1 0 2 2 3 3
+                2 2 0 1 3 3
+                2 2 1 0 3 3
+                3 3 3 3 0 1
+                3 3 3 3 1 0])
     groupsize = NH.GroupSize(6, 2)
     node_labels = [1, 1, 2, 2, 3, 3]
     g = NH.Observations(A, Categorical(3))
     k = 3
     m = 3
-    n = size(A,1)
+    n = size(A, 1)
     a = NH.SparseAssignment(g, NH.GroupSize(n, n ÷ k), node_labels)
     for index in eachindex(realized)
         @test all(realized[index] .== a.additional_data.realized[index])

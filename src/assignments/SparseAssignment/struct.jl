@@ -25,13 +25,10 @@ function SparseData(A::SparseMatrixCSC{T, Int}, k::Int,
         level_count::Int, group_size, node_labels) where {T}
     n = size(A, 1)
     data = SparseData(zeros(Int, k, k), zeros(Int, level_count, k, k),
-        zeros(Float64, level_count, k, k), dropzeros!(A), zeros(Int, level_count, k), zeros(Int, k), 0.0)
+        zeros(Float64, level_count, k, k), dropzeros(A), zeros(Int, level_count, k), zeros(Int, k), 0.0)
     _count_possible_occurences!(data, group_size)
     _count_occurences!(data, node_labels)
     _fast_div!(data.estimated_theta, data.realized, data.counts)
-    println(data.estimated_theta)
-    println(data.realized)
-    println(data.counts)
     data.log_likelihood = compute_log_likelihood_without_0(data.estimated_theta, data.realized, data.counts)
     return data
 end
@@ -60,16 +57,13 @@ function _count_occurences!(data, node_labels)
             groupi = node_labels[row]
             if ismissing(val)
                 data.counts[groupj, groupj] -= 1
-                if groupj != groupj
-                    data.counts[groupj, groupj] -= 1
-                end
             else
                 data.realized[val, groupi, groupj] += 1
-                if groupi != groupj
-                    data.realized[val, groupj, groupi] += 1
-                end
             end
         end
+    end
+    for k in axes(data.realized, 2)
+        data.realized[:,k,k] ./= 2
     end
 end
 
@@ -92,7 +86,6 @@ function compute_log_likelihood_without_0(
                     loglik += realized[m, i, j] * log(estimated_theta[m, i, j])
                 end
             end
-            println(total_decorations, prob_absent)
             loglik += total_decorations * log(prob_absent)
         end
     end
