@@ -56,7 +56,7 @@ function _count_occurences!(data, node_labels)
             val = vals[i]
             groupi = node_labels[row]
             if ismissing(val)
-                data.counts[groupj, groupj] -= 1
+                data.counts[groupi, groupj] -= 1
             else
                 data.realized[val, groupi, groupj] += 1
             end
@@ -77,16 +77,13 @@ function compute_log_likelihood_without_0(
     number_decorations = size(estimated_theta, 1)
     @inbounds for j in 1:number_groups
         for i in j:number_groups
-            prob_absent = one(T)
             total_decorations = counts[i, j]
+            loglik -= xlogx(total_decorations)
             for m in 1:number_decorations
-                if realized[m, i, j] != 0
-                    prob_absent -= estimated_theta[m, i, j]
-                    total_decorations -= realized[m, i, j]
-                    loglik += realized[m, i, j] * log(estimated_theta[m, i, j])
-                end
+                loglik += xlogx(realized[m,i,j])
+                total_decorations -= realized[m,i,j]
             end
-            loglik += total_decorations * log(prob_absent)
+            loglik += xlogx(total_decorations)
         end
     end
     return loglik

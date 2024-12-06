@@ -57,7 +57,6 @@ end
     # force recomputation of the log likelihood using default assignment
     a_new = to_default_assignment(a_test)
     @test NH.loglikelihood(a_new, g) ≈ NH.loglikelihood(a_test, g)
-    println(typeof(a), typeof(a_test))
     @test a_test.additional_data.realized != a.additional_data.realized
     @test a_test.additional_data.estimated_theta !=
           a.additional_data.estimated_theta

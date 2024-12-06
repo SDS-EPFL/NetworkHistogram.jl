@@ -7,10 +7,9 @@ mutable struct SparseSwap{F} <: Swap
     log_likelihood::F
 end
 
-
 function make_swap(a::SparseAssignment, id)
     return SparseSwap(id[1], id[2], copy(a.additional_data.realized),
-        copy(a.additional_data.estimated_theta),copy(a.additional_data.counts),
+        copy(a.additional_data.estimated_theta), copy(a.additional_data.counts),
         a.additional_data.log_likelihood)
 end
 
@@ -29,7 +28,6 @@ function make_swap!(
     copy_addtional!(swap, a.additional_data)
 end
 
-
 function revert_swap!(
         a::SparseAssignment{T, F}, swap::SparseSwap{F}) where {T, F}
     swap_node_labels!(a, swap.index1, swap.index2)
@@ -43,7 +41,6 @@ function apply_swap!(
     update_ll!(a)
 end
 
-
 function update_ll!(a::SparseAssignment)
     a.additional_data.log_likelihood = compute_log_likelihood_without_0(
         a.additional_data.estimated_theta, a.additional_data.realized, a.additional_data.counts)
@@ -55,26 +52,34 @@ function update_observed_and_labels!(
     g1 = get_group_of_vertex(a, swap.index1)
     g2 = get_group_of_vertex(a, swap.index2)
 
+    if g1 == g2
+        return nothing
+    end
+
     rows = rowvals(a.additional_data.A)
     vals = nonzeros(a.additional_data.A)
     m, n = size(a.additional_data.A)
-    @inbounds for j in [swap.index1, swap.index2]
+    for j in [swap.index1, swap.index2]
         a.additional_data.scratch_count .= 0
         a.additional_data.scratch_missing .= 0
         g_from = swap.index1 == j ? g1 : g2
         g_to = swap.index1 == j ? g2 : g1
         for i_index in nzrange(a.additional_data.A, j)
             row = rows[i_index]
+            if row == swap.index1 || row == swap.index2
+                continue
+            end
             val = vals[i_index]
             groupi = get_group_of_vertex(a, row)
             if ismissing(val)
                 a.additional_data.scratch_missing[groupi] += 1
+            else
+                a.additional_data.scratch_count[val, groupi] += 1
             end
-
-            a.additional_data.scratch_count[val, groupi] += 1
         end
         _move_connection!(
             a.additional_data.realized, g_from, g_to, a.additional_data.scratch_count)
+
         _update_counts!(
             a.additional_data.counts, g_from, g_to, a.additional_data.scratch_missing)
     end
