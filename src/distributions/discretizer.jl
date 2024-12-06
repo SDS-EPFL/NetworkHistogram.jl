@@ -1,5 +1,6 @@
+# Inspired by Discretizer.jl but with the fast decoding function and built-in
+# convention for discretizing continuous distributions.
 abstract type Discretizer end
-
 
 function encode(d::Discretizer, x::AbstractArray{<:Real})
     return [encode(d, u) for u in x]
@@ -20,19 +21,32 @@ struct RegularDiscretizer{F, T, L} <: Discretizer
     bin_width::F
 end
 
-
 function support_encoding(d::RegularDiscretizer, x::Real)
     return d.lower_bound <= x <= d.upper_bound
 end
 
+function minimum(d::RegularDiscretizer)
+    return d.lower_bound
+end
+
+function maximum(d::RegularDiscretizer)
+    return d.upper_bound
+end
+
 function encode(d::RegularDiscretizer, x::Real)
-    if !support_encoding(d, x)
-        throw(ArgumentError("Value $x is not supported by the discretizer"))
-    end
     if x == d.upper_bound
         return d.n_bins
     end
     return d.bin_labels[convert(Int, div(x - d.lower_bound, d.bin_width) + 1)]
+end
+
+function _decode_randomly(rng::Random.AbstractRNG, d::RegularDiscretizer, bin::Int)
+    hi,lo = decode(d, bin)
+    return lo + (hi - lo) * rand(rng)
+end
+
+function binwidth(d::RegularDiscretizer)
+    return d.bin_width
 end
 
 function decode(d::RegularDiscretizer, bin::Int)
@@ -42,7 +56,6 @@ end
 function encode(d::RegularDiscretizer, x::AbstractArray{Real})
     return [encode(d, u) for u in x]
 end
-
 
 function decode(d::RegularDiscretizer, x::AbstractArray{Real})
     return [decode(d, u) for u in x]
@@ -58,6 +71,14 @@ Maps a set of categories to a set of bins
 struct CategoryDiscretizer{F, T}
     cat_to_bin::Dict{F, T}
     bin_to_cat::Dict{T, F}
+    min_label::T
+    max_label::T
+end
+
+function CategoryDiscretizer(cat_to_bin::Dict, bin_to_cat::Dict)
+    min_label = minimum(keys(bin_to_cat))
+    max_label = maximum(keys(bin_to_cat))
+    return CategoryDiscretizer(cat_to_bin, bin_to_cat, min_label, max_label)
 end
 
 function support_encoding(d::CategoryDiscretizer, x)
@@ -74,6 +95,14 @@ end
 
 function nlabels(d::CategoryDiscretizer)
     return length(d.bin_to_cat)
+end
+
+function minimum(d::CategoryDiscretizer)
+    return d.min_label
+end
+
+function maximum(d::CategoryDiscretizer)
+    return d.max_label
 end
 
 """
@@ -97,20 +126,24 @@ function HybridDiscretizer(n_bins, lower_bound, upper_bound, atoms)
     )
 end
 
-
 function support_encoding(d::HybridDiscretizer, x)
     return support_encoding(d.lin, x) || support_encoding(d.cat, x)
+end
+
+
+function minimum(d::HybridDiscretizer)
+    return min(minimum(d.lin), minimum(d.cat))
+end
+
+function maximum(d::HybridDiscretizer)
+    return max(maximum(d.lin), maximum(d.cat))
 end
 
 function nlabels(d::HybridDiscretizer)
     return nlabels(d.lin) + nlabels(d.cat)
 end
 
-
 function encode(d::HybridDiscretizer, x::Real)
-    if !support_encoding(d, x)
-        throw(ArgumentError("Value $x is not supported by the discretizer"))
-    end
     if haskey(d.cat.cat_to_bin, x)
         return encode(d.cat, x)
     else
@@ -119,9 +152,28 @@ function encode(d::HybridDiscretizer, x::Real)
 end
 
 function decode(d::HybridDiscretizer, bin::Int)
-   if haskey(d.cat.bin_to_cat, bin)
+    if haskey(d.cat.bin_to_cat, bin)
         return decode(d.cat, bin)
     else
         return decode(d.lin, bin)
     end
+end
+
+
+function _decode_randomly(rng::Random.AbstractRNG, d::HybridDiscretizer, bin::Int)
+     if haskey(d.cat.bin_to_cat, bin)
+        return decode(d.cat, bin)
+    else
+        return _decode_randomly(rng, d.lin, bin)
+    end
+end
+
+
+function auto_nbins(data)
+    binwidth = 2iqr(data) / cbrt(n)
+    lo, hi = extrema(data)
+    nbins_fd = ceil(Int, (hi - lo) / binwidth)
+    nbins_sturges = ceil(Int, log(2, n)) + 1
+    nbins = max(nbins_fd, nbins_sturges)
+    return nbins
 end

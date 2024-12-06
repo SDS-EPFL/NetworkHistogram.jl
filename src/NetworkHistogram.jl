@@ -18,6 +18,8 @@ using Combinatorics: permutations
 using StaticArrays
 using Bootstrap: BootstrapSampling, ParametricBootstrapSample, tx
 import Bootstrap: bootstrap
+import Base.maximum, Base.minimum
+import Random: rand
 
 include("distributions/include.jl")
 include("assignments/Assignments.jl")
