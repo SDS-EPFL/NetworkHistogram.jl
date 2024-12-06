@@ -1,6 +1,6 @@
 @testset "test api" begin
     using Distributions
-    A = rand(0:1, 40, 40)
+    A = rand(-1:1, 40, 40)
     for i in 1:40
         A[i, i] = 0
     end

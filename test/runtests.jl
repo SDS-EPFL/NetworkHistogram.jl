@@ -4,6 +4,10 @@ using Aqua
 include("TestNetworkHistogram.jl")
 
 @testset "Tests" begin
+
+    @testset "Discretizer tests" begin
+        include("discretised_dist/discretizer.jl")
+    end
     @testset "Assignment tests" begin
         include("assignments/default_assignment.jl")
         include("assignments/bernoulli_assignment.jl")

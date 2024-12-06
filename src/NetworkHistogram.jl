@@ -7,7 +7,6 @@ using PermutationSymmetricTensors
 using ProgressMeter: Progress, next!, finish!, ProgressUnknown
 import StatsBase, Random
 using DensityInterface: logdensityof
-using StaticArrays: MVector, MMatrix
 using LogExpFunctions: xlogx, xlogy
 using ArnoldiMethod: LM, SR, LR, partialschur, partialeigen
 import Metis
@@ -15,14 +14,12 @@ import IterativeSolvers
 import Clustering
 import StatsAPI: loglikelihood, fit
 using CategoricalArrays, CategoricalDistributions
-using Discretizers: LinearDiscretizer, binedges, DiscretizeUniformWidth, encode
 using Combinatorics: permutations
 using StaticArrays
-
 using Bootstrap: BootstrapSampling, ParametricBootstrapSample, tx
 import Bootstrap: bootstrap
 
-
+include("distributions/include.jl")
 include("assignments/Assignments.jl")
 include("sbm.jl")
 include("observations.jl")

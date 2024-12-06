@@ -1,0 +1,127 @@
+abstract type Discretizer end
+
+
+function encode(d::Discretizer, x::AbstractArray{<:Real})
+    return [encode(d, u) for u in x]
+end
+
+function decode(d::Discretizer, x::AbstractArray{<:Real})
+    return [decode(d, u) for u in x]
+end
+
+"""
+Uniformly discretizes a continuous distribution into a fixed number of bins of equal width.
+"""
+struct RegularDiscretizer{F, T, L} <: Discretizer
+    n_bins::Int
+    lower_bound::F
+    upper_bound::F
+    bin_labels::MVector{L, T}
+    bin_width::F
+end
+
+
+function support_encoding(d::RegularDiscretizer, x::Real)
+    return d.lower_bound <= x <= d.upper_bound
+end
+
+function encode(d::RegularDiscretizer, x::Real)
+    if !support_encoding(d, x)
+        throw(ArgumentError("Value $x is not supported by the discretizer"))
+    end
+    if x == d.upper_bound
+        return d.n_bins
+    end
+    return d.bin_labels[convert(Int, div(x - d.lower_bound, d.bin_width) + 1)]
+end
+
+function decode(d::RegularDiscretizer, bin::Int)
+    return (d.lower_bound + (bin - 1) * d.bin_width, d.lower_bound + bin * d.bin_width)
+end
+
+function encode(d::RegularDiscretizer, x::AbstractArray{Real})
+    return [encode(d, u) for u in x]
+end
+
+
+function decode(d::RegularDiscretizer, x::AbstractArray{Real})
+    return [decode(d, u) for u in x]
+end
+
+function nlabels(d::RegularDiscretizer)
+    return d.n_bins
+end
+
+"""
+Maps a set of categories to a set of bins
+"""
+struct CategoryDiscretizer{F, T}
+    cat_to_bin::Dict{F, T}
+    bin_to_cat::Dict{T, F}
+end
+
+function support_encoding(d::CategoryDiscretizer, x)
+    return haskey(d.cat_to_bin, x)
+end
+
+function encode(d::CategoryDiscretizer, x)
+    return d.cat_to_bin[x]
+end
+
+function decode(d::CategoryDiscretizer, label)
+    return d.bin_to_cat[label]
+end
+
+function nlabels(d::CategoryDiscretizer)
+    return length(d.bin_to_cat)
+end
+
+"""
+Uniformly discretizes a continuous distribution into a fixed number of bins of equal width,
+with additional bins for missing or special values.
+"""
+struct HybridDiscretizer{F, F2, T, L} <: Discretizer
+    lin::RegularDiscretizer{F, T, L}
+    cat::CategoryDiscretizer{F2, T}
+end
+
+function HybridDiscretizer(n_bins, lower_bound, upper_bound, atoms)
+    cat_to_bin = Dict(a => n_bins + i for (i, a) in enumerate(atoms))
+    bin_to_cat = Dict(n_bins + i => a for (i, a) in enumerate(atoms))
+    bin_width = (upper_bound - lower_bound) / n_bins
+    return HybridDiscretizer(
+        RegularDiscretizer{typeof(bin_width), Int, n_bins}(
+            n_bins, lower_bound, upper_bound, MVector{n_bins}(1:n_bins),
+            (upper_bound - lower_bound) / n_bins),
+        CategoryDiscretizer(cat_to_bin, bin_to_cat)
+    )
+end
+
+
+function support_encoding(d::HybridDiscretizer, x)
+    return support_encoding(d.lin, x) || support_encoding(d.cat, x)
+end
+
+function nlabels(d::HybridDiscretizer)
+    return nlabels(d.lin) + nlabels(d.cat)
+end
+
+
+function encode(d::HybridDiscretizer, x::Real)
+    if !support_encoding(d, x)
+        throw(ArgumentError("Value $x is not supported by the discretizer"))
+    end
+    if haskey(d.cat.cat_to_bin, x)
+        return encode(d.cat, x)
+    else
+        return encode(d.lin, x)
+    end
+end
+
+function decode(d::HybridDiscretizer, bin::Int)
+   if haskey(d.cat.bin_to_cat, bin)
+        return decode(d.cat, bin)
+    else
+        return decode(d.lin, bin)
+    end
+end

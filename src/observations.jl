@@ -114,6 +114,11 @@ function Metis.graph(g::Observations{<:CategoricalMatrix, <:UnivariateFinite})
         adjacency_matrix(SimpleWeightedGraph(A)), weights = true)
 end
 
+
+"""
+Assume that the diagonal is zero.
+0 indicates no edge, while missing indicates no information about the edge.
+"""
 function discretise(g::Observations{G, D};
         number_groups = nothing, number_levels = nothing) where {G, D}
     if isnothing(number_groups) && isnothing(number_levels)
@@ -126,19 +131,13 @@ function discretise(g::Observations{G, D};
             @warn "disregarding `number_groups` as `number_levels` is provided"
         end
     end
-    #zero_locations = g.graph .== 0
-    bin_edges = binedges(DiscretizeUniformWidth(number_levels), g.graph)
-    discretiser = LinearDiscretizer(bin_edges)
+    discretiser = HybridDiscretizer(number_levels-1, extrema(g.graph)..., 0.0)
     return discretise(g, discretiser)
 end
 
-function discretise(g::Observations{G, D}, discretiser ::LinearDiscretizer) where {G,D<:UnivariateDistribution}
+function discretise(g::Observations{G, D}, discretiser ::Discretizer) where {G,D<:UnivariateDistribution}
     A_encoded = encode(discretiser, _graph_to_mat(g))
-    for i in 1:size(A_encoded, 1)
-        A_encoded[i, i] = 0
-    end
-    #A_encoded[zero_locations] .= 0
-    return Observations(A_encoded, Categorical(discretiser.nbins + 1)), discretiser
+    return Observations(A_encoded, Categorical(nlabels(discretiser))), discretiser
 end
 
 
