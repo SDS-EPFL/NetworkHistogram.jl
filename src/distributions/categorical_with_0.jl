@@ -1,6 +1,6 @@
 
 struct ZeroInflatedCategorical{B, D} <: DiscreteUnivariateDistribution
-    proba_zero::B
+    edge_proba::B
     dist::D
 end
 
@@ -16,6 +16,11 @@ function ZeroInflatedCategorical(p::Real, probs::AbstractVector)
     else
         probs_ = probs / sum(probs)
     end
+    if p ≈ 0
+        p = 0
+    elseif p ≈ 1
+        p = 1
+    end
     return ZeroInflatedCategorical(Bernoulli(1 - p), Categorical(probs_))
 end
 
@@ -26,11 +31,11 @@ end
 ZeroInflatedCategorical(k::Int) = ZeroInflatedCategorical(ones(k+1) ./ (k+1))
 
 function Distributions.pdf(d::ZeroInflatedCategorical, x::Real)
-    return pdf(d.proba_zero, 0) * _dirac_delta(x) + pdf(d.proba_zero, 1) * pdf(d.dist, x)
+    return pdf(d.edge_proba, 0) * _dirac_delta(x) + pdf(d.edge_proba, 1) * pdf(d.dist, x)
 end
 
 function rand(rng::Random.AbstractRNG, d::ZeroInflatedCategorical)
-    return rand(rng, d.proba_zero) * rand(rng, d.dist)
+    return rand(rng, d.edge_proba) * rand(rng, d.dist)
 end
 
 logpdf(d::ZeroInflatedCategorical, x::Real) = log(pdf(d, x))
@@ -42,11 +47,11 @@ maximum(d::ZeroInflatedCategorical) = max(maximum(d.dist), 0)
 insupport(d::ZeroInflatedCategorical, x::Real) = x == 0 || insupport(d.dist, x)
 
 function Distributions.cdf(d::ZeroInflatedCategorical, x::Real)
-    return pdf(d.proba_zero, 0) * _dirac_delta(x) + pdf(d.proba_zero, 1) * cdf(d.dist, x)
+    return pdf(d.edge_proba, 0) * _dirac_delta(x) + pdf(d.edge_proba, 1) * cdf(d.dist, x)
 end
 
 function Distributions.params(d::ZeroInflatedCategorical)
-    (first(params(d.proba_zero)), params(d.dist)...)
+    (first(params(d.edge_proba)), params(d.dist)...)
 end
 
 ncategories(d::ZeroInflatedCategorical) = ncategories(d.dist)
