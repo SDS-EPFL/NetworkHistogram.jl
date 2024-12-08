@@ -16,7 +16,7 @@ function DiscretizedDistribution(discretizer::Discretizer)
 end
 
 function pdf(d::DiscretizedDistribution, x::Real)
-    if !supports_encoding(d.discretizer, x)
+    if !support_encoding(d.discretizer, x)
         return 0.0
     end
     bin = encode(d.discretizer, x)
@@ -24,7 +24,7 @@ function pdf(d::DiscretizedDistribution, x::Real)
 end
 
 function logpdf(d::DiscretizedDistribution, x::Real)
-    if !supports_encoding(d.discretizer, x)
+    if !support_encoding(d.discretizer, x)
         return -Inf
     end
     bin = encode(d.discretizer, x)
@@ -45,7 +45,7 @@ function maximum(d::DiscretizedDistribution)
 end
 
 function insupport(d::DiscretizedDistribution, x::Real)
-    return supports_encoding(d.discretizer, x)
+    return support_encoding(d.discretizer, x)
 end
 
 function Base.convert(::Type{DiscretizedDistribution}, d::D) where {D}
