@@ -119,9 +119,10 @@ function fit(a::SparseAssignment, g::Observations{G, <:DiscretizedDistribution})
     for group1 in 1:number_groups(a)
         for group2 in 1:number_groups(a)
             theta = a.additional_data.estimated_theta[:, group1, group2]
+            p = clamp(1 - sum(theta),0,1)
             dists[group1,
             group2] = DiscretizedDistribution(
-                g.dist_ref.discretizer, ZeroInflatedCategorical(1 - sum(theta), theta))
+                g.dist_ref.discretizer, ZeroInflatedCategorical(p, theta))
         end
     end
     return dists
