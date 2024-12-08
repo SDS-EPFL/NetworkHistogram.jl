@@ -21,7 +21,7 @@ function ZeroInflatedCategorical(p::Real, probs::AbstractVector)
     elseif p ≈ 1
         p = one(p)
     end
-    return ZeroInflatedCategorical(Bernoulli(1 - p), Categorical(probs_))
+    return ZeroInflatedCategorical(p, Categorical(probs_))
 end
 
 function ZeroInflatedCategorical(vec_probs::AbstractVector)
