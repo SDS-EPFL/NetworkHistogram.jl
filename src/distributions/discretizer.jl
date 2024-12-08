@@ -175,6 +175,8 @@ function non_zero_labels_counts(d::HybridDiscretizer)
     return non_zero_labels_counts(d.lin) + non_zero_labels_counts(d.cat)
 end
 
+binwidth(d::HybridDiscretizer) = binwidth(d.lin)
+
 function encode(d::HybridDiscretizer, x::Real)
     if haskey(d.cat.cat_to_bin, x)
         return encode(d.cat, x)
