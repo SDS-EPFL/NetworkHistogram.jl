@@ -17,6 +17,11 @@ function fit!(sbm::BlockModel{D,K,F}, g::Observations{G,D}, a::Assignment) where
     end
 end
 
+
+function fit_group(d::ZeroInflatedCategorical, g, edges)
+    return Distributions.fit(typeof(d), get_obs.(Ref(g), edges), ncategories(g.dist_ref))
+end
+
 function fit_group(distribution, g, edges)
     return Distributions.fit(typeof(distribution), get_obs.(Ref(g), edges))
 end

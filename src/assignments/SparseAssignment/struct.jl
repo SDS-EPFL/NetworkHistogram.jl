@@ -9,15 +9,25 @@ mutable struct SparseData{F, C}
 end
 
 
+
 const SparseAssignment{T, F, C} = Assignment{
     T, SparseData{F, C}}
 const SparseInitRule{S, F} = InitRule{S, Val{SparseData}}
 
-function SparseAssignment( g::Observations{G,D}, group_size::GroupSize, node_labels::Vector{Int}) where {G,D}
+function SparseAssignment(g::Observations{G,D}, group_size::GroupSize, node_labels::Vector{Int}) where {G,D}
     A = issparse(g.graph) ? g.graph : sparse(g.graph)
-    num_levels = length(unique(A)) -1
+    num_levels = ncategories(g.dist_ref)
     sparse_data = SparseData(A, size(group_size, 1), num_levels, group_size, node_labels)
     return Assignment(group_size, node_labels, sparse_data)
+end
+
+
+
+function make_assignment(g, h, init_rule::SparseInitRule)
+    group_size,
+    node_labels = initialize_node_labels(
+        g, h, init_rule.starting_assignment_rule)
+    return SparseAssignment(g, group_size, node_labels)
 end
 
 
@@ -89,5 +99,13 @@ function compute_log_likelihood_without_0(
     return loglik
 end
 
+
+function _n_decorations_with_0(a::SparseAssignment)
+    return size(a.additional_data.estimated_theta, 1) + 1
+end
+
+function loglikelihood(assignment::SparseAssignment, g::Observations)
+    return assignment.additional_data.log_likelihood
+end
 
 include("swap.jl")

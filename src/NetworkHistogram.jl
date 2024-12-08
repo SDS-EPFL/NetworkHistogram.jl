@@ -21,7 +21,7 @@ import Bootstrap: bootstrap
 import Base.maximum, Base.minimum
 import Random: rand
 import Base.convert
-import Distributions: pdf,logpdf, ncategories
+import Distributions: pdf,logpdf, ncategories, cdf, rand
 
 include("distributions/include.jl")
 include("assignments/Assignments.jl")
@@ -36,7 +36,7 @@ include("api.jl")
 include("bootstrap.jl")
 
 export nethist, nethist_discretised
-export loglikelihood, fit
+export loglikelihood, fit, cdf, pdf
 
 # export options for optimisation
 export estimate_graphon

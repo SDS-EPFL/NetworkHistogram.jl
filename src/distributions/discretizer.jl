@@ -65,6 +65,9 @@ function nlabels(d::RegularDiscretizer)
     return d.n_bins
 end
 
+non_zero_labels_counts(d::RegularDiscretizer) = nlabels(d)
+
+
 """
 Maps a set of categories to a set of bins
 """
@@ -95,6 +98,16 @@ end
 
 function nlabels(d::CategoryDiscretizer)
     return length(d.bin_to_cat)
+end
+
+
+
+function non_zero_labels_counts(d::CategoryDiscretizer)
+    if 0 ∈ keys(d.bin_to_cat)
+        return length(d.bin_to_cat) - 1
+    else
+        return length(d.bin_to_cat)
+    end
 end
 
 function minimum(d::CategoryDiscretizer)
@@ -156,6 +169,10 @@ end
 
 function nlabels(d::HybridDiscretizer)
     return nlabels(d.lin) + nlabels(d.cat)
+end
+
+function non_zero_labels_counts(d::HybridDiscretizer)
+    return non_zero_labels_counts(d.lin) + non_zero_labels_counts(d.cat)
 end
 
 function encode(d::HybridDiscretizer, x::Real)

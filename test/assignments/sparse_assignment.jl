@@ -16,7 +16,6 @@ using Random
     for i in 1:n
         A[i, i] = 0
     end
-    dropzeros!(A)
     g = NH.Observations(A_dense, Categorical(m))
     sbm_fitted, a = nethist(g; h = n ÷ k, max_iter = 10)
     sparse_a = NH.SparseAssignment(
@@ -33,14 +32,14 @@ end
 @testset "test sparse swap" begin
     Random.seed!(1234123)
     using ..TestNetworkHistogram: test_swap_revertible, to_default_assignment
-    using Distributions: Categorical
+    using Distributions: DiscreteNonParametric
     using LinearAlgebra: Symmetric
     import Random
     m = 4
     p = ones(m) ./ m
     n = 12
     k = 4
-    dist = Categorical(p)
+    dist = NH.ZeroInflatedCategorical(p)
     sbm = NH.initialize_sbm(ones(k) ./ k, dist)
     node_labels = repeat(1:k, inner = n ÷ k)
     A = sparse(first(NH.sample(sbm, node_labels)))
@@ -115,5 +114,5 @@ end
                       realized_after_swap[:, i, j] ./ counts[i, j])
         end
     end
-    @test loglikelihood(a, g) == 4 * log(0.5)
+    @test loglikelihood(a, g) ≈ 4 * log(0.5)
 end

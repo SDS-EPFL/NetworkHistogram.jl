@@ -118,6 +118,8 @@ end
 """
 Assume that the diagonal is zero.
 0 indicates no edge, while missing indicates no information about the edge.
+By default maps 0 to 0. If you want another behaviour use the function where you
+pass a `Discretizer` object.
 """
 function discretise(g::Observations{G, D};
         number_groups = nothing, number_levels = nothing) where {G, D}
@@ -131,7 +133,7 @@ function discretise(g::Observations{G, D};
             @warn "disregarding `number_groups` as `number_levels` is provided"
         end
     end
-    return discretise(g, HybridDiscretizer(number_levels-1, extrema(g.graph)..., 0.0))
+    return discretise(g, DiscretizerZeroToZero(number_levels, extrema(g.graph)...))
 end
 
 function discretise(g::Observations{G, D}, discretiser ::Discretizer) where {G,D<:UnivariateDistribution}

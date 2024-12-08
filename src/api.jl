@@ -1,9 +1,10 @@
 function _default_init(dist::Distribution, start = MetisStart())
     if dist isa Bernoulli
         return InitRule(start, Val{BernoulliData}())
-    elseif dist isa Categorical || dist isa CategoricalArray ||
-           dist isa DiscretizedDistribution
+    elseif dist isa Categorical
         return InitRule(start, Val{CategoricalData}())
+    elseif dist isa  DiscretizedDistribution || dist isa ZeroInflatedCategorical
+        return InitRule(start, Val{SparseData}())
     else
         return InitRule(start, nothing)
     end
