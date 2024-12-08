@@ -17,9 +17,9 @@ function ZeroInflatedCategorical(p::Real, probs::AbstractVector)
         probs_ = probs / sum(probs)
     end
     if p ≈ 0
-        p = 0
+        p = zero(p)
     elseif p ≈ 1
-        p = 1
+        p = one(p)
     end
     return ZeroInflatedCategorical(Bernoulli(1 - p), Categorical(probs_))
 end
