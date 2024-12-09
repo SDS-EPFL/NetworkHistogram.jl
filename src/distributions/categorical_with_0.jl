@@ -71,3 +71,10 @@ function Distributions.fit(
         return ZeroInflatedCategorical(1.0, zeros(n_cat))
     end
 end
+
+
+function get_params_cat_like(dist::ZeroInflatedCategorical)
+    p = first(params(dist.edge_proba))
+    probs = params(dist.dist)
+    return vcat(p, probs .* (1-p))
+end
