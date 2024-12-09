@@ -78,3 +78,13 @@ function get_params_cat_like(dist::ZeroInflatedCategorical)
     probs = vcat(params(dist.dist)...)
     return vcat(1-p, probs .* p)
 end
+
+
+function Base.convert(::Type{<:ZeroInflatedCategorical}, d::D) where {D}
+    return ZeroInflatedCategorical(1.0, d)
+end
+
+
+function Base.convert(T::Type{<:Categorical}, d::ZeroInflatedCategorical)
+    return T(get_params_cat_like(d))
+end
