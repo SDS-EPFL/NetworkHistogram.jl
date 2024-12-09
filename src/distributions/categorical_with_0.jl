@@ -1,4 +1,3 @@
-
 struct ZeroInflatedCategorical{B, D} <: DiscreteUnivariateDistribution
     edge_proba::B
     dist::D
@@ -56,9 +55,6 @@ end
 
 ncategories(d::ZeroInflatedCategorical) = ncategories(d.dist)
 
-function Distributions.suffstats(::Type{ZeroInflatedCategorical{B, D}}, data) where {B, D}
-    return Distributions.suffstats(D, data)
-end
 
 function Distributions.fit(
         ::Type{ZeroInflatedCategorical{B, D}}, data::AbstractArray, n_cat) where {B, D}

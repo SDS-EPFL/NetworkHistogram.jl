@@ -1,4 +1,4 @@
-# switch to MetaGraphsNext.jl ?
+# remove all references to graphs, and only use sparse matrices ?
 struct Observations{G, D}
     graph::G
     dist_ref::D
@@ -120,6 +120,8 @@ Assume that the diagonal is zero.
 0 indicates no edge, while missing indicates no information about the edge.
 By default maps 0 to 0. If you want another behaviour use the function where you
 pass a `Discretizer` object.
+
+number_levels will be the number of levels in the discretized distribution (excluding 0).
 """
 function discretise(g::Observations{G, D};
         number_groups = nothing, number_levels = nothing) where {G, D}
