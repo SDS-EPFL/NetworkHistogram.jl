@@ -1,7 +1,7 @@
 # TODO: remove BlockModel being a subtype of AbstractMatrix
 # this was fun but useless and actually harmful
 
-struct BlockModel{T, K, F <: Real} <: AbstractMatrix{T}
+struct BlockModel{T, K, F <: Real}
     sizes::Vector{F}
     probs::SymmetricTensor{T, K, 2}
 end
