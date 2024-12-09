@@ -76,5 +76,5 @@ end
 function get_params_cat_like(dist::ZeroInflatedCategorical)
     p = first(params(dist.edge_proba))
     probs = vcat(params(dist.dist)...)
-    return vcat(p, probs .* (1-p))
+    return vcat(1-p, probs .* p)
 end
