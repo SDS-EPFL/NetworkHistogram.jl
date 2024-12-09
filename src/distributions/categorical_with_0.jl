@@ -6,6 +6,11 @@ end
 _dirac_delta(x) = x == 0 ? one(x) : zero(x)
 
 function ZeroInflatedCategorical(p::Real, dist::D) where {D}
+    if p < 0
+        p = zero(p)
+    elseif p > 1
+        p = one(p)
+    end
     return ZeroInflatedCategorical(Bernoulli(1 - p), dist)
 end
 
@@ -15,9 +20,9 @@ function ZeroInflatedCategorical(p::Real, probs::AbstractVector)
     else
         probs_ = probs / sum(probs)
     end
-    if p ≈ 0
+    if p < 0
         p = zero(p)
-    elseif p ≈ 1
+    elseif p > 1
         p = one(p)
     end
     return ZeroInflatedCategorical(p, Categorical(probs_))
@@ -27,7 +32,7 @@ function ZeroInflatedCategorical(vec_probs::AbstractVector)
     ZeroInflatedCategorical(vec_probs[1], vec_probs[2:end])
 end
 
-ZeroInflatedCategorical(k::Int) = ZeroInflatedCategorical(ones(k+1) ./ (k+1))
+ZeroInflatedCategorical(k::Int) = ZeroInflatedCategorical(ones(k + 1) ./ (k + 1))
 
 function Distributions.pdf(d::ZeroInflatedCategorical, x::Real)
     return pdf(d.edge_proba, 0) * _dirac_delta(x) + pdf(d.edge_proba, 1) * pdf(d.dist, x)
@@ -54,7 +59,6 @@ function Distributions.params(d::ZeroInflatedCategorical)
 end
 
 ncategories(d::ZeroInflatedCategorical) = ncategories(d.dist)
-
 
 function Distributions.fit(
         ::Type{ZeroInflatedCategorical{B, D}}, data::AbstractArray, n_cat) where {B, D}
