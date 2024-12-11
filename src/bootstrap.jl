@@ -2,7 +2,7 @@ function bootstrap(statistic::Function, data::AbstractMatrix, model::BlockModel,
         sampling::BootstrapSampling)
     t0 = tx(statistic(data))
     m = nrun(sampling)
-    t1 = Bootstrap.zeros_tuple(t0, m)
+    t1 = zeros_tuple(t0, m)
     data1 = copy(data)
     for i in 1:m
         draw_and_fill!(data1, model)

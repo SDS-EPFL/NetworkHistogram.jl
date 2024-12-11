@@ -16,7 +16,8 @@ import StatsAPI: loglikelihood, fit
 using CategoricalArrays, CategoricalDistributions
 using Combinatorics: permutations
 using StaticArrays
-using Bootstrap: BootstrapSampling, ParametricBootstrapSample, tx, bootstrap, nrun
+using Bootstrap: BootstrapSampling, ParametricBootstrapSample, tx, nrun, zeros_tuple
+import Bootstrap: bootstrap
 import Base.maximum, Base.minimum
 import Random: rand
 import Base.convert
