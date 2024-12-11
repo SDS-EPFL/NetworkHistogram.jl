@@ -9,7 +9,7 @@ function DiscretizedDistribution(d::D, n_bins::Int, support_bound = extrema(d)) 
     ps = zeros(non_zero_labels_counts(disc))
     for i in 1:non_zero_labels_counts(disc)
         lb, ub = NetworkHistogram.decode(disc, i)
-        ps[i] = cdf(dist, ub) - cdf(dist, lb)
+        ps[i] = cdf(d, ub) - cdf(d, lb)
     end
     probs = ZeroInflatedCategorical(0.0, ps)
     return DiscretizedDistribution(disc, probs)
@@ -21,7 +21,7 @@ function DiscretizedDistribution(d::ZeroInflated, n_bins::Int, support_bound = e
     ps = zeros(non_zero_labels_counts(disc))
     for i in 1:non_zero_labels_counts(disc)
         lb, ub = NetworkHistogram.decode(disc, i)
-        ps[i] = cdf(dist, ub) - cdf(dist, lb)
+        ps[i] = cdf(d, ub) - cdf(d, lb)
     end
     probs = ZeroInflatedCategorical(pdf(d,0.0), ps)
     return DiscretizedDistribution(disc, probs)
