@@ -32,12 +32,13 @@ function DiscretizedDistribution(discretizer::Discretizer)
         discretizer, ZeroInflatedCategorical(non_zero_labels_counts(discretizer)))
 end
 
+# fast trick, will fail if discretizer put other categorical bins....
 function pdf(d::DiscretizedDistribution, x::Real)
+    if x == 0
+        return pdf(d.probs, 0)
+    end
     if !support_encoding(d.discretizer, x)
         return 0.0
-    end
-    if x == 0
-        return pdf(d.probs, x)
     end
     bin = encode(d.discretizer, x)
     return pdf(d.probs, bin) / binwidth(d.discretizer)
@@ -46,6 +47,9 @@ end
 function logpdf(d::DiscretizedDistribution, x::Real)
     if !support_encoding(d.discretizer, x)
         return -Inf
+    end
+    if x == 0
+        return log(pdf(d.probs, 0))
     end
     bin = encode(d.discretizer, x)
     return log(pdf(d.probs, bin)) - log(binwidth(d.discretizer))

@@ -41,7 +41,7 @@ function encode(d::RegularDiscretizer, x::Real)
 end
 
 function _decode_randomly(rng::Random.AbstractRNG, d::RegularDiscretizer, bin::Int)
-    hi,lo = decode(d, bin)
+    hi, lo = decode(d, bin)
     return lo + (hi - lo) * rand(rng)
 end
 
@@ -66,7 +66,6 @@ function nlabels(d::RegularDiscretizer)
 end
 
 non_zero_labels_counts(d::RegularDiscretizer) = nlabels(d)
-
 
 """
 Maps a set of categories to a set of bins
@@ -100,7 +99,9 @@ function nlabels(d::CategoryDiscretizer)
     return length(d.bin_to_cat)
 end
 
-
+function binwidth(d::CategoryDiscretizer{F,T}, x::T) where {F,T}
+    return length(d.bin_to_cat[x])
+end
 
 function non_zero_labels_counts(d::CategoryDiscretizer)
     if 0 ∈ keys(d.bin_to_cat)
@@ -127,7 +128,6 @@ struct HybridDiscretizer{F, F2, T, L} <: Discretizer
     cat::CategoryDiscretizer{F2, T}
 end
 
-
 # change so that atoms can be packed together if wanted
 function HybridDiscretizer(n_bins, lower_bound, upper_bound, atoms)
     cat_to_bin = Dict(a => n_bins + i for (i, a) in enumerate(atoms))
@@ -140,7 +140,6 @@ function HybridDiscretizer(n_bins, lower_bound, upper_bound, atoms)
         CategoryDiscretizer(cat_to_bin, bin_to_cat)
     )
 end
-
 
 function DiscretizerZeroToZero(n_bins, lower_bound, upper_bound)
     cat_to_bin = Dict([0 => 0])
@@ -157,7 +156,6 @@ end
 function support_encoding(d::HybridDiscretizer, x)
     return support_encoding(d.lin, x) || support_encoding(d.cat, x)
 end
-
 
 function minimum(d::HybridDiscretizer)
     return min(minimum(d.lin), minimum(d.cat))
@@ -177,6 +175,14 @@ end
 
 binwidth(d::HybridDiscretizer) = binwidth(d.lin)
 
+function binwidth(d::HybridDiscretizer, bin)
+    if haskey(d.cat.cat_to_bin, bin)
+        return binwidth(d.cat, bin)
+    else
+        return binwidth(d.lin)
+    end
+end
+
 function encode(d::HybridDiscretizer, x::Real)
     if haskey(d.cat.cat_to_bin, x)
         return encode(d.cat, x)
@@ -193,15 +199,13 @@ function decode(d::HybridDiscretizer, bin::Int)
     end
 end
 
-
 function _decode_randomly(rng::Random.AbstractRNG, d::HybridDiscretizer, bin::Int)
-     if haskey(d.cat.bin_to_cat, bin)
+    if haskey(d.cat.bin_to_cat, bin)
         return decode(d.cat, bin)
     else
         return _decode_randomly(rng, d.lin, bin)
     end
 end
-
 
 function auto_nbins(data)
     binwidth = 2iqr(data) / cbrt(n)
