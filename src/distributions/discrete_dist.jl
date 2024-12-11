@@ -15,7 +15,6 @@ function DiscretizedDistribution(d::D, n_bins::Int, support_bound = extrema(d)) 
     return DiscretizedDistribution(disc, probs)
 end
 
-
 function DiscretizedDistribution(d::ZeroInflated, n_bins::Int, support_bound = extrema(d))
     disc = DiscretizerZeroToZero(n_bins, support_bound...)
     ps = zeros(non_zero_labels_counts(disc))
@@ -23,36 +22,13 @@ function DiscretizedDistribution(d::ZeroInflated, n_bins::Int, support_bound = e
         lb, ub = decode(disc, i)
         ps[i] = cdf(d, ub) - cdf(d, lb)
     end
-    probs = ZeroInflatedCategorical(pdf(d,0.0), ps)
+    probs = ZeroInflatedCategorical(pdf(d, 0.0), ps)
     return DiscretizedDistribution(disc, probs)
 end
 
 function DiscretizedDistribution(discretizer::Discretizer)
     return DiscretizedDistribution(
         discretizer, ZeroInflatedCategorical(non_zero_labels_counts(discretizer)))
-end
-
-# fast trick, will fail if discretizer put other categorical bins....
-function pdf(d::DiscretizedDistribution, x::Real)
-    if x == 0
-        return pdf(d.probs, 0)
-    end
-    if !support_encoding(d.discretizer, x)
-        return 0.0
-    end
-    bin = encode(d.discretizer, x)
-    return pdf(d.probs, bin) / binwidth(d.discretizer)
-end
-
-function logpdf(d::DiscretizedDistribution, x::Real)
-    if !support_encoding(d.discretizer, x)
-        return -Inf
-    end
-    if x == 0
-        return log(pdf(d.probs, 0))
-    end
-    bin = encode(d.discretizer, x)
-    return log(pdf(d.probs, bin)) - log(binwidth(d.discretizer))
 end
 
 function rand(rng::Random.AbstractRNG, d::DiscretizedDistribution)
@@ -86,4 +62,33 @@ end
 
 function set_params!(d::DiscretizedDistribution{D, L}, params) where {D, L}
     d.probs = L(params...)
+end
+
+# fast trick, will fail if discretizer put other categorical bins....
+function pdf(d::DiscretizedDistribution, x::Real)
+    if x == 0
+        return pdf(d.probs, 0)
+    end
+    if !support_encoding(d.discretizer, x)
+        return 0.0
+    end
+    bin = encode(d.discretizer, x)
+    return pdf(d.probs, bin) / binwidth(d.discretizer)
+end
+
+function logpdf(d::DiscretizedDistribution, x::Real)
+    if !support_encoding(d.discretizer, x)
+        return -Inf
+    end
+    if x == 0
+        return log(pdf(d.probs, 0))
+    end
+    bin = encode(d.discretizer, x)
+    return log(pdf(d.probs, bin)) - log(binwidth(d.discretizer))
+end
+
+#lazy cdf computation, not efficient
+function Distributions.cdf(d::DiscretizedDistribution, x::Real; step::Real = 0.01)
+    return mean(pdf(d, minimum(d):step:x)) * (x - minimum(d)) +
+           pdf(dist, 0) * _dirac_delta(x, 0.0, Inf)
 end

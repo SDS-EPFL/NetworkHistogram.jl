@@ -24,7 +24,8 @@ maximum(d::ZeroInflated) = max(maximum(d.dist), 0)
 insupport(d::ZeroInflated, x::Real) = x == 0 || insupport(d.dist, x)
 
 function Distributions.cdf(d::ZeroInflated, x::Real)
-    return pdf(d.edge_proba, 0) * _dirac_delta(x, 0, Inf) + cdf(d.dist, x)
+    return pdf(d.edge_proba, 0) * _dirac_delta(x, 0, Inf) +
+           cdf(d.dist, x) * pdf(d.edge_proba, 1)
 end
 
 function Distributions.params(d::ZeroInflated)
