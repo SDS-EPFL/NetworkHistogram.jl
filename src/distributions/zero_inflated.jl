@@ -24,20 +24,19 @@ maximum(d::ZeroInflated) = max(maximum(d.dist), 0)
 insupport(d::ZeroInflated, x::Real) = x == 0 || insupport(d.dist, x)
 
 function Distributions.cdf(d::ZeroInflated, x::Real)
-    return pdf(d.edge_proba, 0) * _dirac_delta(x) + pdf(d.edge_proba, 1) * cdf(d.dist, x)
+    return pdf(d.edge_proba, 0) * _dirac_delta(x, 0, Inf) + cdf(d.dist, x)
 end
 
 function Distributions.params(d::ZeroInflated)
     (first(params(d.edge_proba)), params(d.dist)...)
 end
 
-
 function Distributions.fit(
         ::Type{ZeroInflated{B, D}}, data::AbstractArray, n_cat) where {B, D}
     indices_0 = findall(x -> x == 0, data)
     p = length(indices_0) / length(data)
     if p != 1
-        return ZeroInflated(p,  fit(D, data[setdiff(collect(eachindex(data)), indices_0)]))
+        return ZeroInflated(p, fit(D, data[setdiff(collect(eachindex(data)), indices_0)]))
     else
         return ZeroInflated(1.0, D())
     end

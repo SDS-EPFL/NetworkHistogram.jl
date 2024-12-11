@@ -4,6 +4,7 @@ struct ZeroInflatedCategorical{B, D} <: DiscreteUnivariateDistribution
 end
 
 _dirac_delta(x) = x == 0 ? one(x) : zero(x)
+_dirac_delta(x, lb, ub) = lb <= x <= ub ? one(x) : zero(x)
 
 function ZeroInflatedCategorical(p::Real, dist::D) where {D}
     if p < 0
@@ -72,18 +73,15 @@ function Distributions.fit(
     end
 end
 
-
 function get_params_cat_like(dist::ZeroInflatedCategorical)
     p = first(params(dist.edge_proba))
     probs = vcat(params(dist.dist)...)
-    return vcat(1-p, probs .* p)
+    return vcat(1 - p, probs .* p)
 end
-
 
 function Base.convert(::Type{<:ZeroInflatedCategorical}, d::D) where {D}
     return ZeroInflatedCategorical(1.0, d)
 end
-
 
 function Base.convert(T::Type{<:Categorical}, d::ZeroInflatedCategorical)
     return T(get_params_cat_like(d))

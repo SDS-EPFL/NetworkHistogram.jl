@@ -20,7 +20,7 @@ function DiscretizedDistribution(d::ZeroInflated, n_bins::Int, support_bound = e
     disc = DiscretizerZeroToZero(n_bins, support_bound...)
     ps = zeros(non_zero_labels_counts(disc))
     for i in 1:non_zero_labels_counts(disc)
-        lb, ub = NetworkHistogram.decode(disc, i)
+        lb, ub = decode(disc, i)
         ps[i] = cdf(d, ub) - cdf(d, lb)
     end
     probs = ZeroInflatedCategorical(pdf(d,0.0), ps)
@@ -35,6 +35,9 @@ end
 function pdf(d::DiscretizedDistribution, x::Real)
     if !support_encoding(d.discretizer, x)
         return 0.0
+    end
+    if x == 0
+        return pdf(d.probs, x)
     end
     bin = encode(d.discretizer, x)
     return pdf(d.probs, bin) / binwidth(d.discretizer)
