@@ -5,7 +5,7 @@ mutable struct DiscretizedDistribution{D, L} <:
 end
 
 function DiscretizedDistribution(d::D, n_bins::Int, support_bound = extrema(d)) where {D}
-    disc = ZeroToZeroDiscretizer(n_bins, support_bound...)
+    disc = DiscretizerZeroToZero(n_bins, support_bound...)
     probs = ZeroInflatedCategorical(non_zero_labels_counts(disc))
     return DiscretizedDistribution(disc, probs)
 end
