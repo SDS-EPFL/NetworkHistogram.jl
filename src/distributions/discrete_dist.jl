@@ -90,5 +90,5 @@ end
 #lazy cdf computation, not efficient
 function Distributions.cdf(d::DiscretizedDistribution, x::Real; step::Real = 0.01)
     return mean(pdf(d, minimum(d):step:x)) * (x - minimum(d)) +
-           pdf(dist, 0) * _dirac_delta(x, 0.0, Inf)
+           pdf(d, 0) * _dirac_delta(x, 0.0, Inf)
 end
