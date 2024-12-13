@@ -34,7 +34,7 @@ function maximum(d::RegularDiscretizer)
 end
 
 function encode(d::RegularDiscretizer, x::Real)
-    if x == d.upper_bound
+    if x >= d.upper_bound
         return d.n_bins
     end
     return d.bin_labels[convert(Int, div(x - d.lower_bound, d.bin_width) + 1)]
