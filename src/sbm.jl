@@ -159,3 +159,26 @@ function align_sbm!(sbm::BlockModel, perm)
     sbm.probs .= sbm.probs[perm, perm]
     sbm.sizes .= sbm.sizes[perm]
 end
+
+
+"""
+    order_groups(a::Assignment, latents::AbstractVector)
+
+Order the groups of an assignment according to the true latents. This is an heuristic
+approach, which is not guaranteed to find the true ordering of the groups.
+"""
+function order_groups(a::Assignment, latents::AbstractVector)
+    n = number_nodes(a)
+    k = number_groups(a)
+    sort_perm = sortperm(latents)
+    sorted_group_labels = a.node_labels[sort_perm]
+    dummy_group_labels = repeat(1:k, inner = n ÷ k + 1)[1:n]
+    counts = Dict(group => countmap(dummy_group_labels[sorted_group_labels .== group])
+    for group in 1:k)
+    return sort(1:k, by = x -> Tuple(get(counts[x], g, 0) for g in 1:k), rev = true)
+end
+
+
+function align_sbm_true_latents!(sbm::BlockModel, a::Assignment, latents)
+    align_sbm!(sbm, order_groups(a, latents))
+end
