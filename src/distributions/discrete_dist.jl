@@ -88,7 +88,14 @@ function logpdf(d::DiscretizedDistribution, x::Real)
 end
 
 #lazy cdf computation, not efficient
-function Distributions.cdf(d::DiscretizedDistribution, x::Real; step::Real = 0.01)
-    return mean(pdf(d, minimum(d):step:x)) * (x - minimum(d)) +
-           pdf(d, 0) * _dirac_delta(x, 0.0, Inf)
+function Distributions.cdf(
+        d::DiscretizedDistribution{D, P}, x::Real) where {D, P <: ZeroInflatedCategorical}
+    bin = encode(d.discretizer, x)
+    result = (x == 0) * cdf(d.probs, 0)
+    if bin != 0
+        lb, ub = decode(d.discretizer, bin)
+        result += cdf(d.probs, bin - 1) +
+                  (cdf(d.probs, bin) - cdf(d.probs, bin - 1)) * (x - lb) / (ub - lb)
+    end
+    return result
 end

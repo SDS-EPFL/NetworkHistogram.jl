@@ -104,6 +104,11 @@ function _n_decorations_with_0(a::SparseAssignment)
     return size(a.additional_data.estimated_theta, 1) + 1
 end
 
+
+function _n_decorations_not_0(a::SparseAssignment)
+    return size(a.additional_data.estimated_theta, 1)
+end
+
 function loglikelihood(assignment::SparseAssignment, g::Observations)
     return assignment.additional_data.log_likelihood
 end

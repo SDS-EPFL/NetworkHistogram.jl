@@ -52,7 +52,8 @@ maximum(d::ZeroInflatedCategorical) = max(maximum(d.dist), 0)
 insupport(d::ZeroInflatedCategorical, x::Real) = x == 0 || insupport(d.dist, x)
 
 function Distributions.cdf(d::ZeroInflatedCategorical, x::Real)
-    return pdf(d.edge_proba, 0) * _dirac_delta(x) + pdf(d.edge_proba, 1) * cdf(d.dist, x)
+    return pdf(d.edge_proba, 0) * _dirac_delta(x, 0, Inf) +
+           pdf(d.edge_proba, 1) * cdf(d.dist, x)
 end
 
 function Distributions.params(d::ZeroInflatedCategorical)
@@ -62,11 +63,12 @@ end
 ncategories(d::ZeroInflatedCategorical) = ncategories(d.dist)
 
 function Distributions.fit(
-        ::Type{ZeroInflatedCategorical{B, D}}, data::AbstractArray, n_cat) where {B, D}
+        ::Type{ZeroInflatedCategorical{B, D}}, data::AbstractArray, n_cat) where {
+        B, D <: Categorical}
     indices_0 = findall(x -> x == 0, data)
     p = length(indices_0) / length(data)
     if p != 1
-        dist = fit(D, data[setdiff(1:end, indices_0)])
+        dist = fit_mle(Categorical, n_cat, data[setdiff(1:end, indices_0)])
         return ZeroInflatedCategorical(p, dist)
     else
         return ZeroInflatedCategorical(1.0, zeros(n_cat))
