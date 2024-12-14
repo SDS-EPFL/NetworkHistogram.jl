@@ -152,6 +152,10 @@ function _graph_to_mat(g::Observations{<:AbstractMatrix, D}) where {D<:Univariat
     return g.graph
 end
 
+
+"""
+Get the number of levels for the discretized distribution given n and k.
+"""
 function get_num_levels_from_groups(n, number_groups)
-    return max(1, ceil(Int, n / number_groups))
+    return max(1,  n^(0.5 * (1 - log(number_groups) / log(n))))
 end
