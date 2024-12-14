@@ -153,5 +153,5 @@ function _graph_to_mat(g::Observations{<:AbstractMatrix, D}) where {D<:Univariat
 end
 
 function get_num_levels_from_groups(n, number_groups)
-    return ceil(Int, n / number_groups)
+    return max(1, ceil(Int, n / number_groups))
 end

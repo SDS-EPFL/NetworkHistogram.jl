@@ -11,7 +11,6 @@ struct OracleH <: KSelectionRule
     H::Int
 end
 
-
 function OracleM(M)
     return OracleM(M, 1.0)
 end
@@ -44,7 +43,7 @@ How to select the number of blocks `K` for the BlockModel model.
 select_number_node_per_block
 
 function select_number_node_per_block(g::Observations, rule::OracleH)
-    if rule.H > number_nodes(g)÷2
+    if rule.H > number_nodes(g) ÷ 2
         throw(ArgumentError("The number of nodes per block $(rule.H) is too large for the \
         number of nodes $(number_nodes(g)), it should be at most $(number_nodes(g)÷2)"))
     end
@@ -63,8 +62,8 @@ end
 function select_number_node_per_block(g::Observations, rule::OracleM)
     rho = density(g)
     n = number_nodes(g)
-    k = max(2, round(Int, (2 * rule.M * rho)^(-1 / 4) * sqrt(n)))
-    return select_number_node_per_block(g, OracleH(k))
+    h = min(max(2, round(Int, (2 * rule.M * rho)^(-1 / 4) * sqrt(n))), n ÷ 2)
+    return select_number_node_per_block(g, OracleH(h))
 end
 
 function select_number_node_per_block(g::Observations, rule::EstimatedM)
@@ -92,7 +91,7 @@ function estimated_number_nodes_per_block(
 end
 
 function _approx_k_from_delta_f(u, mult, midpoints, ρ, α = 1.0)
-    sort!(u, dims=1)
+    sort!(u, dims = 1)
     uMid = u[midpoints]
     β₀, β₁ = hcat(ones(length(uMid)), 1:length(uMid)) \ uMid
     # from Olhede and Wolfe (2014), equation (11)
