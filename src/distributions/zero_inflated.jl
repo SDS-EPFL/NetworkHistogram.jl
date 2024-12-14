@@ -11,6 +11,10 @@ function Distributions.pdf(d::ZeroInflated, x::Real)
     return pdf(d.edge_proba, 0) * _dirac_delta(x) + pdf(d.edge_proba, 1) * pdf(d.dist, x)
 end
 
+function get_proba_zero(d::ZeroInflated)
+    return pdf(d.edge_proba, 0)
+end
+
 function rand(rng::Random.AbstractRNG, d::ZeroInflated)
     return rand(rng, d.edge_proba) * rand(rng, d.dist)
 end
