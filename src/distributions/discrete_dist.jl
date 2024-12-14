@@ -90,6 +90,7 @@ end
 #lazy cdf computation, not efficient
 function Distributions.cdf(
         d::DiscretizedDistribution{D, P}, x::Real) where {D, P <: ZeroInflatedCategorical}
+    !insupport(d, x) && return 0.0
     bin = encode(d.discretizer, x)
     result = (x == 0) * cdf(d.probs, 0)
     if bin != 0
