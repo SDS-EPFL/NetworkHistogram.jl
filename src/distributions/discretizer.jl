@@ -215,3 +215,23 @@ function auto_nbins(data)
     nbins = max(nbins_fd, nbins_sturges)
     return nbins
 end
+
+
+function progress_in_bin(d::CategoryDiscretizer, x::Real, bin)
+    return  one(x)
+end
+
+
+function progress_in_bin(d::RegularDiscretizer, x::Real, bin)
+    lo, hi = decode(d, bin)
+    return (x - lo) / (hi - lo)
+end
+
+
+function progress_in_bin(d::HybridDiscretizer, x::Real, bin)
+    if haskey(d.cat.bin_to_cat, bin)
+        return progress_in_bin(d.cat, x, bin)
+    else
+        return progress_in_bin(d.lin, x, bin)
+    end
+end

@@ -93,9 +93,9 @@ function Distributions.cdf(
     bin = encode(d.discretizer, x)
     result = (x == 0) * cdf(d.probs, x)
     if bin != 0
-        lb, ub = decode(d.discretizer, bin)
         result += cdf(d.probs, bin - 1) +
-                  (cdf(d.probs, bin) - cdf(d.probs, bin - 1)) * (x - lb) / (ub - lb)
+                  (cdf(d.probs, bin) - cdf(d.probs, bin - 1)) *
+                  progress_in_bin(d.discretizer, x, bin)
     end
     return result
 end
