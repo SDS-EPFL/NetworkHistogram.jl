@@ -142,8 +142,8 @@ function HybridDiscretizer(n_bins, lower_bound, upper_bound, atoms)
 end
 
 function DiscretizerZeroToZero(n_bins, lower_bound, upper_bound)
-    cat_to_bin = Dict([0 => 0])
-    bin_to_cat = Dict([0 => 0])
+    cat_to_bin = Dict([0.0 => 0])
+    bin_to_cat = Dict([0 => 0.0])
     bin_width = (upper_bound - lower_bound) / n_bins
     return HybridDiscretizer(
         RegularDiscretizer{typeof(bin_width), Int, n_bins}(
