@@ -123,9 +123,9 @@ end
 Uniformly discretizes a continuous distribution into a fixed number of bins of equal width,
 with additional bins for missing or special values.
 """
-struct HybridDiscretizer{F, F2, T, L} <: Discretizer
+struct HybridDiscretizer{F, T, L} <: Discretizer
     lin::RegularDiscretizer{F, T, L}
-    cat::CategoryDiscretizer{F2, T}
+    cat::CategoryDiscretizer{F, T}
 end
 
 # change so that atoms can be packed together if wanted
