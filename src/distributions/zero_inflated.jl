@@ -8,7 +8,8 @@ function ZeroInflated(p::Real, dist::D) where {D}
 end
 
 function Distributions.pdf(d::ZeroInflated, x::Real)
-    return pdf(d.edge_proba, 0) * _dirac_delta(x) + pdf(d.edge_proba, 1) * pdf(d.dist, x)
+    return pdf(d.edge_proba, zero(x)) * _dirac_delta(x) +
+           pdf(d.edge_proba, one(x)) * pdf(d.dist, x)
 end
 
 function get_proba_zero(d::ZeroInflated)
@@ -28,8 +29,8 @@ maximum(d::ZeroInflated) = max(maximum(d.dist), 0)
 insupport(d::ZeroInflated, x::Real) = x == 0 || insupport(d.dist, x)
 
 function Distributions.cdf(d::ZeroInflated, x::Real)
-    return pdf(d.edge_proba, 0) * _dirac_delta(x, 0, Inf) +
-           cdf(d.dist, x) * pdf(d.edge_proba, 1)
+    return pdf(d.edge_proba, zero(x)) * _dirac_delta(x, zero(x), Inf) +
+           cdf(d.dist, x) * pdf(d.edge_proba, one(x))
 end
 
 function Distributions.params(d::ZeroInflated)

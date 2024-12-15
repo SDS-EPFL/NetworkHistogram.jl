@@ -36,7 +36,8 @@ end
 ZeroInflatedCategorical(k::Int) = ZeroInflatedCategorical(ones(k + 1) ./ (k + 1))
 
 function Distributions.pdf(d::ZeroInflatedCategorical, x::Real)
-    return pdf(d.edge_proba, 0) * _dirac_delta(x) + pdf(d.edge_proba, 1) * pdf(d.dist, x)
+    return pdf(d.edge_proba, zero(x)) * _dirac_delta(x) +
+           pdf(d.edge_proba, one(x)) * pdf(d.dist, x)
 end
 
 function rand(rng::Random.AbstractRNG, d::ZeroInflatedCategorical)
@@ -52,8 +53,8 @@ maximum(d::ZeroInflatedCategorical) = max(maximum(d.dist), 0)
 insupport(d::ZeroInflatedCategorical, x::Real) = x == 0 || insupport(d.dist, x)
 
 function Distributions.cdf(d::ZeroInflatedCategorical, x::Real)
-    return pdf(d.edge_proba, 0) * _dirac_delta(x, 0, Inf) +
-           pdf(d.edge_proba, 1) * cdf(d.dist, x)
+    return pdf(d.edge_proba, zero(x)) * _dirac_delta(x, 0, Inf) +
+           pdf(d.edge_proba, one(x)) * cdf(d.dist, x)
 end
 
 function Distributions.params(d::ZeroInflatedCategorical)

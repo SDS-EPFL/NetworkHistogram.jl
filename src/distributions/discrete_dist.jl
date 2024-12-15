@@ -67,10 +67,10 @@ end
 # fast trick, will fail if discretizer put other categorical bins....
 function pdf(d::DiscretizedDistribution, x::Real)
     if x == 0
-        return pdf(d.probs, 0)
+        return pdf(d.probs, zero(x))
     end
     if !support_encoding(d.discretizer, x)
-        return 0.0
+        return zero(x)
     end
     bin = encode(d.discretizer, x)
     return pdf(d.probs, bin) / binwidth(d.discretizer)
@@ -80,9 +80,7 @@ function logpdf(d::DiscretizedDistribution, x::Real)
     if !support_encoding(d.discretizer, x)
         return -Inf
     end
-    if x == 0
-        return log(pdf(d.probs, 0))
-    end
+    x == 0 && return log(pdf(d.probs, x))
     bin = encode(d.discretizer, x)
     return log(pdf(d.probs, bin)) - log(binwidth(d.discretizer))
 end
@@ -90,10 +88,10 @@ end
 #lazy cdf computation, not efficient
 function Distributions.cdf(
         d::DiscretizedDistribution{D, P}, x::Real) where {D, P <: ZeroInflatedCategorical}
-    x < minimum(d) && return 0.0
-    x > maximum(d) && return 1.0
+    x < minimum(d) && return zero(x)
+    x > maximum(d) && return one(x)
     bin = encode(d.discretizer, x)
-    result = (x == 0) * cdf(d.probs, 0)
+    result = (x == 0) * cdf(d.probs, x)
     if bin != 0
         lb, ub = decode(d.discretizer, bin)
         result += cdf(d.probs, bin - 1) +
