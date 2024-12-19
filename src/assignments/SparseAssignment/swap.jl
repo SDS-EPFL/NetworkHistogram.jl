@@ -35,6 +35,7 @@ function revert_swap!(
     return nothing
 end
 
+# this function fails in presence of missing values
 function apply_swap!(
         a::SparseAssignment{T, F}, swap::SparseSwap{F}) where {T, F}
     update_observed_and_labels!(a, swap)

@@ -97,3 +97,9 @@ function get_ordered_adjacency_matrix(a::Assignment, A, by=identity)
     perm = sortperm(a.node_labels, by=by)
     return A[perm, perm]
 end
+
+
+
+function Base.deepcopy(a::Assignment)
+    return Assignment(a.group_size, copy(a.node_labels), deepcopy(a.additional_data))
+end
