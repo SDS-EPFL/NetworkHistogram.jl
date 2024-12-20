@@ -4,7 +4,6 @@ using SparseArrays
 include("TestNetworkHistogram.jl")
 
 @testset "Tests" begin
-
     @testset "Discretizer tests" begin
         include("discretised_dist/discretizer.jl")
     end
@@ -26,8 +25,13 @@ include("TestNetworkHistogram.jl")
     @testset "API tests" begin
         include("test_api.jl")
     end
-    @testset "Aqua.jl for package quality" begin
-        using NetworkHistogram
-        Aqua.test_all(NetworkHistogram)
+
+    @testset "Generated tests" begin
+        include("generated_tests/all.jl")
     end
+
+    # @testset "Aqua.jl for package quality" begin
+    #     using NetworkHistogram
+    #     Aqua.test_all(NetworkHistogram)
+    # end
 end
