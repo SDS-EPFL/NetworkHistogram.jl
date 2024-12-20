@@ -17,7 +17,7 @@ using Random
         A[i, i] = 0
     end
     g = NH.Observations(A_dense, Categorical(m))
-    sbm_fitted, a = nethist(g; h = n ÷ k, max_iter = 10)
+    sbm_fitted, a = nethist(g; h = n ÷ k, iterations = 10)
     sparse_a = NH.SparseAssignment(
         NH.Observations(A, Categorical(m)), a.group_size, a.node_labels)
     @test a.additional_data.counts == sparse_a.additional_data.counts

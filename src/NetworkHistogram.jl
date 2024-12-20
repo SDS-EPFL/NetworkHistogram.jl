@@ -60,6 +60,7 @@ export BernoulliData, CategoricalData
 export Observations, discretise
 export DiscretizedDistribution
 
+export Observations, estimate_graphon, nethist, nethist_discretised
 
 export bootstrap
 

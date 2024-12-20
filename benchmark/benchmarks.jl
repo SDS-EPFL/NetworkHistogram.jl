@@ -31,7 +31,7 @@ SUITE["Assignment"] = BenchmarkGroup(["assignment"])
 
 Random.seed!(123451)
 stop_rule = NH.PreviousBestValue(200)
-max_iter = 200
+iterations = 200
 swap_rule = NH.RandomNodeSwap()
 accept_rule = NH.Strict()
 dist = Bernoulli(0.5)
