@@ -21,6 +21,16 @@ struct RegularDiscretizer{F, T, L} <: Discretizer
     bin_width::F
 end
 
+function RegularDiscretizer(n_bins::Int, lower_bound::F, upper_bound::F) where {F}
+    if !isfinite(lower_bound) || !isfinite(upper_bound)
+        throw(ArgumentError("RegularDiscretizer requires finite lower and upper bounds."))
+    end
+    bin_width = (upper_bound - lower_bound) / n_bins
+    return RegularDiscretizer(
+        n_bins, lower_bound, upper_bound, MVector{n_bins}(1:n_bins), bin_width
+    )
+end
+
 function support_encoding(d::RegularDiscretizer, x::Real)
     return d.lower_bound <= x <= d.upper_bound
 end

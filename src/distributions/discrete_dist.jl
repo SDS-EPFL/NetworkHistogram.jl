@@ -1,3 +1,20 @@
+"""
+    struct DiscretizedDistribution{D, L} <: ContinuousUnivariateDistribution
+
+A discretized distribution that combines a discretizer with a zero-inflated categorical distribution.
+
+# Fields
+- `discretizer::D`: The discretizer used to discretize the continuous distribution.
+- `probs::L`: The zero-inflated categorical distribution representing the discretized probabilities.
+
+# Constructors
+- `DiscretizedDistribution(d::D, n_bins::Int, support_bound = extrema(d))`: Creates a discretized distribution with `n_bins` bins and support bound `support_bound`.
+
+# Mathematical Explanation
+The discretized distribution modifies the original continuous distribution by dividing it into `n_bins` bins. The `pdf` and `cdf` are adjusted accordingly:
+- `pdf(x) = pdf_discretized(bin) / bin_width`
+- `cdf(x) = cdf_discretized(bin) + (cdf_discretized(bin + 1) - cdf_discretized(bin)) * progress_in_bin(x)`
+"""
 mutable struct DiscretizedDistribution{D, L} <:
                ContinuousUnivariateDistribution where {D, L}
     discretizer::D
@@ -31,30 +48,27 @@ function DiscretizedDistribution(discretizer::Discretizer)
         discretizer, ZeroInflatedCategorical(non_zero_labels_counts(discretizer)))
 end
 
+"""
+    rand(rng::Random.AbstractRNG, d::DiscretizedDistribution)
+
+Generates a random sample from the discretized distribution `d` using the random number generator `rng`.
+"""
 function rand(rng::Random.AbstractRNG, d::DiscretizedDistribution)
     bin = rand(rng, d.probs)
     return _decode_randomly(rng, d.discretizer, bin)
 end
 
-function minimum(d::DiscretizedDistribution)
-    return minimum(d.discretizer)
-end
+minimum(d::DiscretizedDistribution) = minimum(d.discretizer)
 
-function maximum(d::DiscretizedDistribution)
-    return maximum(d.discretizer)
-end
+maximum(d::DiscretizedDistribution) = maximum(d.discretizer)
 
-function insupport(d::DiscretizedDistribution, x::Real)
-    return support_encoding(d.discretizer, x)
-end
+insupport(d::DiscretizedDistribution, x::Real) = support_encoding(d.discretizer, x)
 
 function Base.convert(::Type{DiscretizedDistribution}, d::D) where {D}
     return DiscretizedDistribution(d, 10)
 end
 
-function Distributions.ncategories(d::DiscretizedDistribution)
-    return ncategories(d.probs)
-end
+ncategories(d::DiscretizedDistribution) = ncategories(d.probs)
 
 function Distributions.fit(::Type{<:DiscretizedDistribution{D, L}}, data) where {D, L}
     return fit(L, data)
@@ -64,7 +78,15 @@ function set_params!(d::DiscretizedDistribution{D, L}, params) where {D, L}
     d.probs = L(params...)
 end
 
-# fast trick, will fail if discretizer put other categorical bins....
+"""
+    Distributions.pdf(d::DiscretizedDistribution, x::Real)
+
+Computes the probability density function (pdf) of the discretized distribution `d` at `x`.
+
+# Mathematical Explanation
+The `pdf` of the discretized distribution is computed as:
+- `pdf(x) = pdf_discretized(bin) / bin_width`
+"""
 function pdf(d::DiscretizedDistribution, x::Real)
     if x == 0
         return pdf(d.probs, zero(x))
@@ -76,6 +98,11 @@ function pdf(d::DiscretizedDistribution, x::Real)
     return pdf(d.probs, bin) / binwidth(d.discretizer)
 end
 
+"""
+    Distributions.logpdf(d::DiscretizedDistribution, x::Real)
+
+Computes the log of the probability density function (logpdf) of the discretized distribution `d` at `x`.
+"""
 function logpdf(d::DiscretizedDistribution, x::Real)
     if !support_encoding(d.discretizer, x)
         return -Inf
@@ -85,7 +112,15 @@ function logpdf(d::DiscretizedDistribution, x::Real)
     return log(pdf(d.probs, bin)) - log(binwidth(d.discretizer))
 end
 
-#lazy cdf computation, not efficient
+"""
+    Distributions.cdf(d::DiscretizedDistribution{D, P}, x::Real) where {D, P <: ZeroInflatedCategorical}
+
+Computes the cumulative distribution function (cdf) of the discretized distribution `d` at `x`.
+
+# Mathematical Explanation
+The `cdf` of the discretized distribution is computed as:
+- `cdf(x) = cdf_discretized(bin) + (cdf_discretized(bin + 1) - cdf_discretized(bin)) * progress_in_bin(x)`
+"""
 function Distributions.cdf(
         d::DiscretizedDistribution{D, P}, x::Real) where {D, P <: ZeroInflatedCategorical}
     x < minimum(d) && return zero(x)

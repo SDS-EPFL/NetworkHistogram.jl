@@ -1,3 +1,21 @@
+"""
+    struct ZeroInflatedCategorical{B, D} <: DiscreteUnivariateDistribution
+
+A zero-inflated categorical distribution that combines a Bernoulli distribution with a categorical distribution.
+
+# Fields
+- `edge_proba::B`: The Bernoulli distribution representing the probability of zero.
+- `dist::D`: The categorical distribution.
+
+# Constructors
+- `ZeroInflatedCategorical(p::Real, dist::D)`: Creates a zero-inflated categorical distribution with probability `p` of zero and categorical distribution `dist`.
+
+# Mathematical Explanation
+The zero-inflated categorical distribution modifies the original categorical distribution by introducing a probability `p` of zero. The `pmf` and `cdf` are adjusted accordingly:
+- `pdf(x) = p * δ(x) + (1 - p) * pmf_original(x)`
+- `cdf(x) = p * δ(x) + (1 - p) * cdf_original(x)`
+where `δ(x)` is the Dirac delta function.
+"""
 struct ZeroInflatedCategorical{B, D} <: DiscreteUnivariateDistribution
     edge_proba::B
     dist::D
@@ -35,11 +53,26 @@ end
 
 ZeroInflatedCategorical(k::Int) = ZeroInflatedCategorical(ones(k + 1) ./ (k + 1))
 
+"""
+    Distributions.pdf(d::ZeroInflatedCategorical, x::Real)
+
+Computes the probability mass function (pmf) of the zero-inflated categorical distribution `d` at `x`.
+
+# Mathematical Explanation
+The `pmf` of the zero-inflated categorical distribution is given by:
+- `pmf(x) = p * δ(x) + (1 - p) * pmf_original(x)`
+where `p` is the probability of zero, `δ(x)` is the Dirac delta function, and `pmf_original(x)` is the pmf of the original categorical distribution.
+"""
 function Distributions.pdf(d::ZeroInflatedCategorical, x::Real)
     return pdf(d.edge_proba, zero(x)) * _dirac_delta(x) +
            pdf(d.edge_proba, one(x)) * pdf(d.dist, x)
 end
 
+"""
+    rand(rng::Random.AbstractRNG, d::ZeroInflatedCategorical)
+
+Generates a random sample from the zero-inflated categorical distribution `d` using the random number generator `rng`.
+"""
 function rand(rng::Random.AbstractRNG, d::ZeroInflatedCategorical)
     return rand(rng, d.edge_proba) * rand(rng, d.dist)
 end
@@ -52,6 +85,16 @@ maximum(d::ZeroInflatedCategorical) = max(maximum(d.dist), 0)
 
 insupport(d::ZeroInflatedCategorical, x::Real) = x == 0 || insupport(d.dist, x)
 
+"""
+    Distributions.cdf(d::ZeroInflatedCategorical, x::Real)
+
+Computes the cumulative distribution function (cdf) of the zero-inflated categorical distribution `d` at `x`.
+
+# Mathematical Explanation
+The `cdf` of the zero-inflated categorical distribution is given by:
+- `cdf(x) = p * δ(x) + (1 - p) * cdf_original(x)`
+where `p` is the probability of zero, `δ(x)` is the Dirac delta function, and `cdf_original(x)` is the cdf of the original categorical distribution.
+"""
 function Distributions.cdf(d::ZeroInflatedCategorical, x::Real)
     return pdf(d.edge_proba, zero(x)) * _dirac_delta(x, 0, Inf) +
            pdf(d.edge_proba, one(x)) * cdf(d.dist, x)
@@ -63,6 +106,11 @@ end
 
 ncategories(d::ZeroInflatedCategorical) = ncategories(d.dist)
 
+"""
+    Distributions.fit(::Type{ZeroInflatedCategorical{B, D}}, data::AbstractArray, n_cat)
+
+Fits a zero-inflated categorical distribution to the given data.
+"""
 function Distributions.fit(
         ::Type{ZeroInflatedCategorical{B, D}}, data::AbstractArray, n_cat) where {
         B, D <: Categorical}
