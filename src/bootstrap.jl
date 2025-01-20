@@ -1,4 +1,5 @@
-function bootstrap(statistic::Function, data::AbstractMatrix, model::BlockModel,
+function bootstrap(
+        statistic::Function, data::AbstractMatrix, model::BlockModel,
         sampling::BootstrapSampling)
     t0 = tx(statistic(data))
     m = nrun(sampling)

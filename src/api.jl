@@ -15,7 +15,7 @@ function _default_init(dist::Distribution, start = MetisStart())
         return InitRule(start, Val{BernoulliData}())
     elseif dist isa Categorical
         return InitRule(start, Val{CategoricalData}())
-    elseif dist isa  DiscretizedDistribution || dist isa ZeroInflatedCategorical
+    elseif dist isa DiscretizedDistribution || dist isa ZeroInflatedCategorical
         return InitRule(start, Val{SparseData}())
     else
         return InitRule(start, nothing)
@@ -40,7 +40,8 @@ function _nethist(g::Observations{G, D}, h; kwargs...) where {G, D}
     kwargs_dict = Dict(kwargs)
     start_clustering = pop!(kwargs_dict, :start_clustering, MetisStart())
     initialise_rule = pop!(
-        kwargs_dict, :initialise_rule, _default_init(g.dist_ref, start_clustering))
+        kwargs_dict, :initialise_rule, _default_init(
+            g.dist_ref, start_clustering))
     a = estimate_graphon(g, h;
         kwargs_dict..., initialise_rule = initialise_rule)
     return fit(a, g), a

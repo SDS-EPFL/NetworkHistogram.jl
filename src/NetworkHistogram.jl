@@ -16,12 +16,13 @@ import StatsAPI: loglikelihood, fit
 using CategoricalArrays, CategoricalDistributions
 using Combinatorics: permutations
 using StaticArrays
-using Bootstrap: BootstrapSampling, ParametricBootstrapSample, tx, nrun, zeros_tuple
+using Bootstrap: BootstrapSampling, ParametricBootstrapSample, tx, nrun,
+                 zeros_tuple
 import Bootstrap: bootstrap
 import Base.maximum, Base.minimum
 import Random: rand
 import Base.convert
-import Distributions: pdf,logpdf, ncategories, cdf, rand
+import Distributions: pdf, logpdf, ncategories, cdf, rand
 
 include("distributions/include.jl")
 include("assignments/Assignments.jl")
@@ -49,7 +50,8 @@ export Strict
 # stopping rules
 export PreviousBestValue
 # bandwidth selection rules
-export OracleK, EstimatedEigenvalues, EstimatedDegrees, select_number_node_per_block
+export OracleK, EstimatedEigenvalues, EstimatedDegrees,
+       select_number_node_per_block
 # random local search rules
 export RandomNodeSwap, RandomGroupSwap
 

@@ -21,7 +21,8 @@ mutable struct DiscretizedDistribution{D, L} <:
     probs::L
 end
 
-function DiscretizedDistribution(d::D, n_bins::Int, support_bound = extrema(d)) where {D}
+function DiscretizedDistribution(
+        d::D, n_bins::Int, support_bound = extrema(d)) where {D}
     disc = DiscretizerZeroToZero(n_bins, support_bound...)
     ps = zeros(non_zero_labels_counts(disc))
     for i in 1:non_zero_labels_counts(disc)
@@ -32,7 +33,8 @@ function DiscretizedDistribution(d::D, n_bins::Int, support_bound = extrema(d)) 
     return DiscretizedDistribution(disc, probs)
 end
 
-function DiscretizedDistribution(d::ZeroInflated, n_bins::Int, support_bound = extrema(d))
+function DiscretizedDistribution(
+        d::ZeroInflated, n_bins::Int, support_bound = extrema(d))
     disc = DiscretizerZeroToZero(n_bins, support_bound...)
     ps = zeros(non_zero_labels_counts(disc))
     for i in 1:non_zero_labels_counts(disc)
@@ -62,7 +64,9 @@ minimum(d::DiscretizedDistribution) = minimum(d.discretizer)
 
 maximum(d::DiscretizedDistribution) = maximum(d.discretizer)
 
-insupport(d::DiscretizedDistribution, x::Real) = support_encoding(d.discretizer, x)
+function insupport(d::DiscretizedDistribution, x::Real)
+    support_encoding(d.discretizer, x)
+end
 
 function Base.convert(::Type{DiscretizedDistribution}, d::D) where {D}
     return DiscretizedDistribution(d, 10)
@@ -70,7 +74,8 @@ end
 
 ncategories(d::DiscretizedDistribution) = ncategories(d.probs)
 
-function Distributions.fit(::Type{<:DiscretizedDistribution{D, L}}, data) where {D, L}
+function Distributions.fit(
+        ::Type{<:DiscretizedDistribution{D, L}}, data) where {D, L}
     return fit(L, data)
 end
 
@@ -122,7 +127,8 @@ The `cdf` of the discretized distribution is computed as:
 - `cdf(x) = cdf_discretized(bin) + (cdf_discretized(bin + 1) - cdf_discretized(bin)) * progress_in_bin(x)`
 """
 function Distributions.cdf(
-        d::DiscretizedDistribution{D, P}, x::Real) where {D, P <: ZeroInflatedCategorical}
+        d::DiscretizedDistribution{D, P}, x::Real) where {
+        D, P <: ZeroInflatedCategorical}
     x < minimum(d) && return zero(x)
     x > maximum(d) && return one(x)
     bin = encode(d.discretizer, x)

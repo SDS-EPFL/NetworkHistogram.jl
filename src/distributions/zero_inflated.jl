@@ -85,7 +85,8 @@ function Distributions.fit(
     indices_0 = findall(x -> x == 0, data)
     p = length(indices_0) / length(data)
     if p != 1
-        return ZeroInflated(p, fit(D, data[setdiff(collect(eachindex(data)), indices_0)]))
+        return ZeroInflated(
+            p, fit(D, data[setdiff(collect(eachindex(data)), indices_0)]))
     else
         return ZeroInflated(1.0, D())
     end

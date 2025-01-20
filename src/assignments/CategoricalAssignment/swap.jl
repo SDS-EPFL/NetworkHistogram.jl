@@ -67,7 +67,8 @@ function fit(
 end
 
 function fit(
-        a::CategoricalAssignment{T, F, C}, g::Observations{G, <:DiscretizedDistribution}) where {
+        a::CategoricalAssignment{T, F, C}, g::Observations{
+            G, <:DiscretizedDistribution}) where {
         T, F, C, G}
     dists = initialize_sbm(
         a.group_size, g.dist_ref)
@@ -87,8 +88,10 @@ function _move_connection!(realized, group_origin, group_dest, scratch)
         for label in axes(realized, 1)
             realized[label, group, group_origin] -= scratch[label, group]
             realized[label, group, group_dest] += scratch[label, group]
-            realized[label, group_origin, group] = realized[label, group, group_origin]
-            realized[label, group_dest, group] = realized[label, group, group_dest]
+            realized[label, group_origin, group] = realized[
+                label, group, group_origin]
+            realized[label, group_dest, group] = realized[
+                label, group, group_dest]
         end
     end
 end
@@ -115,7 +118,8 @@ function new_update_observed_and_labels!(
             a.additional_data.scratch[obs, group_inter] += 1
         end
     end
-    _move_connection!(a.additional_data.realized, g1, g2, a.additional_data.scratch)
+    _move_connection!(
+        a.additional_data.realized, g1, g2, a.additional_data.scratch)
 
     a.additional_data.scratch .= 0
     for i in axes(a.additional_data.A, 1)
@@ -128,7 +132,8 @@ function new_update_observed_and_labels!(
             a.additional_data.scratch[obs, group_inter] += 1
         end
     end
-    _move_connection!(a.additional_data.realized, g2, g1, a.additional_data.scratch)
+    _move_connection!(
+        a.additional_data.realized, g2, g1, a.additional_data.scratch)
 
     _fast_div!(a.additional_data.estimated_theta, a.additional_data.realized,
         a.additional_data.counts)

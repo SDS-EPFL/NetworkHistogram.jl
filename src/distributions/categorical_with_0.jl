@@ -51,7 +51,9 @@ function ZeroInflatedCategorical(vec_probs::AbstractVector)
     ZeroInflatedCategorical(vec_probs[1], vec_probs[2:end])
 end
 
-ZeroInflatedCategorical(k::Int) = ZeroInflatedCategorical(ones(k + 1) ./ (k + 1))
+function ZeroInflatedCategorical(k::Int)
+    ZeroInflatedCategorical(ones(k + 1) ./ (k + 1))
+end
 
 """
     Distributions.pdf(d::ZeroInflatedCategorical, x::Real)

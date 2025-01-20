@@ -54,7 +54,7 @@ function initialize_node_labels(g, h, ::SpectralStart)
     node_labels = zeros(Int, number_nodes(g))
 
     laplacian = normalized_laplacian(g)
-    decomp, = partialschur(laplacian, nev=2, which=:LR)
+    decomp, = partialschur(laplacian, nev = 2, which = :LR)
 
     # get 2nd eigenvector, sort its components
     indices = sortperm(real.(decomp.Q[:, 2]))
@@ -91,8 +91,6 @@ function initialize_node_labels(g, h, rule::HigherOrderSpectralStart)
     results = IterativeSolvers.lobpcg(laplacian, true, rule.k)
     return group_size, node_labels
 end
-
-
 
 function initialize_node_labels(g, h, ::BiasAdjustedSoS)
     # implement method from Bias-adjusted spectral clustering in multilayer stochastic block

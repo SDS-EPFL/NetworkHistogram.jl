@@ -29,7 +29,8 @@ Fit the SBM to the given graph observations and assignment.
 - `g::Observations{G,D}`: The graph observations.
 - `a::Assignment`: The assignment of nodes to blocks.
 """
-function fit!(sbm::BlockModel{D,K,F}, g::Observations{G,D}, a::Assignment) where {G,D,K,F}
+function fit!(sbm::BlockModel{D, K, F}, g::Observations{G, D},
+        a::Assignment) where {G, D, K, F}
     for group1 in 1:number_groups(a)
         for group2 in group1:number_groups(a)
             edge_indices = get_edge_indices(a, group1, group2)
@@ -39,7 +40,8 @@ function fit!(sbm::BlockModel{D,K,F}, g::Observations{G,D}, a::Assignment) where
 end
 
 function fit_group(d::ZeroInflatedCategorical, g, edges)
-    return Distributions.fit(typeof(d), get_obs.(Ref(g), edges), ncategories(g.dist_ref))
+    return Distributions.fit(
+        typeof(d), get_obs.(Ref(g), edges), ncategories(g.dist_ref))
 end
 
 function fit_group(distribution, g, edges)
@@ -47,7 +49,8 @@ function fit_group(distribution, g, edges)
 end
 
 function fit_group(distribution::Binomial, g, edges)
-    return Distributions.fit(typeof(distribution), ntrials(distribution), get_obs.(Ref(g), edges))
+    return Distributions.fit(
+        typeof(distribution), ntrials(distribution), get_obs.(Ref(g), edges))
 end
 
 """
@@ -88,7 +91,8 @@ Fit the SBM to the given graph observations.
 - `sbm::BlockModel{D,K,F}`: The block model to fit.
 - `g::Observations{G,D}`: The graph observations.
 """
-function fit!(sbm::BlockModel{D,K,F}, g::Observations{G,D}) where {G,D,K,F}
+function fit!(
+        sbm::BlockModel{D, K, F}, g::Observations{G, D}) where {G, D, K, F}
     k = number_blocks(sbm)
     a = estimate_graphon(g, select_number_node_per_block(g, OracleK(k)))
     fit!(sbm, g, a)

@@ -102,7 +102,8 @@ function _update_counts!(counts, g_from, g_to, missing_update)
 end
 
 function fit(a::SparseAssignment, g::Observations)
-    dists = initialize_sbm(a.group_size, ZeroInflatedCategorical(_n_decorations_not_0(a)))
+    dists = initialize_sbm(
+        a.group_size, ZeroInflatedCategorical(_n_decorations_not_0(a)))
     for group1 in 1:number_groups(a)
         for group2 in 1:number_groups(a)
             theta = a.additional_data.estimated_theta[:, group1, group2]
@@ -113,14 +114,15 @@ function fit(a::SparseAssignment, g::Observations)
     return dists
 end
 
-function fit(a::SparseAssignment, g::Observations{G, <:DiscretizedDistribution}) where {G}
+function fit(a::SparseAssignment,
+        g::Observations{G, <:DiscretizedDistribution}) where {G}
     dists = initialize_sbm(a.group_size,
         DiscretizedDistribution(
             g.dist_ref.discretizer, ZeroInflatedCategorical(_n_decorations_not_0(a))))
     for group1 in 1:number_groups(a)
         for group2 in 1:number_groups(a)
             theta = a.additional_data.estimated_theta[:, group1, group2]
-            p = clamp(1 - sum(theta),0,1)
+            p = clamp(1 - sum(theta), 0, 1)
             dists[group1,
             group2] = DiscretizedDistribution(
                 g.dist_ref.discretizer, ZeroInflatedCategorical(p, theta))

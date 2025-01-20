@@ -13,10 +13,12 @@ const SparseAssignment{T, F, C} = Assignment{
 const SparseInitRule{S, F} = InitRule{S, Val{SparseData}}
 
 function SparseAssignment(
-        g::Observations{G, D}, group_size::GroupSize, node_labels::Vector{Int}) where {G, D}
+        g::Observations{G, D}, group_size::GroupSize, node_labels::Vector{Int}) where {
+        G, D}
     A = issparse(g.graph) ? g.graph : sparse(g.graph)
     num_levels = ncategories(g.dist_ref)
-    sparse_data = SparseData(A, size(group_size, 1), num_levels, group_size, node_labels)
+    sparse_data = SparseData(
+        A, size(group_size, 1), num_levels, group_size, node_labels)
     return Assignment(group_size, node_labels, sparse_data)
 end
 
@@ -31,7 +33,8 @@ function SparseData(A::SparseMatrixCSC{T, Int}, k::Int,
         level_count::Int, group_size, node_labels) where {T}
     n = size(A, 1)
     data = SparseData(zeros(Int, k, k), zeros(Int, level_count, k, k),
-        zeros(Float64, level_count, k, k), dropzeros(A), zeros(Int, level_count, k), zeros(
+        zeros(Float64, level_count, k, k), dropzeros(A), zeros(
+            Int, level_count, k), zeros(
             Int, k), 0.0)
     _count_possible_occurences!(data, group_size)
     _count_occurences!(data, node_labels)
@@ -59,21 +62,23 @@ function _count_occurences!(data, node_labels)
             node_group_k = findall(x -> x == k, node_labels)
             node_group_l = findall(x -> x == l, node_labels)
             if k != l
-                counts = StatsBase.countmap(data.A[i,j]  for i in node_group_k for j in node_group_l if i != j)
+                counts = StatsBase.countmap(data.A[i, j] for i in node_group_k
+                for j in node_group_l if i != j)
             else
-                counts = StatsBase.countmap(data.A[i,j]  for i in node_group_k for j in node_group_l if i < j)
+                counts = StatsBase.countmap(data.A[i, j] for i in node_group_k
+                for j in node_group_l if i < j)
             end
             for m in 1:size(data.realized, 1)
                 data.realized[m, k, l] = get(counts, m, 0)
                 data.realized[m, l, k] = get(counts, m, 0)
             end
-            total_witouth_missing = sum(values(counts)) - get(counts, missing, 0)
+            total_witouth_missing = sum(values(counts)) -
+                                    get(counts, missing, 0)
             data.counts[k, l] = total_witouth_missing
             data.counts[l, k] = total_witouth_missing
         end
     end
 end
-
 
 function compute_log_likelihood_without_0(
         estimated_theta::Array{T, 3}, realized::Array{F, 3}, counts) where {

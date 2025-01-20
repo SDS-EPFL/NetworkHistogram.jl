@@ -18,7 +18,8 @@ Estimate the graphon for the given graph.
 # Returns
 - `a`: The assignment of nodes to blocks.
 """
-function estimate_graphon(graph, h = select_number_node_per_block(graph, EstimatedDegrees());
+function estimate_graphon(
+        graph, h = select_number_node_per_block(graph, EstimatedDegrees());
         iterations::Int = 10_000,
         initialise_rule::InitRule = InitRule(SpectralStart(), nothing),
         swap_rule::NodeSwapRule = RandomNodeSwap(),
@@ -55,7 +56,8 @@ function greedy_improve!(a::Assignment, graph; iterations::Int = 10_000,
 )
     # swap memory allocation
     swap = make_swap(a, (1, 1))
-    p = ProgressUnknown(enabled = progress_bar, showspeed = true, desc = "Greedy search: ")
+    p = ProgressUnknown(
+        enabled = progress_bar, showspeed = true, desc = "Greedy search: ")
     # perform local search until the stopping rule is met
     for i in 1:iterations
         local_search!(

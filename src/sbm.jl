@@ -6,7 +6,8 @@ struct BlockModel{T, K, F <: Real} <: AbstractMatrix{T}
     probs::SymmetricTensor{T, K, 2}
 end
 
-function BlockModel(θ::AbstractMatrix{T}, sizes::Vector{F}) where {T, F <: Real}
+function BlockModel(
+        θ::AbstractMatrix{T}, sizes::Vector{F}) where {T, F <: Real}
     return BlockModel(sizes,
         SymmetricTensor([θ[i, j] for i in 1:size(θ, 1) for j in i:size(θ, 2)],
             Val(length(sizes)), Val(2)))
@@ -70,8 +71,8 @@ function sample(
     return sparse(Symmetric(A, :L)), node_labels
 end
 
-
-function draw_and_fill!(rng::Random.AbstractRNG, A, sbm::BlockModel, sorted = false)
+function draw_and_fill!(
+        rng::Random.AbstractRNG, A, sbm::BlockModel, sorted = false)
     n_blocks = number_blocks(sbm)
     n_nodes = size(A, 1)
     node_labels = StatsBase.sample(
@@ -87,7 +88,9 @@ function draw_and_fill!(rng::Random.AbstractRNG, A, sbm::BlockModel, sorted = fa
     A .= Symmetric(A, :L)
 end
 
-draw_and_fill!(A, sbm, sorted = false) = draw_and_fill!(Random.default_rng(), A, sbm, sorted)
+function draw_and_fill!(A, sbm, sorted = false)
+    draw_and_fill!(Random.default_rng(), A, sbm, sorted)
+end
 
 function sample(sbm::BlockModel, node_labels::Vector{Int}, sorted = false)
     sample(Random.default_rng(), sbm, node_labels, sorted)
@@ -115,7 +118,6 @@ function _get_params_as_vec(dist::Distribution)
     return vcat(params(dist)...)
 end
 
-
 function latent_to_block_index(latents_vec, sbm::BlockModel)
     cum_sum_sizes = cumsum(sbm.sizes)
     cum_sum_sizes[end] = 1.0
@@ -133,7 +135,8 @@ If the difference between the two models is less than `tol`, the function stops 
     This function is not efficient for large numbers of blocks, as it uses brute force to
     find the best permutation.
 """
-function best_alignment(fitted_sbm::BlockModel, true_sbm::BlockModel, tol = 0.01)
+function best_alignment(
+        fitted_sbm::BlockModel, true_sbm::BlockModel, tol = 0.01)
     k = number_blocks(fitted_sbm)
     if k != number_blocks(true_sbm)
         throw(ArgumentError("The number of blocks must be the same for both models"))
@@ -160,7 +163,6 @@ function align_sbm!(sbm::BlockModel, perm)
     sbm.sizes .= sbm.sizes[perm]
 end
 
-
 """
     order_groups(a::Assignment, latents::AbstractVector)
 
@@ -175,9 +177,9 @@ function order_groups(a::Assignment, latents::AbstractVector)
     dummy_group_labels = repeat(1:k, inner = n ÷ k + 1)[1:n]
     counts = Dict(group => countmap(dummy_group_labels[sorted_group_labels .== group])
     for group in 1:k)
-    return sort(1:k, by = x -> Tuple(get(counts[x], g, 0) for g in 1:k), rev = true)
+    return sort(
+        1:k, by = x -> Tuple(get(counts[x], g, 0) for g in 1:k), rev = true)
 end
-
 
 function align_sbm_true_latents!(sbm::BlockModel, a::Assignment, latents)
     align_sbm!(sbm, order_groups(a, latents))

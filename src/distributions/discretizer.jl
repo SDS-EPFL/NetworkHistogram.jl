@@ -21,7 +21,8 @@ struct RegularDiscretizer{F, T, L} <: Discretizer
     bin_width::F
 end
 
-function RegularDiscretizer(n_bins::Int, lower_bound::F, upper_bound::F) where {F}
+function RegularDiscretizer(
+        n_bins::Int, lower_bound::F, upper_bound::F) where {F}
     if !isfinite(lower_bound) || !isfinite(upper_bound)
         throw(ArgumentError("RegularDiscretizer requires finite lower and upper bounds."))
     end
@@ -50,7 +51,8 @@ function encode(d::RegularDiscretizer, x::Real)
     return d.bin_labels[convert(Int, div(x - d.lower_bound, d.bin_width) + 1)]
 end
 
-function _decode_randomly(rng::Random.AbstractRNG, d::RegularDiscretizer, bin::Int)
+function _decode_randomly(
+        rng::Random.AbstractRNG, d::RegularDiscretizer, bin::Int)
     hi, lo = decode(d, bin)
     return lo + (hi - lo) * rand(rng)
 end
@@ -60,7 +62,8 @@ function binwidth(d::RegularDiscretizer)
 end
 
 function decode(d::RegularDiscretizer, bin::Int)
-    return (d.lower_bound + (bin - 1) * d.bin_width, d.lower_bound + bin * d.bin_width)
+    return (d.lower_bound + (bin - 1) * d.bin_width,
+        d.lower_bound + bin * d.bin_width)
 end
 
 function encode(d::RegularDiscretizer, x::AbstractArray{Real})
@@ -109,7 +112,7 @@ function nlabels(d::CategoryDiscretizer)
     return length(d.bin_to_cat)
 end
 
-function binwidth(d::CategoryDiscretizer{F,T}, x::T) where {F,T}
+function binwidth(d::CategoryDiscretizer{F, T}, x::T) where {F, T}
     return length(d.bin_to_cat[x])
 end
 
@@ -209,7 +212,8 @@ function decode(d::HybridDiscretizer, bin::Int)
     end
 end
 
-function _decode_randomly(rng::Random.AbstractRNG, d::HybridDiscretizer, bin::Int)
+function _decode_randomly(
+        rng::Random.AbstractRNG, d::HybridDiscretizer, bin::Int)
     if haskey(d.cat.bin_to_cat, bin)
         return decode(d.cat, bin)
     else
@@ -226,17 +230,14 @@ function auto_nbins(data)
     return nbins
 end
 
-
 function progress_in_bin(d::CategoryDiscretizer, x::Real, bin)
-    return  one(x)
+    return one(x)
 end
-
 
 function progress_in_bin(d::RegularDiscretizer, x::Real, bin)
     lo, hi = decode(d, bin)
     return (x - lo) / (hi - lo)
 end
-
 
 function progress_in_bin(d::HybridDiscretizer, x::Real, bin)
     if haskey(d.cat.bin_to_cat, bin)

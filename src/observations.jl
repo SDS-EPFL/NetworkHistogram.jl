@@ -73,7 +73,8 @@ Get the density of the graph.
 - `density`: The density of the graph.
 """
 function density(graph::Observations)
-    return sum(graph.graph) / ((size(graph.graph, 1) * (size(graph.graph, 1) - 1)))
+    return sum(graph.graph) /
+           ((size(graph.graph, 1) * (size(graph.graph, 1) - 1)))
 end
 
 """
@@ -106,8 +107,6 @@ function get_adj(graph::Observations)
     return graph.graph
 end
 
-
-
 function normalized_laplacian(graph::Observations)
     return normalized_laplacian(graph.graph)
 end
@@ -115,7 +114,6 @@ end
 function normalized_laplacian(g::AbstractGraph)
     return normalized_laplacian(Graphs.adjacency_matrix(g))
 end
-
 
 normalized_laplacian(g::CategoricalArray) = normalized_laplacian(levelcode.(g))
 
@@ -149,15 +147,15 @@ function normalized_laplacian(graph::AbstractMatrix)
     return L
 end
 
-function Metis.graph(graph::Observations{G, <:UnivariateDistribution}) where {G}
+function Metis.graph(graph::Observations{
+        G, <:UnivariateDistribution}) where {G}
     use_weights = true
     if minimum(graph.dist_ref) < 0
         @warn "Negative values are not allowed for MetisStart, using binary graph"
         use_weights = false
     end
-        return Metis.graph(sparse(graph.graph), weights = use_weights)
+    return Metis.graph(sparse(graph.graph), weights = use_weights)
 end
-
 
 """
     discretise(graph::Observations; number_groups, number_levels)
@@ -180,18 +178,21 @@ pass a `Discretizer` object.
 
 number_levels will be the number of levels in the discretized distribution (excluding 0).
 """
-function discretise(graph::Observations; number_groups = nothing, number_levels = nothing)
+function discretise(
+        graph::Observations; number_groups = nothing, number_levels = nothing)
     if isnothing(number_groups) && isnothing(number_levels)
         throw(ArgumentError("Either `number_groups` or `number_levels` must be provided"))
     end
     if isnothing(number_levels)
-        number_levels = round(Int, get_num_levels_from_groups(number_nodes(graph), number_groups))
+        number_levels = round(Int,
+            get_num_levels_from_groups(number_nodes(graph), number_groups))
     else
         if !isnothing(number_groups)
             @warn "disregarding `number_groups` as `number_levels` is provided"
         end
     end
-    return discretise(graph, DiscretizerZeroToZero(number_levels, extrema(graph.graph)...))
+    return discretise(
+        graph, DiscretizerZeroToZero(number_levels, extrema(graph.graph)...))
 end
 
 """
@@ -209,7 +210,8 @@ Discretise the graph observations using the given discretiser.
 """
 function discretise(graph::Observations, discretiser::Discretizer)
     A_encoded = encode(discretiser, graph.graph)
-    return Observations(A_encoded, DiscretizedDistribution(discretiser)), discretiser
+    return Observations(A_encoded, DiscretizedDistribution(discretiser)),
+    discretiser
 end
 
 """
@@ -225,5 +227,5 @@ Get the number of levels for the discretized distribution given n and k.
 - `num_levels`: The number of levels.
 """
 function get_num_levels_from_groups(n, number_groups)
-    return max(1,  n^(0.5 * (1 - log(number_groups) / log(n))))
+    return max(1, n^(0.5 * (1 - log(number_groups) / log(n))))
 end
