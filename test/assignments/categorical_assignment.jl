@@ -2,7 +2,6 @@ import NetworkHistogram as NH
 
 using Random
 
-
 @testset "test Categorical swap" begin
     Random.seed!(1234123)
     using ..TestNetworkHistogram: test_swap_revertible, to_default_assignment

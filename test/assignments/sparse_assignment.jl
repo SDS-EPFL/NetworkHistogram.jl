@@ -21,12 +21,14 @@ using Random
     sparse_a = NH.SparseAssignment(
         NH.Observations(A, Categorical(m)), a.group_size, a.node_labels)
     @test a.additional_data.counts == sparse_a.additional_data.counts
-    for (l,m_index) in enumerate(2:m)
-        @test a.additional_data.realized[m_index, :, :] == sparse_a.additional_data.realized[l, :, :]
+    for (l, m_index) in enumerate(2:m)
+        @test a.additional_data.realized[m_index, :, :] ==
+              sparse_a.additional_data.realized[l, :, :]
         @test a.additional_data.estimated_theta[m_index, :, :] ==
-            sparse_a.additional_data.estimated_theta[l, :, :]
+              sparse_a.additional_data.estimated_theta[l, :, :]
     end
-    @test a.additional_data.log_likelihood ≈ sparse_a.additional_data.log_likelihood
+    @test a.additional_data.log_likelihood ≈
+          sparse_a.additional_data.log_likelihood
 end
 
 @testset "test sparse swap" begin

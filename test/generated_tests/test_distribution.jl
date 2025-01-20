@@ -1,6 +1,9 @@
-using NetworkHistogram: ZeroInflated, DiscretizedDistribution, ZeroInflatedCategorical,
-                        ncategories, Discretizer, encode, decode, binwidth, RegularDiscretizer,
-                        CategoryDiscretizer, HybridDiscretizer, DiscretizerZeroToZero, nlabels
+using NetworkHistogram: ZeroInflated, DiscretizedDistribution,
+                        ZeroInflatedCategorical,
+                        ncategories, Discretizer, encode, decode, binwidth,
+                        RegularDiscretizer,
+                        CategoryDiscretizer, HybridDiscretizer,
+                        DiscretizerZeroToZero, nlabels
 using Distributions
 using Test
 
@@ -67,7 +70,7 @@ end
     @test encode(disc, 0.0) == 11
     @test encode(disc, 0.5) == 8
     @test decode(disc, 11) == 0.0
-    @test all(isapprox.(decode(disc, 8), (0.4, 0.6); atol=1e-2))
+    @test all(isapprox.(decode(disc, 8), (0.4, 0.6); atol = 1e-2))
     @test nlabels(disc) == 12
 end
 
@@ -76,6 +79,6 @@ end
     @test encode(disc, 0.0) == 0
     @test encode(disc, 0.5) == 8
     @test decode(disc, 0) == 0.0
-    @test all(isapprox.(decode(disc, 8), (0.4, 0.6); atol=1e-2))
+    @test all(isapprox.(decode(disc, 8), (0.4, 0.6); atol = 1e-2))
     @test nlabels(disc) == 11
 end

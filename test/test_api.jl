@@ -9,11 +9,11 @@
     sbm_fitted, a = nethist(g; h = 10, iterations = 10)
 
     @test eltype(sbm_fitted) == typeof(Uniform(-1, 1))
-    @test size(sbm_fitted) == (4,4)
+    @test size(sbm_fitted) == (4, 4)
 
     sbm_discretised, a, discretizer = nethist_discretised(
         g; number_levels = 5, h = 10, iterations = 10)
-    @test sbm_discretised[1,1] isa DiscretizedDistribution
-    @test ncategories(sbm_discretised[1,1]) == 5
-    @test size(sbm_discretised) == (4,4)
+    @test sbm_discretised[1, 1] isa DiscretizedDistribution
+    @test ncategories(sbm_discretised[1, 1]) == 5
+    @test size(sbm_discretised) == (4, 4)
 end

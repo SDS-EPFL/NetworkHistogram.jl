@@ -24,7 +24,7 @@ using NetworkHistogram: ZeroInflated, get_proba_zero
         @test sample == 0 || insupport(dist, sample)
 
         # Test logpdf
-        @test logpdf(zero_inflated_dist, 0) ≈ log(0.5* (1 + pdf(dist, 0)))
+        @test logpdf(zero_inflated_dist, 0) ≈ log(0.5 * (1 + pdf(dist, 0)))
         @test logpdf(zero_inflated_dist, 1) ≈ log(0.5 * pdf(dist, 1))
 
         # Test minimum and maximum
@@ -69,7 +69,8 @@ using NetworkHistogram: ZeroInflated, get_proba_zero
         @test sample_disc == 0 || insupport(dist_disc, sample_disc)
 
         # Test logpdf with discrete distribution
-        @test logpdf(zero_inflated_dist_disc, 0) ≈ log(0.5 * (1 + pdf(dist_disc, 0)))
+        @test logpdf(zero_inflated_dist_disc, 0) ≈
+              log(0.5 * (1 + pdf(dist_disc, 0)))
         @test logpdf(zero_inflated_dist_disc, 1) ≈ log(0.5 * pdf(dist_disc, 1))
 
         # Test minimum and maximum with discrete distribution
