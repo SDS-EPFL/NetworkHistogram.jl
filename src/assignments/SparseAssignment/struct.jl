@@ -89,9 +89,6 @@ function compute_log_likelihood_without_0(
     for j in 1:number_groups
         for i in j:number_groups
             total_decorations = counts[i, j]
-            if total_decorations < sum(realized[:, i, j])
-                total_decorations = sum(realized[:, i, j])
-            end
             loglik -= xlogx(total_decorations)
             for m in 1:number_decorations
                 loglik += xlogx(realized[m, i, j])
