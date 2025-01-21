@@ -96,8 +96,10 @@ end
 
 function _update_counts!(counts, g_from, g_to, missing_update)
     for i in axes(counts, 1)
-        counts[i, g_to] += missing_update[i]
-        counts[i, g_from] -= missing_update[i]
+        counts[i, g_to] = counts[i, g_to] - missing_update[i]
+        counts[i, g_from] = counts[i, g_from] + missing_update[i]
+        counts[g_to, i] = counts[i, g_to]
+        counts[g_from, i] = counts[i, g_from]
     end
 end
 
