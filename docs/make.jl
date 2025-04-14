@@ -20,7 +20,7 @@ makedocs(;
         "API Reference" => "api.md",
         "Optimization hyperparameters" => "rules.md",
         "Examples" => "examples.md",
-        "Internal" => "internal.md"
+        "Internal" => ["internals/assignments.md","internals/distributions.md"]
     ],
     checkdocs = :none)
 
