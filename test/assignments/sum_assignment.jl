@@ -5,5 +5,5 @@ using Random
 
 @testset "test sum assignment" begin
     using Distributions, LinearAlgebra, SparseArrays
-    @error "This test is not implemented yet"
+    @test 1 == 2
 end
