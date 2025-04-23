@@ -12,6 +12,7 @@ include("TestNetworkHistogram.jl")
         include("assignments/bernoulli_assignment.jl")
         include("assignments/categorical_assignment.jl")
         include("assignments/sparse_assignment.jl")
+        include("assignments/sum_assignment.jl")
     end
 
     @testset "Rule optimization tests" begin
