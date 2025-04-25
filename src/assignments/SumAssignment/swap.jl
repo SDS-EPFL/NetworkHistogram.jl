@@ -9,9 +9,9 @@ end
 
 function make_swap(a::SumAssignment, id)
     return SumSwap(id[1], id[2], deepcopy(a.additional_data.θ),
-        deepcopy(a.additional_data.counts), deepcopy(a.additional_data.log_likelihood_per_group), a.additional_data.log_likelihood)
+        deepcopy(a.additional_data.counts), deepcopy(a.additional_data.log_likelihood_per_group),
+        a.additional_data.log_likelihood)
 end
-
 
 function make_swap!(swap::SumSwap{F}, a::SumAssignment{T, F}, id) where {T, F}
     swap.index1, swap.index2 = id
@@ -41,40 +41,46 @@ function apply_swap!(
         return nothing
     end
 
-    for v in rows[nzrange(λ, swap.index1)]
+    for i in nzrange(λ, swap.index1)
+        v = rows[i]
         key_old_groups = minmax(g1, a.node_labels[v])
         key_new_groups = minmax(g2, a.node_labels[v])
-        c_og = a.counts[key_old_groups]
-        c_ng = a.counts[key_new_groups]
+        c_og = a.additional_data.counts[key_old_groups]
+        c_ng = a.additional_data.counts[key_new_groups]
         param = vals[i]
-        a.θ[key_old_groups] = (a.θ[key_old_groups]*c_og - param)/(c_og - 1)
-        a.θ[key_new_groups] = (a.θ[key_new_groups]*c_ng + param)/(c_ng + 1)
-        a.counts[key_old_groups] -= 1
-        a.counts[key_new_groups] += 1
+        a.additional_data.θ[key_old_groups] = (a.additional_data.θ[key_old_groups]*c_og -
+                                               param)/(c_og - 1)
+        a.additional_data.θ[key_new_groups] = (a.additional_data.θ[key_new_groups]*c_ng +
+                                               param)/(c_ng + 1)
+        a.additional_data.counts[key_old_groups] -= 1
+        a.additional_data.counts[key_new_groups] += 1
     end
 
-    for v in rows[nzrange(λ, swap.index2)]
+    for i in nzrange(λ, swap.index2)
+        v = rows[i]
         key_old_groups = minmax(g2, a.node_labels[v])
         key_new_groups = minmax(g1, a.node_labels[v])
-        c_og = a.counts[key_old_groups]
-        c_ng = a.counts[key_new_groups]
+        c_og = a.additional_data.counts[key_old_groups]
+        c_ng = a.additional_data.counts[key_new_groups]
         param = vals[i]
-        a.θ[key_old_groups] = (a.θ[key_old_groups]*c_og - param)/(c_og - 1)
-        a.θ[key_new_groups] = (a.θ[key_new_groups]*c_ng + param)/(c_ng + 1)
-        a.counts[key_old_groups] -= 1
-        a.counts[key_new_groups] += 1
+        a.additional_data.θ[key_old_groups] = (a.additional_data.θ[key_old_groups]*c_og -
+                                               param)/(c_og - 1)
+        a.additional_data.θ[key_new_groups] = (a.additional_data.θ[key_new_groups]*c_ng +
+                                               param)/(c_ng + 1)
+        a.additional_data.counts[key_old_groups] -= 1
+        a.additional_data.counts[key_new_groups] += 1
     end
 
     swap_node_labels!(a, swap.index1, swap.index2)
     fast_update_ll!(a, swap)
 end
 
-function fast_update_ll(a::SumAssignment, swap::SumSwap)
+function fast_update_ll!(a::SumAssignment, swap::SumSwap)
     k = size(a.group_size, 1)
     for i in 1:k
         for j in i:k
             index_group = (i, j)
-            if swap.θ[index_group] != a.θ[index_group]
+            if swap.θ[index_group] != a.additional_data.θ[index_group]
                 _update_ll_one_group!(a, index_group)
             end
         end
@@ -83,21 +89,31 @@ function fast_update_ll(a::SumAssignment, swap::SumSwap)
 end
 
 function _update_ll_one_group!(a::SumAssignment, group)
-    k = size(a.group_size, 1)
     nodes_1 = findall(x -> x == group[1], a.node_labels)
     nodes_2 = findall(x -> x == group[2], a.node_labels)
     ll = 0.0
     rows = rowvals(a.additional_data.λ)
-    vals = nonzeros(a.additional_data.λ)
-    for i in nodes_1
-        for u in nodes_1
-            for v in rows[nzrange(a.additional_data.λ, u)]
-                if v ∈ nodes_2
-                    ll += loglikelihood(a.θ[group], a.additional_data.A[u, v])
-                end
-            end
+    for u in nodes_1
+        for v in intersect(rows[nzrange(a.additional_data.λ, u)], nodes_2)
+            ll += loglikelihood(
+                a.additional_data.θ[group], a.additional_data.A[u, v])
         end
     end
-    a.log_likelihood_per_group[group] = ll
+    a.additional_data.log_likelihood_per_group[group] = ll
     return nothing
+end
+
+function fit(
+        a::SumAssignment{T, F, C}, g::Observations{
+            G, <:DiscreteMarkovChain}) where {
+        T, F, C, G}
+    dists = initialize_sbm(
+        a.group_size, g.dist_ref)
+    for group1 in 1:number_groups(a)
+        for group2 in 1:number_groups(a)
+            dists[
+                group1, group2] = a.additional_data.θ[minmax(group1, group2)]
+        end
+    end
+    return dists
 end

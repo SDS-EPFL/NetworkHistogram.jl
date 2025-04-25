@@ -28,6 +28,7 @@ function estimate_graphon(
         progress_bar::Bool = false
 )
     a = make_assignment(graph, h, initialise_rule)
+    @debug a
     initialise_stop_rule!(stop_rule, a, graph)
     greedy_improve!(
         a, graph; iterations, swap_rule, accept_rule, stop_rule, progress_bar)

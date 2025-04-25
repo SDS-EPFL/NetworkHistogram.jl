@@ -22,6 +22,10 @@ function _default_init(dist::Distribution, start = MetisStart())
     end
 end
 
+function _default_init(::DiscreteMarkovChain, start = RandomStart())
+    return InitRule(start, Val{SumData}())
+end
+
 """
     _nethist(g::Observations{G, D}, h; kwargs...)
 
@@ -126,4 +130,26 @@ function nethist_discretised(g::Observations{G, D};
         progress_bar = progress_bar,
         start_clustering = start_clustering)
     return sbm_discretise, a, discretiser
+end
+
+
+
+function nethist_mc(g::Observations{G, <:DiscreteMarkovChain};
+    h = number_nodes(g) ÷ 2,
+    iterations = 100_000,
+    stalled_iter = 1000,
+    swap_rule::NodeSwapRule = RandomGroupSwap(),
+    accept_rule::AcceptRule = Strict(),
+    progress_bar::Bool = true,
+    start_clustering = RandomStart()
+) where {G}
+    initialise_rule = _default_init(g.dist_ref, start_clustering)
+    a = estimate_graphon(g, h;
+        iterations = iterations,
+        initialise_rule = initialise_rule,
+        swap_rule = swap_rule,
+        accept_rule = accept_rule,
+        stop_rule = PreviousBestValue(stalled_iter),
+        progress_bar = progress_bar)
+    return fit(a, g), a
 end

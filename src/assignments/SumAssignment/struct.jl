@@ -1,7 +1,7 @@
 
 # type F needs to be a vector field!
 
-struct SumData{F, C}
+mutable struct SumData{F, C}
     λ::SparseMatrixCSC{F, Int}
     θ::Dict{Tuple{Int, Int}, F}
     A::SparseMatrixCSC{C, Int}
@@ -12,6 +12,21 @@ end
 
 const SumAssignment{T, F, C} = Assignment{T, SumData{F, C}}
 const SumInitRule{S} = InitRule{S, Val{SumData}}
+
+
+
+function make_assignment(g, h, init_rule::SumInitRule)
+    group_size,
+    node_labels = initialize_node_labels(
+        g, h, init_rule.starting_assignment_rule)
+    return SumAssignment(g, group_size, node_labels)
+end
+
+function SumAssignment(g::Observations, group_size::GroupSize, node_labels)
+    A = issparse(g.graph) ? g.graph : sparse(g.graph)
+    λ = fit.(Ref(g.dist_ref), A)
+    return SumAssignment(A, λ, group_size, node_labels)
+end
 
 function SumAssignment(
         A::SparseMatrixCSC{C, Int},
@@ -25,9 +40,10 @@ function SumAssignment(
     vals = nonzeros(λ)
     m, n = size(λ)
     for u in 1:n
-        for v in rows[nzrange(λ, u)]
+        for i in nzrange(λ,u)
+            v = rows[i]
             if u >= v
-                break # check that this isn't a mistake trying to be fast
+                # break # check that this isn't a mistake trying to be fast
                 continue
             end
             key_groups = minmax(node_labels[u], node_labels[v])
@@ -46,11 +62,8 @@ function SumAssignment(
     end
     for i in 1:k
         for j in i:k
-            θ[minmax(i, j)] ./= counts[minmax(i, j)]
+            θ[minmax(i, j)] /= counts[minmax(i, j)]
         end
-    end
-    for i in 1:k
-        counts[(i, i)] ./= 2
     end
     ll_sum = 0.0
     ll = Dict{Tuple{Int, Int}, Float64}()
@@ -59,9 +72,9 @@ function SumAssignment(
             ll[(i, j)] = 0.0
         end
     end
-    for i in 1:n
-        for v in nzrange(λ, j)
-            u = rows[i]
+    for u in 1:n
+        for i in nzrange(λ, u)
+            v = rows[i]
             if u >= v
                 continue
             end

@@ -9,6 +9,7 @@ import StatsBase, Random
 using DensityInterface: logdensityof
 using LogExpFunctions: xlogx, xlogy
 using ArnoldiMethod: LM, SR, LR, partialschur, partialeigen
+using KrylovKit: eigsolve
 import Metis
 import IterativeSolvers
 import Clustering
