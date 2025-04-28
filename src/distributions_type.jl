@@ -1,0 +1,47 @@
+struct Dist{D}
+    dist::D
+    counts::Int
+end
+
+Dist(d) = Dist(d, 1)
+
+Base.broadcastable(x::Dist) = Ref(x)
+
+function add_to(avgdist::Dist{D}, dist::D) where {D}
+    return Dist(agg_params(avgdist.dist, dist, avgdist.counts / (avgdist.counts + 1), 1 / (avgdist.counts + 1)), avgdist.counts + 1)
+end
+
+
+function remove_from(avgdist::Dist{D}, dist::D) where {D}
+    if avgdist.counts == 1
+        error("Cannot remove from a distribution with only one sample")
+    else
+        return Dist(agg_params(avgdist.dist, dist, avgdist.counts / (avgdist.counts - 1), - 1 / (avgdist.counts - 1)), avgdist.counts -1)
+    end
+end
+
+for f in [:logpdf, :sample, :dist, :eltype]
+    @eval $f(d::Dist, args...) = $f(d.dist, args...)
+end
+
+fit(d::Dist, x) = Dist(fit(d.dist, x), d.counts)
+loglikelihood(d::Dist, x) = sum(logpdf(d, y) for y in x)
+
+# expose compression step that assumes there is a pdf(d, typeof(compressed(x))) properly defined
+# by default do nothing
+_fast_compressed_obs(d, x) = x
+
+unwrap(d::Dist) = d.dist
+
+# Bernoulli distribution
+
+struct Bernoulli{T<:Real}
+    p::T
+end
+
+
+agg_params(d1::Bernoulli, d2::Bernoulli, w1, w2) = Bernoulli(w1 * d1.p + w2 * d2.p)
+fit(::Bernoulli, x) = Bernoulli(mean(x))
+sample(d::Bernoulli, n=1) = rand(n) .<= d.p
+dist(d1::Bernoulli, d2::Bernoulli) = abs(d1.p - d2.p)
+logpdf(d::Bernoulli, x) = log(d.p * x + (1 - d.p) * (1 - x))
