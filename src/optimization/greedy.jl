@@ -12,7 +12,7 @@ end
 GreedyParams() = GreedyParams(10_000, RandomNodeSwap(), Strict(), PreviousBestValue(1000), false)
 
 function greedy_optimize(g, initial_labels, params::GreedyParams)
-    a = Assignment(g, initial_labels)
+    a = Assignment(initial_labels, g...)
     greedy_improve!(a; params = params)
     return a
 end

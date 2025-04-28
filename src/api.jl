@@ -3,6 +3,7 @@ function nethist(data_input, dist_user, initial_node_labels, params::GreedyParam
     dist = Dist(dist_user)
     g = preprocess_data(data_input, dist)
 
+
     out = greedy_optimize(g, initial_node_labels, params)
 
     return postprocess(out)
@@ -16,5 +17,6 @@ end
 
 
 function postprocess(out)
+    return true
     return BlockModel(optimal_a)
 end

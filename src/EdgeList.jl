@@ -28,3 +28,8 @@ function EdgeList(A::AbstractMatrix{E}) where {E}
     end
     return EdgeList(data)
 end
+
+
+function Base.convert(::Type{EdgeList{E}}, A::AbstractMatrix{E}) where {E}
+    return EdgeList(A)
+end
