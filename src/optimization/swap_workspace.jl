@@ -15,7 +15,7 @@ function make_swap(a::Assignment, id)
 end
 
 function make_swap!(swap::Swap, a::Assignment, id)
-    swap.index1, swap.index2 = id
+    swap.u, swap.v = id
     swap.workspace.θ = deepcopy(a.θ)
     swap.workspace.log_likelihood_per_group = deepcopy(a.log_likelihood)
 end
@@ -31,22 +31,23 @@ function swap_node_labels!(a::Assignment, i, j)
 end
 
 function apply_swap!(a::Assignment, s::Swap)
-    g1 = get_group_of_vertex(a, s.index1)
-    g2 = get_group_of_vertex(a, s.index2)
+    g1 = group(a, s.u)
+    g2 = group(a, s.v)
     groups_concerned = Set([minmax(g1, g2)])
-    for (u, g_old, g_new) in [(s.index1, g1, g2), (s.index2, g2, g1)]
+    for (u, g_old, g_new) in [(s.u, g1, g2), (s.v, g2, g1)]
         # iterate over neighbors of u and get the decoration of the edge
-        for (v,d) in a.dists[u]
-            g_v = get_group_of_vertex(a, v)
+        for (v,d) in iterate_neighbors(a.dists, u)
+            g_v = group(a, v)
             a.θ[g_old, g_v] = remove_from(a.θ[g_old, g_v], d)
             a.θ[g_new, g_v] = add_to(a.θ[g_new, g_v], d)
             push!(groups_concerned, minmax(g_new, g_v))
             push!(groups_concerned, minmax(g_old, g_v))
         end
     end
+    println("Groups concerned: ", groups_concerned)
     fast_ll_update!(a, groups_concerned)
 
-    swap_node_labels!(a, s.index1, s.index2)
+    swap_node_labels!(a, s.u, s.v)
 end
 
 
@@ -65,7 +66,7 @@ function _fast_ll_one_group(a::Assignment, g1, g2)
     ll = 0.0
     d = a.θ[g1, g2]
     for u in nodes_g1
-        for (v,e) in a.edges[u] # assume implicitly that g1 != g2
+        for (v,e) in iterate_neighbors(a.edges,u) # assume implicitly that g1 != g2
             if v in nodes_g2
                 ll += loglikelihood(d, e)
             end

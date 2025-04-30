@@ -19,13 +19,13 @@ function nodes(edgelist::EdgeList{E}) where {E}
 end
 
 
-function EdgeList(A::AbstractMatrix{E}) where {E}
+function EdgeList(A::AbstractMatrix{<:Union{Missing,E}}) where {E}
     n = size(A, 1)
     data = Vector{Vector{Tuple{Int,E}}}(undef, n)
     for j in 1:n
         data[j] = Vector{Tuple{Int,E}}(undef, 0)
         for i in 1:n
-            if A[i, j] != 0
+            if !ismissing(A[i,j])
                 push!(data[j], (i, A[i, j]))
             end
         end
