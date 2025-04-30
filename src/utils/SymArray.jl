@@ -2,7 +2,7 @@ module FastSymArray
 
     export SymArray
 
-    mutable struct SymArray{F}
+    mutable struct SymArray{F} <: AbstractArray{F, 2}
         d::Dict{Tuple{Int, Int}, F}
         k::Int
     end
@@ -13,11 +13,17 @@ module FastSymArray
         for j in i:k), k)
     end
 
+    function Base.size(a::SymArray)
+        return (a.k, a.k)
+    end
+
     Base.@propagate_inbounds function Base.getindex(a::SymArray, i, j)
+        @boundscheck checkbounds(a, i, j)
         return a.d[minmax(i, j)]
     end
 
-    function Base.setindex!(a::SymArray, v, i, j)
+    Base.@propagate_inbounds function Base.setindex!(a::SymArray, v, i, j)
+        @boundscheck checkbounds(a, i, j)
         a.d[minmax(i, j)] = v
     end
 

@@ -1,12 +1,12 @@
-mutable struct WorkspaceSwap{D,K,F}
+mutable struct WorkspaceSwap{D,F}
     θ::SymArray{D}
     log_likelihood_per_group::SymArray{F}
 end
 
-mutable struct Swap{D, F}
+mutable struct Swap{W}
     u::Int
     v::Int
-    workspace::WorkspaceSwap{D,F}
+    workspace::W
 end
 
 

@@ -20,7 +20,12 @@ function remove_from(avgdist::Dist{D}, dist::D) where {D}
     end
 end
 
-for f in [:logpdf, :sample, :dist, :eltype]
+
+# probably need to update to account for counts in second dist? will that mess the other code?
+add_to(d::Dist, dist::Dist) = add_to(d, dist.dist)
+remove_from(d::Dist, dist::Dist) = remove_from(d, dist.dist)
+
+for f in [:logpdf, :sample, :dist, :eltype, :params]
     @eval $f(d::Dist, args...) = $f(d.dist, args...)
 end
 
@@ -45,3 +50,4 @@ fit(::Bernoulli, x) = Bernoulli(mean(x))
 sample(d::Bernoulli, n=1) = rand(n) .<= d.p
 dist(d1::Bernoulli, d2::Bernoulli) = abs(d1.p - d2.p)
 logpdf(d::Bernoulli, x) = log(d.p * x + (1 - d.p) * (1 - x))
+params(d::Bernoulli) = (d.p,)

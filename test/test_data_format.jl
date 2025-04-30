@@ -17,6 +17,6 @@
         end
     end
 
-    @test eltype(edgelist) == eltype(A)
+    @test NetworkHistogram.edge_type(edgelist) == eltype(A)
     @test nodes(edgelist) == size(A,1)
 end

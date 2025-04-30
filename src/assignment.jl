@@ -38,16 +38,13 @@ Base.@propagate_inbounds function Base.getindex(
     return i < length(g) ? g.group_number[1] : g.group_number[2]
 end
 
-
-
-mutable struct Assignment{E, D, A, F}
+mutable struct Assignment{E, D, F}
     node_labels::AbstractVector{Int}
     const edges::EdgeList{E}
     const dists::EdgeList{D}
     θ::SymArray{D}
     log_likelihood::SymArray{F}
 end
-
 
 function loglikelihood(a::Assignment)
     return sum(a.log_likelihood)
@@ -58,48 +55,52 @@ function group(a::Assignment, node::Int)
 end
 
 function get_edges_in_groups(a::Assignment, g1::Int, g2::Int)
-    nodes_g1 = findall(x -> x == g1, a.node_labels)
-    edges = Vector(eltype(a.edges), 0)
+    return get_edges_in_groups(a.node_labels, a.edges, g1, g2)
+end
+
+function get_edges_in_groups(node_labels, edges_all, g1, g2)
+    nodes_g1 = findall(x -> x == g1, node_labels)
+    edges = Vector{edge_type(edges_all)}(undef, 0)
     if g1 == g2
-       for u in nodes_g1
-            for (v, e) in a.edges[u]
+        for u in nodes_g1
+            for (v, e) in iterate_neighbors(edges_all, u)
                 if v in nodes_g1 && u < v
                     push!(edges, e)
                 end
             end
         end
     else
-        nodes_g2 = findall(x -> x == g2, a.node_labels)
+        nodes_g2 = findall(x -> x == g2, node_labels)
         for u in nodes_g1
-            for (v, e) in a.edges[u]
+            for (v, e) in iterate_neighbors(edges_all, u)
                 if v in nodes_g2
                     push!(edges, e)
                 end
             end
         end
     end
-   return edges
+    return edges
 end
 
-
 function Assignment(node_labels, edge_list::EdgeList{E}, dist::Dist{D}) where {E, D}
-    dists = fit.(dist ,edge_list)
+    dists = fit(dist, edge_list)
     number_groups = length(unique(node_labels))
     θ = SymArray(number_groups, dist)
     log_likelihood = SymArray(number_groups, 0.0)
-    for u in 1:length(dists)
+    for u in 1:nodes(dists)
         g1 = node_labels[u]
-        for (v,d) in neighbors(dists, u)
+        for (v, d) in iterate_neighbors(dists, u)
             g2 = node_labels[v]
-            if g1 == g2 && u < v
-                continue
+            if u < v
+                θ[g1, g2] = add_to(θ[g1, g2], d)
             end
-            θ[g1, g2] = add_to(θ[g1, g2], d)
         end
     end
     for k in 1:number_groups
         for l in k:number_groups
-            log_likelihood[k, l] = loglikelihood(θ[k,l], get_edges_in_groups(edge_list, k, l))
+            log_likelihood[k,
+                l] = loglikelihood(
+                θ[k, l], get_edges_in_groups(node_labels, edge_list, k, l))
         end
     end
     return Assignment(node_labels, edge_list, dists, θ, log_likelihood)
