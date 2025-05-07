@@ -1,18 +1,15 @@
 struct EdgeList{E}
-    data::Vector{Vector{Tuple{Int,E}}}
+    data::Vector{Vector{E}}
+    name_list::Vector{Vector{Int}}
 end
 
 function neighbors(A::EdgeList{E}, i::Int) where {E}
-    return first.(A.data[i]), last.(A.data[i])
+    return A.name_list[i], A.data[i]
 end
 
-function iterate_neighbors(A::EdgeList{E}, i::Int) where {E}
-    return zip(first.(A.data[i]), last.(A.data[i]))
-end
 
-function edge_type(edgelist::EdgeList{E}) where {E}
-    return E
-end
+iterate_neighbors(A::EdgeList, i::Int) = zip(neighbors(A, i)...)
+edge_type(A::EdgeList{E}) where {E} = E
 
 function nodes(edgelist::EdgeList{E}) where {E}
     return length(edgelist.data)
@@ -21,16 +18,19 @@ end
 
 function EdgeList(A::AbstractMatrix{<:Union{Missing,E}}) where {E}
     n = size(A, 1)
-    data = Vector{Vector{Tuple{Int,E}}}(undef, n)
+    data = Vector{Vector{E}}(undef, n)
+    name_list = Vector{Vector{Int}}(undef, n)
     for j in 1:n
         data[j] = Vector{Tuple{Int,E}}(undef, 0)
+        name_list[j] = Vector{Int}(undef, 0)
         for i in 1:n
             if !ismissing(A[i,j])
-                push!(data[j], (i, A[i, j]))
+                push!(name_list[j], i)
+                push!(data[j], A[i, j])
             end
         end
     end
-    return EdgeList(data)
+    return EdgeList(data, name_list)
 end
 
 
@@ -40,12 +40,12 @@ end
 
 
 function fit(d::Dist, A::EdgeList{E}) where {E}
-    new_data = Vector{Vector{Tuple{Int, typeof(d)}}}(undef, length(A.data))
+    new_data = Vector{Vector{typeof(d)}}(undef, length(A.data))
     for j in 1:length(A.data)
-        new_data[j] = Vector{Tuple{Int, typeof(d)}}(undef, length(A.data[j]))
-        for (k,(i, e)) in enumerate(A.data[j])
-            new_data[j][k] = (i, fit(d, e))
+        new_data[j] = Vector{typeof(d)}(undef, length(A.data[j]))
+        for (k,e) in enumerate(A.data[j])
+            new_data[j][k] = fit(d, e)
         end
     end
-    return EdgeList(new_data)
+    return EdgeList(new_data, A.name_list)
 end

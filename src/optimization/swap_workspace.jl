@@ -44,7 +44,6 @@ function apply_swap!(a::Assignment, s::Swap)
             push!(groups_concerned, minmax(g_old, g_v))
         end
     end
-    println("Groups concerned: ", groups_concerned)
     fast_ll_update!(a, groups_concerned)
 
     swap_node_labels!(a, s.u, s.v)
