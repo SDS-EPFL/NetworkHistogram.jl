@@ -1,6 +1,7 @@
 module FastSymArray
 
-    export SymArray
+    import Base: eltype
+    export SymArray, eltype
 
     mutable struct SymArray{F} <: AbstractArray{F, 2}
         d::Dict{Tuple{Int, Int}, F}
@@ -30,5 +31,9 @@ module FastSymArray
 
     function Base.sum(a::SymArray)
         return sum(values(a.d))
+    end
+
+    function eltype(a::SymArray{F}) where {F}
+        return F
     end
 end

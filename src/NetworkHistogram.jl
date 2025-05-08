@@ -3,7 +3,7 @@ using StatsBase
 using StaticArrays
 using ProgressMeter
 import StatsAPI: loglikelihood
-import Base: convert
+import Base: convert, eltype
 
 include("utils/include.jl")
 using .FastSymArray

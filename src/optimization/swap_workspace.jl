@@ -21,7 +21,9 @@ function make_swap!(swap::Swap, a::Assignment, id)
 end
 
 function revert_swap!(assignment::Assignment, swap::Swap)
-    apply_swap!(assignment, swap)
+    # swap labels back to original
+    swap_node_labels!(assignment, swap.u, swap.v)
+    # restore saved θ and log likelihoods
     assignment.θ = deepcopy(swap.workspace.θ)
     assignment.log_likelihood = deepcopy(swap.workspace.log_likelihood_per_group)
 end
@@ -30,24 +32,31 @@ function swap_node_labels!(a::Assignment, i, j)
     a.node_labels[i], a.node_labels[j] = a.node_labels[j], a.node_labels[i]
 end
 
+
 function apply_swap!(a::Assignment, s::Swap)
-    g1 = group(a, s.u)
-    g2 = group(a, s.v)
-    groups_concerned = Set([minmax(g1, g2)])
-    for (u, g_old, g_new) in [(s.u, g1, g2), (s.v, g2, g1)]
-        # iterate over neighbors of u and get the decoration of the edge
-        for (v,d) in iterate_neighbors(a.dists, u)
-            g_v = group(a, v)
-            a.θ[g_old, g_v] = remove_from(a.θ[g_old, g_v], d)
-            a.θ[g_new, g_v] = add_to(a.θ[g_new, g_v], d)
-            push!(groups_concerned, minmax(g_new, g_v))
-            push!(groups_concerned, minmax(g_old, g_v))
+    # swap node labels
+    swap_node_labels!(a, s.u, s.v)
+    # fully rebuild θ and log_likelihood based on new labels
+    k = size(a.θ, 1)
+    # initial distribution template and zero-likelihood
+    base_dist = a.θ[1, 1]
+    a.θ = SymArray(k, base_dist)
+    a.log_likelihood = SymArray(k, zero(eltype(a.log_likelihood)))
+    # accumulate edge contributions
+    for u in 1:length(a.node_labels)
+        g_u = group(a, u)
+        for (v, d) in iterate_neighbors(a.dists, u)
+            if u < v
+                g_v = group(a, v)
+                a.θ[g_u, g_v] = add_to(a.θ[g_u, g_v], d)
+            end
         end
     end
-    @show a.θ
-    fast_ll_update!(a, groups_concerned)
-
-    swap_node_labels!(a, s.u, s.v)
+    # recompute log likelihoods for all group pairs
+    for g1 in 1:k, g2 in g1:k
+        edges = get_edges_in_groups(a, g1, g2)
+        a.log_likelihood[g1, g2] = loglikelihood(a.θ[g1, g2], edges)
+    end
 end
 
 

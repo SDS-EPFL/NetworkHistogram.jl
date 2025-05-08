@@ -6,4 +6,5 @@ using NetworkHistogram
     include("test_data_format.jl")
     include("test_distributions_type.jl")
     include("test_swap_workspace.jl")
+    include("test_get_edges_in_groups.jl")
 end

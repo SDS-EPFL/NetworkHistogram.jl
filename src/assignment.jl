@@ -62,23 +62,15 @@ function get_edges_in_groups(a::Assignment, g1::Int, g2::Int)
 end
 
 function get_edges_in_groups(node_labels, edges_all, g1, g2)
+
+    edges = Vector{edge_type(edges_all)}()
     nodes_g1 = findall(x -> x == g1, node_labels)
-    edges = Vector{edge_type(edges_all)}(undef, 0)
-    if g1 == g2
-        for u in nodes_g1
-            for (v, e) in iterate_neighbors(edges_all, u)
-                if v in nodes_g1 && u < v
-                    push!(edges, e)
-                end
-            end
-        end
-    else
-        nodes_g2 = findall(x -> x == g2, node_labels)
-        for u in nodes_g1
-            for (v, e) in iterate_neighbors(edges_all, u)
-                if v in nodes_g2
-                    push!(edges, e)
-                end
+    nodes_g2 = findall(x -> x == g2, node_labels)
+
+    for u in nodes_g1
+        for (v, e) in iterate_neighbors(edges_all, u)
+            if  v in nodes_g2 && ((g1 == g2 && u < v) || g1 != g2)
+                push!(edges, e)
             end
         end
     end
