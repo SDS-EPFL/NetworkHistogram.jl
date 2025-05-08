@@ -10,11 +10,8 @@ end
 
 iterate_neighbors(A::EdgeList, i::Int) = zip(neighbors(A, i)...)
 edge_type(A::EdgeList{E}) where {E} = E
-
-function nodes(edgelist::EdgeList{E}) where {E}
-    return length(edgelist.data)
-end
-
+nodes(edgelist::EdgeList) = length(edgelist.data)
+number_nodes(edgelist::EdgeList) = nodes(edgelist)
 
 function EdgeList(A::AbstractMatrix{<:Union{Missing,E}}) where {E}
     n = size(A, 1)
@@ -24,7 +21,7 @@ function EdgeList(A::AbstractMatrix{<:Union{Missing,E}}) where {E}
         data[j] = Vector{Tuple{Int,E}}(undef, 0)
         name_list[j] = Vector{Int}(undef, 0)
         for i in 1:n
-            if !ismissing(A[i,j])
+            if !ismissing(A[i,j]) # gonna be an issue with MC! have to define 0 chain and fast operations on them
                 push!(name_list[j], i)
                 push!(data[j], A[i, j])
             end
@@ -34,9 +31,7 @@ function EdgeList(A::AbstractMatrix{<:Union{Missing,E}}) where {E}
 end
 
 
-function Base.convert(::Type{EdgeList{E}}, A::AbstractMatrix{E}) where {E}
-    return EdgeList(A)
-end
+convert(::Type{EdgeList}, A::AbstractMatrix) =  EdgeList(A)
 
 
 function fit(d::Dist, A::EdgeList{E}) where {E}

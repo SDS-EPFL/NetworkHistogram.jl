@@ -17,6 +17,9 @@ function accept_reject_update!(a::Assignment, swap::Swap, ::Strict)
     current_score = loglikelihood(a)
     apply_swap!(a, swap)
     if loglikelihood(a) <= current_score
+        @debug "Rejecting swap: $(swap.u) <-> $(swap.v), score: $(loglikelihood(a)), current score: $current_score"
         revert_swap!(a, swap)
+    else
+        @debug "Accepting swap: $(swap.u) <-> $(swap.v), score: $(loglikelihood(a))"
     end
 end

@@ -11,12 +11,12 @@ end
 
 
 function preprocess_data(data, dist)
-    A = _fast_compressed_g.(dist, data)
+    A = EdgeList(_fast_compressed_obs.(dist, data))
     return  A, dist
 end
 
 
 function postprocess(out)
-    return true
-    return BlockModel(optimal_a)
+    return out
+    return BlockModel(out)
 end

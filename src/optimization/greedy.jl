@@ -9,7 +9,7 @@ mutable struct GreedyParams
     progress_bar::Bool
 end
 
-GreedyParams() = GreedyParams(10_000, RandomNodeSwap(), Strict(), PreviousBestValue(1000), false)
+GreedyParams() = GreedyParams(10_000, RandomGroupSwap(), Strict(), PreviousBestValue(1000), true)
 
 function greedy_optimize(g, initial_labels, params::GreedyParams)
     a = Assignment(initial_labels, g...)

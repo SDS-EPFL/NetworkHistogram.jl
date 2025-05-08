@@ -13,7 +13,14 @@ end
 
 
 function sample(bm::BlockModel, latents::Vector{T}) where {T}
-    #fuck need the element type of the distribution...
+    A = Array{eltype(bm[1,1]), 2}(undef, length(latents), length(latents)) .* zero(eltype(bm[1,1]))
+    for j in 1:length(latents)
+        for i in j+1:length(latents)
+                A[i, j] = sample(bm[latents[i], latents[j]])
+                A[j, i] = A[i, j]
+        end
+    end
+    return A
 end
 
 

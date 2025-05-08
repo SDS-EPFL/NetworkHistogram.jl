@@ -46,6 +46,9 @@ mutable struct Assignment{E, D, F}
     log_likelihood::SymArray{F}
 end
 
+number_nodes(a::Assignment) = length(a.node_labels)
+number_groups(a::Assignment) = size(a.θ, 1)
+
 function loglikelihood(a::Assignment)
     return sum(a.log_likelihood)
 end

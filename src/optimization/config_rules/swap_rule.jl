@@ -21,7 +21,7 @@ end
 function select_indices_swap(assignment::Assignment, ::RandomGroupSwap)
     groups = StatsBase.sample(
         1:number_groups(assignment), 2; replace = false)
-    index1 = rand(get_vertex_in_group(assignment, groups[1]))
-    index2 = rand(get_vertex_in_group(assignment, groups[2]))
+    index1 = rand(findall(x -> x == groups[1], assignment.node_labels))
+    index2 = rand(findall(x -> x == groups[2], assignment.node_labels))
     return (index1, index2)
 end

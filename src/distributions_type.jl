@@ -47,7 +47,8 @@ end
 
 agg_params(d1::Bernoulli, d2::Bernoulli, w1, w2) = Bernoulli(w1 * d1.p + w2 * d2.p)
 fit(::Bernoulli, x) = Bernoulli(mean(x))
-sample(d::Bernoulli, n=1) = rand(n) .<= d.p
 dist(d1::Bernoulli, d2::Bernoulli) = abs(d1.p - d2.p)
 logpdf(d::Bernoulli, x) = log(d.p * x + (1 - d.p) * (1 - x))
 params(d::Bernoulli) = (d.p,)
+eltype(d::Bernoulli) = Bool
+sample(d::Bernoulli) = Bool(rand() .<= d.p)
