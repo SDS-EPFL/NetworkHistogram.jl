@@ -40,7 +40,7 @@ unwrap(d::Dist) = d.dist
 _fast_compressed_obs(d, x) = x
 
 
-# Bernoulli distribution
+# Bernoulli distribution (example)
 
 struct Bernoulli{T<:Real}
     p::T
