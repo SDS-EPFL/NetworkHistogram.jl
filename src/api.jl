@@ -10,8 +10,8 @@ function nethist(data_input, dist_user, initial_node_labels, params::GreedyParam
 end
 
 
-function preprocess_data(data, dist)
-    A = EdgeList(_fast_compressed_obs.(dist, data))
+function preprocess_data(data, dist::Dist)
+    A = EdgeList(_fast_compressed_obs(dist, data))
     return  A, dist
 end
 

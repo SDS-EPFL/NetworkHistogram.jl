@@ -32,12 +32,13 @@ end
 
 fit(d::Dist, x) = Dist(fit(d.dist, x), d.counts)
 loglikelihood(d::Dist, x) = sum(logpdf(d, y) for y in x)
+unwrap(d::Dist) = d.dist
+
 
 # expose compression step that assumes there is a pdf(d, typeof(compressed(x))) properly defined
 # by default do nothing
 _fast_compressed_obs(d, x) = x
 
-unwrap(d::Dist) = d.dist
 
 # Bernoulli distribution
 
@@ -45,7 +46,6 @@ struct Bernoulli{T<:Real}
     p::T
 end
 
-#zero(::Type{Bernoulli{T}}) where {T} = Bernoulli(zero(T))
 
 zero(d::Bernoulli) = Bernoulli(zero(d.p))
 agg_params(d1::Bernoulli, d2::Bernoulli, w1, w2) = Bernoulli(w1 * d1.p + w2 * d2.p)
@@ -55,3 +55,4 @@ logpdf(d::Bernoulli, x) = log(d.p * x + (1 - d.p) * (1 - x))
 params(d::Bernoulli) = (d.p,)
 eltype(d::Bernoulli) = Bool
 sample(d::Bernoulli) = Bool(rand() <= d.p)
+_fast_compressed_obs(d::Bernoulli, x) = x

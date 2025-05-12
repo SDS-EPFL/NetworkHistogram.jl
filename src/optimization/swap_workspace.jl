@@ -39,7 +39,6 @@ function apply_swap!(a::Assignment, s::Swap)
     new_assignment = Assignment(a.node_labels, a.edges, a.θ[1,1])
     a.θ = new_assignment.θ
     a.log_likelihood = new_assignment.log_likelihood
-    # # fully rebuild θ and log_likelihood based on new labels
     # k = size(a.θ, 1)
     # # initial distribution template and zero-likelihood
     # base_dist = a.θ[1, 1]
