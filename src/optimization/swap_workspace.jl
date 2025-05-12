@@ -36,27 +36,30 @@ end
 function apply_swap!(a::Assignment, s::Swap)
     # swap node labels
     swap_node_labels!(a, s.u, s.v)
-    # fully rebuild θ and log_likelihood based on new labels
-    k = size(a.θ, 1)
-    # initial distribution template and zero-likelihood
-    base_dist = a.θ[1, 1]
-    a.θ = SymArray(k, base_dist)
-    a.log_likelihood = SymArray(k, zero(eltype(a.log_likelihood)))
-    # accumulate edge contributions
-    for u in 1:length(a.node_labels)
-        g_u = group(a, u)
-        for (v, d) in iterate_neighbors(a.dists, u)
-            if u < v
-                g_v = group(a, v)
-                a.θ[g_u, g_v] = add_to(a.θ[g_u, g_v], d)
-            end
-        end
-    end
-    # recompute log likelihoods for all group pairs
-    for g1 in 1:k, g2 in g1:k
-        edges = get_edges_in_groups(a, g1, g2)
-        a.log_likelihood[g1, g2] = loglikelihood(a.θ[g1, g2], edges)
-    end
+    new_assignment = Assignment(a.node_labels, a.edges, a.θ[1,1])
+    a.θ = new_assignment.θ
+    a.log_likelihood = new_assignment.log_likelihood
+    # # fully rebuild θ and log_likelihood based on new labels
+    # k = size(a.θ, 1)
+    # # initial distribution template and zero-likelihood
+    # base_dist = a.θ[1, 1]
+    # a.θ = SymArray(k, base_dist)
+    # a.log_likelihood = SymArray(k, zero(eltype(a.log_likelihood)))
+    # # accumulate edge contributions
+    # for u in 1:length(a.node_labels)
+    #     g_u = group(a, u)
+    #     for (v, d) in iterate_neighbors(a.dists, u)
+    #         if u < v
+    #             g_v = group(a, v)
+    #             a.θ[g_u, g_v] = add_to(a.θ[g_u, g_v], d)
+    #         end
+    #     end
+    # end
+    # # recompute log likelihoods for all group pairs
+    # for g1 in 1:k, g2 in g1:k
+    #     edges = get_edges_in_groups(a, g1, g2)
+    #     a.log_likelihood[g1, g2] = loglikelihood(a.θ[g1, g2], edges)
+    # end
 end
 
 

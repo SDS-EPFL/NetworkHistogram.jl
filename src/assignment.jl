@@ -80,7 +80,7 @@ end
 function Assignment(node_labels, edge_list::EdgeList{E}, dist::Dist{D}) where {E, D}
     dists = fit(dist, edge_list)
     number_groups = length(unique(node_labels))
-    θ = SymArray(number_groups, dist)
+    θ = SymArray(number_groups, zero(dist))
     log_likelihood = SymArray(number_groups, 0.0)
     for u in 1:nodes(dists)
         g1 = node_labels[u]

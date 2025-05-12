@@ -9,7 +9,7 @@ mutable struct GreedyParams
     progress_bar::Bool
 end
 
-GreedyParams() = GreedyParams(10_000, RandomGroupSwap(), Strict(), PreviousBestValue(1000), true)
+GreedyParams() = GreedyParams(100_000, RandomGroupSwap(), Strict(), PreviousBestValue(10_000), true)
 
 function greedy_optimize(g, initial_labels, params::GreedyParams)
     a = Assignment(initial_labels, g...)
@@ -27,7 +27,7 @@ function greedy_improve!(a::Assignment; params = GreedyParams())
 
     for i in 1:params.max_iter
         local_search!(a, swap, params)
-        next!(p)
+        next!(p; showvalues = [("ll: ",sum(a.log_likelihood))])
         if stopping_rule(a, params.stop_rule)
             finish!(p)
             break

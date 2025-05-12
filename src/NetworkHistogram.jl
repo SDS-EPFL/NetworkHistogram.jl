@@ -3,7 +3,7 @@ using StatsBase
 using StaticArrays
 using ProgressMeter
 import StatsAPI: loglikelihood
-import Base: convert, eltype
+import Base: convert, eltype, zero
 
 include("utils/include.jl")
 using .FastSymArray
@@ -15,6 +15,6 @@ include("assignment.jl")
 include("optimization/greedy.jl")
 include("api.jl")
 
-export EdgeList, neighbors, nodes, loglikelihood
+export EdgeList, neighbors, nodes, loglikelihood, zero
 
 end
