@@ -2,8 +2,9 @@ module NetworkHistogram
 using StatsBase
 using StaticArrays
 using ProgressMeter
-import StatsAPI: loglikelihood
+import StatsAPI: loglikelihood, fit
 import Base: convert, eltype, zero
+
 
 include("utils/include.jl")
 using .FastSymArray
@@ -15,6 +16,6 @@ include("assignment.jl")
 include("optimization/greedy.jl")
 include("api.jl")
 
-export EdgeList, neighbors, nodes, loglikelihood, zero
+export EdgeList, neighbors, nodes, loglikelihood, zero, fit, agg_params, logpdf
 
 end

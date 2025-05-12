@@ -45,8 +45,8 @@ function _from_adj_to_edge_list(A::AbstractMatrix, function_to_apply = identity)
         name_list[j] = Vector{Int}(undef, 0)
         for i in 1:n
             if !ismissing(A[i,j]) && i != j # gonna be an issue with MC! have to define 0 chain and fast operations on them
-                push!(name_list[j], function_to_apply(i))
-                push!(data[j], A[i, j])
+                push!(name_list[j], i)
+                push!(data[j], function_to_apply(A[i, j]))
             end
         end
     end

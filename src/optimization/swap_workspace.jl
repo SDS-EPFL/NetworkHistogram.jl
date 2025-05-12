@@ -71,7 +71,7 @@ function _fast_ll_one_group(a::Assignment, g1, g2)
         for (v,e) in iterate_neighbors(a.edges,u) # assume implicitly that g1 != g2
             if v in nodes_g2
                 if (g1 == g2 && u < v) || g1 != g2
-                    ll += loglikelihood(d, e)
+                    ll += logpdf(d, e)
                 end
             end
         end
