@@ -14,6 +14,7 @@ nodes(edgelist::EdgeList) = length(edgelist.data)
 number_nodes(edgelist::EdgeList) = nodes(edgelist)
 
 EdgeList(A::AbstractMatrix{<:Union{Missing,E}}) where {E} = _from_adj_to_edge_list(A)
+EdgeList(adj_list::EdgeList) = adj_list
 
 # function EdgeList(A::AbstractMatrix{<:Union{Missing,E}}) where {E}
 #     n = size(A, 1)
@@ -43,7 +44,7 @@ function _from_adj_to_edge_list(A::AbstractMatrix, function_to_apply = identity)
         data[j] = Vector{typeof(test)}(undef, 0)
         name_list[j] = Vector{Int}(undef, 0)
         for i in 1:n
-            if !ismissing(A[i,j]) # gonna be an issue with MC! have to define 0 chain and fast operations on them
+            if !ismissing(A[i,j]) && i != j # gonna be an issue with MC! have to define 0 chain and fast operations on them
                 push!(name_list[j], function_to_apply(i))
                 push!(data[j], A[i, j])
             end

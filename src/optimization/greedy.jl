@@ -27,7 +27,7 @@ function greedy_improve!(a::Assignment; params = GreedyParams())
 
     for i in 1:params.max_iter
         local_search!(a, swap, params)
-        next!(p; showvalues = [("ll: ",sum(a.log_likelihood))])
+        next!(p; showvalues = [("ll: ",sum(a.log_likelihood)), info_to_print(params.stop_rule)])
         if stopping_rule(a, params.stop_rule)
             finish!(p)
             break

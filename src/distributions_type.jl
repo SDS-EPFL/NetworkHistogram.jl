@@ -1,7 +1,10 @@
 struct Dist{D}
     dist::D
     counts::Int
+    Dist(d,counts::Int) = counts < 0 ? error("Counts cannot be negative") : new{typeof(d)}(d, counts)
 end
+
+
 
 Dist(d) = Dist(d, 1)
 zero(d::Dist) = Dist(zero(d.dist),0)
@@ -14,15 +17,19 @@ end
 
 
 function remove_from(avgdist::Dist{D}, dist::D) where {D}
-    if avgdist.counts <= 1
-        error("Cannot remove from a distribution with strictly less than 2 counts")
-    else
-        return Dist(agg_params(avgdist.dist, dist, avgdist.counts / (avgdist.counts - 1), - 1 / (avgdist.counts - 1)), avgdist.counts -1)
+    if avgdist.counts <= 0
+        error("Cannot remove from a distribution with 0 counts")
     end
+    # if avgdist.counts == 1 && params(avgdist) == params(dist)
+    #     return Dist(zero(avgdist.dist), 0)
+    # else
+    #     error("Cannot remove from a distribution with 1 count unless the parameters are the same, got $(params(avgdist)) and $(params(dist))")
+    # end
+    return Dist(agg_params(avgdist.dist, dist, avgdist.counts / max(1,(avgdist.counts - 1)), - 1 / max(1,(avgdist.counts - 1))), avgdist.counts -1)
 end
 
 
-# probably need to update to account for counts in second dist? will that mess the other code?
+## probably this is fucked ...
 add_to(d::Dist, dist::Dist) = add_to(d, dist.dist)
 remove_from(d::Dist, dist::Dist) = remove_from(d, dist.dist)
 

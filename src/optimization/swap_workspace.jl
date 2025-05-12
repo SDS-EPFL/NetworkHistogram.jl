@@ -34,40 +34,47 @@ end
 
 
 function apply_swap!(a::Assignment, s::Swap)
-    # swap node labels
+    g1 = group(a, s.u)
+    g2 = group(a, s.v)
+    groups_concerned = Set([minmax(g1, g2)])
+    for (u, g_old, g_new) in [(s.u, g1, g2), (s.v, g2, g1)]
+        for (v,d) in iterate_neighbors(a.dists, u)
+            if v == s.u || v == s.v
+                continue
+            end
+            g_v = group(a, v)
+            a.θ[g_new, g_v] = add_to(a.θ[g_new, g_v], d)
+            a.θ[g_old, g_v] = remove_from(a.θ[g_old, g_v], d)
+            push!(groups_concerned, minmax(g_new, g_v), minmax(g_old, g_v))
+        end
+    end
     swap_node_labels!(a, s.u, s.v)
-    new_assignment = Assignment(a.node_labels, a.edges, a.θ[1,1])
-    a.θ = new_assignment.θ
-    a.log_likelihood = new_assignment.log_likelihood
-    # k = size(a.θ, 1)
-    # # initial distribution template and zero-likelihood
-    # base_dist = a.θ[1, 1]
-    # a.θ = SymArray(k, base_dist)
-    # a.log_likelihood = SymArray(k, zero(eltype(a.log_likelihood)))
-    # # accumulate edge contributions
-    # for u in 1:length(a.node_labels)
-    #     g_u = group(a, u)
-    #     for (v, d) in iterate_neighbors(a.dists, u)
-    #         if u < v
-    #             g_v = group(a, v)
-    #             a.θ[g_u, g_v] = add_to(a.θ[g_u, g_v], d)
-    #         end
-    #     end
-    # end
-    # # recompute log likelihoods for all group pairs
-    # for g1 in 1:k, g2 in g1:k
-    #     edges = get_edges_in_groups(a, g1, g2)
-    #     a.log_likelihood[g1, g2] = loglikelihood(a.θ[g1, g2], edges)
-    # end
+    fast_ll_update!(a, groups_concerned)
 end
 
 
-## below can be specialised for Bernoulli probably
+## below can be specialised for Bernoulli probably (probably above needs to be actually)
 
 function fast_ll_update!(a, groups_concerned)
     for g in groups_concerned
-        # Use get_edges_in_groups to get the correct set of edges
-        edges = get_edges_in_groups(a, g[1], g[2])
-        a.log_likelihood[g[1], g[2]] = loglikelihood(a.θ[g[1], g[2]], edges)
+        a.log_likelihood[g[1], g[2]] = _fast_ll_one_group(a, g[1], g[2])
     end
+end
+
+
+function _fast_ll_one_group(a::Assignment, g1, g2)
+    nodes_g1 = findall(x -> x == g1, a.node_labels)
+    nodes_g2 = findall(x -> x == g2, a.node_labels)
+    ll = 0.0
+    d = a.θ[g1, g2]
+    for u in nodes_g1
+        for (v,e) in iterate_neighbors(a.edges,u) # assume implicitly that g1 != g2
+            if v in nodes_g2
+                if (g1 == g2 && u < v) || g1 != g2
+                    ll += loglikelihood(d, e)
+                end
+            end
+        end
+    end
+    return ll
 end
