@@ -1,5 +1,6 @@
 function nethist(data_input, dist_user, initial_node_labels, params::GreedyParams)
 
+    @debug "preprocessing data"
     dist = Dist(dist_user)
     g = preprocess_data(data_input, dist)
 
