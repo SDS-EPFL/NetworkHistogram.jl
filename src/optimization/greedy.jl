@@ -12,7 +12,9 @@ end
 GreedyParams() = GreedyParams(100_000, RandomGroupSwap(), Strict(), PreviousBestValue(10_000), true)
 
 function greedy_optimize(g, initial_labels, params::GreedyParams)
+    @debug "making assignment"
     a = Assignment(initial_labels, g...)
+    @debug "assignment made, starting greedy search"
     greedy_improve!(a; params = params)
     return a
 end

@@ -33,7 +33,13 @@ end
 add_to(d::Dist, dist::Dist) = add_to(d, dist.dist)
 remove_from(d::Dist, dist::Dist) = remove_from(d, dist.dist)
 
-for f in [:logpdf, :sample, :dist, :eltype, :params]
+# expose compression step that assumes there is a pdf(d, typeof(compressed(x))) properly defined
+# by default do nothing
+_fast_compressed_obs(d, x) = x
+
+
+# what to delegate to the underlying distribution
+for f in [:logpdf, :sample, :dist, :eltype, :params, :_fast_compressed_obs]
     @eval $f(d::Dist, args...) = $f(d.dist, args...)
 end
 
@@ -42,9 +48,6 @@ loglikelihood(d::Dist, x) = sum(logpdf(d, y) for y in x)
 unwrap(d::Dist) = d.dist
 
 
-# expose compression step that assumes there is a pdf(d, typeof(compressed(x))) properly defined
-# by default do nothing
-_fast_compressed_obs(d, x) = x
 
 
 # Bernoulli distribution (example)

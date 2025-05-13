@@ -3,7 +3,7 @@ function nethist(data_input, dist_user, initial_node_labels, params::GreedyParam
     dist = Dist(dist_user)
     g = preprocess_data(data_input, dist)
 
-
+    @debug "started optimizatiion"
     out = greedy_optimize(g, initial_node_labels, params)
 
     return postprocess(out)

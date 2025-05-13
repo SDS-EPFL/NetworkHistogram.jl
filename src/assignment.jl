@@ -79,6 +79,12 @@ end
 
 function Assignment(node_labels, edge_list::EdgeList{E}, dist::Dist{D}) where {E, D}
     dists = fit(dist, edge_list)
+    θ, ll = _compute_theta_and_ll(node_labels, dists, edge_list, dist)
+    return Assignment(node_labels, edge_list, dists, θ, ll)
+end
+
+
+function _compute_theta_and_ll(node_labels, dists::EdgeList{Dist{D}}, edge_list::EdgeList{E}, dist::Dist{D}) where {E, D}
     number_groups = length(unique(node_labels))
     θ = SymArray(number_groups, zero(dist))
     log_likelihood = SymArray(number_groups, 0.0)
@@ -98,5 +104,5 @@ function Assignment(node_labels, edge_list::EdgeList{E}, dist::Dist{D}) where {E
                 θ[k, l], get_edges_in_groups(node_labels, edge_list, k, l))
         end
     end
-    return Assignment(node_labels, edge_list, dists, θ, log_likelihood)
+    return θ, log_likelihood
 end
