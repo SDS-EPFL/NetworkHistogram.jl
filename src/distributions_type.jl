@@ -12,7 +12,8 @@ zero(d::Dist) = Dist(zero(d.dist),0)
 Base.broadcastable(x::Dist) = Ref(x)
 
 function add_to(avgdist::Dist{D}, dist::D) where {D}
-    return Dist(agg_params(avgdist.dist, dist, avgdist.counts / (avgdist.counts + 1), 1 / (avgdist.counts + 1)), avgdist.counts + 1)
+    inner_dist = agg_params(avgdist.dist, dist, avgdist.counts / (avgdist.counts + 1), 1 / (avgdist.counts + 1))
+    return Dist(inner_dist, avgdist.counts + 1)
 end
 
 

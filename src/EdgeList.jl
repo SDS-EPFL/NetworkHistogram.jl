@@ -37,13 +37,16 @@ EdgeList(adj_list::EdgeList) = adj_list
 
 function _from_adj_to_edge_list(A::AbstractMatrix, function_to_apply = identity)
     n = size(A, 1)
-    test = function_to_apply(A[1,1])
+    input = findfirst(x -> !ismissing(x), A)
+    test = function_to_apply(A[input])
     data = Vector{Vector{typeof(test)}}(undef, n)
     name_list = Vector{Vector{Int}}(undef, n)
     for j in 1:n
         data[j] = Vector{typeof(test)}(undef, 0)
         name_list[j] = Vector{Int}(undef, 0)
         for i in 1:n
+            if !ismissing(A[i,j])
+            end
             if !ismissing(A[i,j]) && i != j # gonna be an issue with MC! have to define 0 chain and fast operations on them
                 push!(name_list[j], i)
                 push!(data[j], function_to_apply(A[i, j]))
@@ -68,7 +71,7 @@ function _make_shift_broadcast(A::EdgeList, f)
 end
 
 
-convert(::Type{EdgeList}, A::AbstractMatrix) =  EdgeList(A)
+#convert(::Type{EdgeList}, A::AbstractMatrix) =  EdgeList(A)
 
 
 function fit(d::Dist, A::EdgeList{E}) where {E}
