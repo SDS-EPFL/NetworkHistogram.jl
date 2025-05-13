@@ -6,6 +6,7 @@ function nethist(data_input, dist_user, initial_node_labels, params::GreedyParam
     @debug "started optimizatiion"
     out = greedy_optimize(g, initial_node_labels, params)
 
+    @debug "finished optimizatiion with loglikelihood $(loglikelihood(out))"
     return postprocess(out)
 end
 
