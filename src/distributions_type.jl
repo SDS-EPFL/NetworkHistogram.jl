@@ -45,7 +45,9 @@ for f in [:logpdf, :sample, :dist, :eltype, :params, :_fast_compressed_obs]
 end
 
 fit(d::Dist, x) = Dist(fit(d.dist, x), d.counts)
-loglikelihood(d::Dist, x) = sum(logpdf(d, y) for y in x)
+
+## TODO: remove type instability ?
+loglikelihood(d::Dist, x) = isempty(x) ? 0.0 : sum(logpdf(d, y) for y in x)
 unwrap(d::Dist) = d.dist
 
 
