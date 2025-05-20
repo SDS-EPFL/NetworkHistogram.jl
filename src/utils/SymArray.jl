@@ -1,6 +1,6 @@
 module FastSymArray
 
-    import Base: eltype
+    import Base: eltype, convert
     export SymArray, eltype
 
     mutable struct SymArray{F} <: AbstractArray{F, 2}
@@ -36,4 +36,25 @@ module FastSymArray
     function eltype(a::SymArray{F}) where {F}
         return F
     end
+
+    function convert(::Type{SymArray{F}}, a::AbstractMatrix{F}) where {F}
+        @assert size(a, 1) == size(a, 2)
+        k = size(a, 1)
+        d = Dict{Tuple{Int, Int}, F}(minmax(i, j) => a[i, j] for i in 1:k
+        for j in i:k)
+        return SymArray(k, d)
+    end
+
+
+    function convert(::Type{AbstractMatrix{F}}, a::SymArray{F}) where {F}
+        k = a.k
+        m = zeros(F, k, k)
+        for i in 1:k
+            for j in i:k
+                m[i, j] = a[i, j]
+            end
+        end
+        return m
+    end
+
 end

@@ -1,14 +1,23 @@
 struct BlockModel{D, K, T}
     _dists::SymArray{D}
     sizes::SVector{K, T}
-    cum_sizes::Vector{T}
+    cum_sizes::SVector{K,T}
 end
 
 function BlockModel(k::Int, d::D) where {D}
     sizes = @SVector fill(1/k, k)
-    cumulative_sizes = cumsum(sizes)
+    cumulative_sizes = SVector{k}(cumsum(sizes))
     _dists = SymArray(k, d)
     return BlockModel{D, k, Float64}(_dists, sizes, cumulative_sizes)
+end
+
+
+function BlockModel(a::Assignment)
+    k = length(unique(a.node_labels))
+    sizes = SVector{k}(proportions(a))
+    cumulative_sizes = SVector{k}(cumsum(sizes))
+    _dists = deepcopy(a.θ)
+    return BlockModel{eltype(_dists), k, eltype(cumulative_sizes)}(unwrap.(_dists), sizes, cumulative_sizes)
 end
 
 

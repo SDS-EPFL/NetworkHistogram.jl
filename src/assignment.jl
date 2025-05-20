@@ -49,6 +49,10 @@ end
 number_nodes(a::Assignment) = length(a.node_labels)
 number_groups(a::Assignment) = size(a.θ, 1)
 
+function proportions(a::Assignment)
+    return counts(a.node_labels) / number_nodes(a)
+end
+
 function loglikelihood(a::Assignment)
     return sum(a.log_likelihood)
 end

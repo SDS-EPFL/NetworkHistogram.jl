@@ -20,5 +20,5 @@ end
 
 function postprocess(out)
     return out
-    return BlockModel(out)
+    return out.node_labels, BlockModel(out)
 end
