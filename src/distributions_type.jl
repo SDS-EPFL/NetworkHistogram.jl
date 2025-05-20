@@ -40,7 +40,7 @@ _fast_compressed_obs(d, x) = x
 
 
 # what to delegate to the underlying distribution
-for f in [:logpdf, :sample, :dist, :eltype, :params, :_fast_compressed_obs]
+for f in [:logpdf, :sample, :distance, :eltype, :params, :_fast_compressed_obs]
     @eval $f(d::Dist, args...) = $f(d.dist, args...)
 end
 
@@ -64,7 +64,7 @@ end
 zero(d::Bernoulli) = Bernoulli(zero(d.p))
 agg_params(d1::Bernoulli, d2::Bernoulli, w1, w2) = Bernoulli(w1 * d1.p + w2 * d2.p)
 fit(::Bernoulli, x) = Bernoulli(mean(x))
-dist(d1::Bernoulli, d2::Bernoulli) = abs(d1.p - d2.p)
+distance(d1::Bernoulli, d2::Bernoulli) = abs(d1.p - d2.p)
 logpdf(d::Bernoulli, x) = log(d.p * x + (1 - d.p) * (1 - x))
 params(d::Bernoulli) = (d.p,)
 eltype(d::Bernoulli) = Bool
