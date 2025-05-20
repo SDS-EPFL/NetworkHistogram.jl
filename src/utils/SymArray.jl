@@ -8,7 +8,7 @@ module FastSymArray
         k::Int
     end
 
-    function SymArray(k, d::F) where {F}
+    function SymArray(k::T, d::F) where {F, T<:Real}
         @assert k > 0
         return SymArray{F}(Dict{Tuple{Int, Int}, F}(minmax(i, j) => d for i in 1:k
         for j in i:k), k)
@@ -40,9 +40,15 @@ module FastSymArray
     function convert(::Type{SymArray{F}}, a::AbstractMatrix{F}) where {F}
         @assert size(a, 1) == size(a, 2)
         k = size(a, 1)
-        d = Dict{Tuple{Int, Int}, F}(minmax(i, j) => a[i, j] for i in 1:k
-        for j in i:k)
-        return SymArray(k, d)
+        res = SymArray(k, a[1,1])
+        for j in axes(a,2)
+            for i in axes(a,1)
+                if i <= j
+                    res[i,j] = a[i,j]
+                end
+            end
+        end
+        return res
     end
 
 

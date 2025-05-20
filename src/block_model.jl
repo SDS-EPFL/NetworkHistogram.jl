@@ -16,8 +16,8 @@ function BlockModel(a::Assignment)
     k = length(unique(a.node_labels))
     sizes = SVector{k}(proportions(a))
     cumulative_sizes = SVector{k}(cumsum(sizes))
-    _dists = deepcopy(a.θ)
-    return BlockModel{eltype(_dists), k, eltype(cumulative_sizes)}(unwrap.(_dists), sizes, cumulative_sizes)
+    _dists = unwrap.(a.θ)
+    return BlockModel{eltype(_dists), k, eltype(cumulative_sizes)}(_dists, sizes, cumulative_sizes)
 end
 
 
