@@ -47,8 +47,8 @@ end
 fit(d::Dist, x) = Dist(fit(d.dist, x), d.counts)
 
 ## TODO: remove type instability ?
-# loglikelihood(d::Dist, x) = isempty(x) ? 0.0 : sum(logpdf(d, y) for y in x)
-loglikelihood(d::Dist, x) = sum(logpdf(d, y) for y in x)
+loglikelihood(d::Dist, x) = isempty(x) ? 0.0 : sum(logpdf(d, y) for y in x)
+# loglikelihood(d::Dist, x) = sum(logpdf(d, y) for y in x)
 unwrap(d::Dist) = d.dist
 
 
