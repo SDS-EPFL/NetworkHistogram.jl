@@ -54,7 +54,7 @@ function proportions(a::Assignment)
 end
 
 function loglikelihood(a::Assignment)
-    return sum(a.log_likelihood)
+    return FastSymArray.sum_tri_with_diag(a.log_likelihood)
 end
 
 function group(a::Assignment, node::Int)

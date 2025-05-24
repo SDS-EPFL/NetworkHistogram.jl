@@ -29,7 +29,7 @@ module FastSymArray
     end
 
 
-    function Base.sum(a::SymArray)
+    function sum_tri_with_diag(a::SymArray)
         return sum(values(a.d))
     end
 

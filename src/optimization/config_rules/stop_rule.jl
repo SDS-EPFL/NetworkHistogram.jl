@@ -10,7 +10,7 @@ end
 
 # default score is the log likelihood
 function score(a::Assignment)
-    return loglikelihood(a) / binomial(number_nodes(a), 2)
+    return loglikelihood(a) #/ binomial(number_nodes(a), 2)
 end
 
 mutable struct PreviousBestValue{T} <: StopRule
