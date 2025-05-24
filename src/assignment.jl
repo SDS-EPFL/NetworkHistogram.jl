@@ -101,12 +101,24 @@ function _compute_theta_and_ll(node_labels, dists::EdgeList{Dist{D}}, edge_list:
             end
         end
     end
-    for k in 1:number_groups
-        for l in k:number_groups
-            log_likelihood[k,
-                l] = loglikelihood(
-                θ[k, l], get_edges_in_groups(node_labels, edge_list, k, l))
+
+    for u in 1:nodes(dists)
+        g1 = node_labels[u]
+        for (v, e) in iterate_neighbors(edge_list, u)
+            g2 = node_labels[v]
+            if u > v
+                log_likelihood[g1,g2] += logpdf(θ[g1,g2], e)
+            else
+                break
+            end
         end
     end
+    # for k in 1:number_groups
+    #     for l in k:number_groups
+    #         log_likelihood[k,
+    #             l] = loglikelihood(
+    #             θ[k, l], get_edges_in_groups(node_labels, edge_list, k, l))
+    #     end
+    # end
     return θ, log_likelihood
 end
