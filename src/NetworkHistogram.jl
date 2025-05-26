@@ -2,7 +2,7 @@ module NetworkHistogram
 using StatsBase
 using StaticArrays
 using ProgressMeter
-import StatsAPI: loglikelihood, fit
+import StatsAPI: loglikelihood, fit, params
 import Base: convert, eltype, zero
 
 

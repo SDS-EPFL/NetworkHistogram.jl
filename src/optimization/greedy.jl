@@ -29,7 +29,7 @@ function greedy_improve!(a::Assignment; params = GreedyParams())
 
     for i in 1:params.max_iter
         local_search!(a, swap, params)
-        next!(p; showvalues = [("ll: ",sum(a.log_likelihood)), info_to_print(params.stop_rule)])
+        next!(p; showvalues = [("ll: ", loglikelihood(a)), info_to_print(params.stop_rule)])
         if stopping_rule(a, params.stop_rule)
             if i < 10
                 @warn "Greedy search stopped early after $(i) iterations"
