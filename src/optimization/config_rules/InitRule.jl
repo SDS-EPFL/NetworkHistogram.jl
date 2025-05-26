@@ -7,6 +7,11 @@ struct FromAssignment{A} <: StartingAssignment
     assignment::A
 end
 
+
+struct FromNodeLabels{L} <: StartingAssignment
+    node_labels::L
+end
+
 struct InitRule{S <: StartingAssignment, I}
     starting_assignment_rule::S
     assignment_rule::I
@@ -41,4 +46,15 @@ function initialize_node_labels(g, h, ::RandomStart)
     group_size, node_labels = initialize_node_labels(g, h, OrderedStart())
     Random.shuffle!(node_labels)
     return group_size, node_labels
+end
+
+
+function initialise_node_labels(g,h, init_rule::FromAssignment{A}) where {A <: Assignment}
+    return initialise_node_labels(g, h, FromNodeLabels(init_rule.assignment.node_labels))
+end
+
+
+function initialise_node_labels(g, h, init_rule::FromNodeLabels{L}) where {L}
+    @assert number_nodes(g) == length(init_rule.node_labels)
+    return group_size, deepcopy(init_rule.node_labels)
 end

@@ -9,7 +9,7 @@ import Base: convert, eltype, zero
 include("utils/include.jl")
 using .FastSymArray
 
-include("distributions_type.jl")
+include("distributions/include.jl")
 include("EdgeList.jl")
 include("assignment.jl")
 include("block_model.jl")
