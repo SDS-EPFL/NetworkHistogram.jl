@@ -107,7 +107,7 @@ function _compute_theta_and_ll(node_labels, dists::EdgeList{Dist{D}}, edge_list:
         for (v, e) in iterate_neighbors(edge_list, u)
             g2 = node_labels[v]
             if u > v
-                log_likelihood[g1,g2] += logpdf(θ[g1,g2], e)
+                log_likelihood[g1, g2] += logpdf(θ[g1, g2], e)
             else
                 break
             end
