@@ -31,8 +31,22 @@ end
 
 
 ## probably this is fucked ...
-add_to(d::Dist, dist::Dist) = add_to(d, dist.dist)
-remove_from(d::Dist, dist::Dist) = remove_from(d, dist.dist)
+# add_to(d::Dist, dist::Dist) = add_to(d, dist.dist)
+
+function add_to(avgdist::Dist{D}, dist::Dist{D}) where {D}
+    Dist(
+        agg_params(
+            avgdist.dist, dist.dist, avgdist.counts / (avgdist.counts + dist.counts),
+            dist.counts / (avgdist.counts + dist.counts)),
+        avgdist.counts + dist.counts)
+end
+function remove_from(avgdist::Dist, dist::Dist)
+    Dist(
+        agg_params(
+            avgdist.dist, dist.dist, avgdist.counts / max(1, (avgdist.counts - dist.counts)),
+            - dist.counts / max(1, (avgdist.counts - dist.counts))),
+        avgdist.counts - dist.counts)
+end
 
 # expose compression step that assumes there is a pdf(d, typeof(compressed(x))) properly defined
 # by default do nothing

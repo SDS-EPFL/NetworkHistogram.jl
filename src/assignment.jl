@@ -101,7 +101,6 @@ function _compute_theta_and_ll(node_labels, dists::EdgeList{Dist{D}}, edge_list:
             end
         end
     end
-
     for u in 1:nodes(dists)
         g1 = node_labels[u]
         for (v, e) in iterate_neighbors(edge_list, u)
@@ -113,12 +112,62 @@ function _compute_theta_and_ll(node_labels, dists::EdgeList{Dist{D}}, edge_list:
             end
         end
     end
-    # for k in 1:number_groups
-    #     for l in k:number_groups
-    #         log_likelihood[k,
-    #             l] = loglikelihood(
-    #             θ[k, l], get_edges_in_groups(node_labels, edge_list, k, l))
-    #     end
-    # end
     return θ, log_likelihood
+end
+
+
+
+
+function _compute_theta_and_ll_not_working(
+        node_labels,
+        dists::EdgeList{Dist{D}},
+        edge_list::EdgeList{E},
+        dist::Dist{D}
+) where {E, D}
+    n = nodes(dists)
+    K = length(unique(node_labels))
+
+    # --- PASS 1: accumulate θ in parallel ---
+    partial_thetas = @tasks for u in 1:n
+        @set collect = true
+        @local theta_local = SymArray(K, zero(dist))
+        gu = node_labels[u]
+        for (v, d) in iterate_neighbors(dists, u)
+            if u < v
+                gv = node_labels[v]
+                theta_local[gu, gv] = add_to(theta_local[gu, gv], d)
+            end
+        end
+        theta_local
+    end
+    # reduce into the final θ
+    θ = SymArray(K, zero(dist))
+    for t in partial_thetas
+        for j in 1:K, i in j:K
+            θ[i, j] = add_to(θ[i, j], t[i, j])
+        end
+    end
+
+    # --- PASS 2: compute log‐likelihoods in parallel ---
+    partial_lls = @tasks for u in 1:n
+        @set collect = true
+        @local ll_local = SymArray(K, 0.0)
+        gu = node_labels[u]
+        for (v, e) in iterate_neighbors(edge_list, u)
+            if u < v
+                gv = node_labels[v]
+                ll_local[gu, gv] += logpdf(θ[gu, gv], e)
+            end
+        end
+        ll_local
+    end
+    # reduce into the final ll
+    ll = SymArray(K, 0.0)
+    for p in partial_lls
+        for j in 1:K, i in j:K
+            ll[i, j] += p[i, j]
+        end
+    end
+
+    return θ, ll
 end
