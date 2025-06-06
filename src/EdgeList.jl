@@ -16,6 +16,20 @@ number_nodes(edgelist::EdgeList) = nodes(edgelist)
 EdgeList(A::AbstractMatrix{<:Union{Missing,E}}) where {E} = _from_adj_to_edge_list(A)
 EdgeList(adj_list::EdgeList) = adj_list
 
+function get_edge(A::EdgeList{E}, i::Int, j::Int) where {E}
+    if i == j
+        return zero(E)
+    end
+    if j ∉ A.name_list[i] && i ∉ A.name_list[j]
+        return zero(E)
+    end
+    for (k, e) in iterate_neighbors(A, i)
+        if k == j
+            return e
+        end
+    end
+end
+
 # function EdgeList(A::AbstractMatrix{<:Union{Missing,E}}) where {E}
 #     n = size(A, 1)
 #     data = Vector{Vector{E}}(undef, n)
