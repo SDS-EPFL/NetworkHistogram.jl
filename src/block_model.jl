@@ -20,6 +20,16 @@ function BlockModel(a::Assignment)
     return BlockModel{eltype(_dists), k, eltype(cumulative_sizes)}(_dists, sizes, cumulative_sizes)
 end
 
+
+function BlockModel(nodes_labels, θ)
+    k = length(unique(nodes_labels))
+    sizes = SVector{k}(counts(nodes_labels) / length(nodes_labels))
+    cumulative_sizes = SVector{k}(cumsum(sizes))
+    _dists = unwrap.(θ)
+    return BlockModel{eltype(_dists), k, eltype(cumulative_sizes)}(_dists, sizes, cumulative_sizes)
+end
+
+
 function map_ξ_to_block(bm::BlockModel, ξ::T) where {T<:Real}
     return findfirst(x -> x >= ξ, bm.cum_sizes)
 end
