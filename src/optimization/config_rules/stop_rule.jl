@@ -1,6 +1,5 @@
 abstract type StopRule end
 
-
 function info_to_print(::StopRule)
     return nothing
 end
@@ -51,5 +50,6 @@ function stopping_rule(assignment::Assignment, stop_rule::PreviousBestValue)
     return stop_rule.iterations_since_best >= stop_rule.k
 end
 
-
-info_to_print(stop_rule::PreviousBestValue) = ("stalled iter: ", stop_rule.iterations_since_best)
+function info_to_print(stop_rule::PreviousBestValue)
+    ("stalled iter: ", stop_rule.iterations_since_best)
+end

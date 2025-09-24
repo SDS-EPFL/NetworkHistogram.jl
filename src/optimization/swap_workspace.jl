@@ -46,7 +46,8 @@ end
 # for reference and testing
 function _slow_swap!(a::Assignment, s::Swap)
     swap_node_labels!(a, s.u, s.v)
-    a.θ, a.log_likelihood = _compute_theta_and_ll(
+    a.θ,
+    a.log_likelihood = _compute_theta_and_ll(
         a.node_labels, a.dists, a.edges, a.θ[1, 1])
 end
 

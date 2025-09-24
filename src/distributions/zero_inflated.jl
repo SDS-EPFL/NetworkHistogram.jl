@@ -9,11 +9,9 @@ struct SampleZI{F}
     iszero::Bool
 end
 
-
 function ZeroInflated(dist)
     return ZeroInflated(dist, 0.0)
 end
-
 
 function logpdf(zi::ZeroInflated{D, F}, x::SampleZI) where {D, F}
     if x.iszero
@@ -44,7 +42,6 @@ zero(zi::ZeroInflated) = ZeroInflated(zero(zi.dist), 0.0)
 eltype(zi::ZeroInflated{D, F}) where {D, F} = SampleZI{eltype(D)}
 params(zi::ZeroInflated{D, F}) where {D, F} = (params(zi.dist)..., zi.proba_zero)
 
-
 function fit(zi::ZeroInflated{D, F}, x::SampleZI) where {D, F}
     if x.iszero
         return ZeroInflated(zero(zi.dist), 1.0)
@@ -54,15 +51,13 @@ function fit(zi::ZeroInflated{D, F}, x::SampleZI) where {D, F}
 end
 
 function _fast_compressed_obs(zi::ZeroInflated, x, filter = iszero)
-    return SampleZI(_fast_compressed_obs(zi.dist,x), filter(x))
+    return SampleZI(_fast_compressed_obs(zi.dist, x), filter(x))
 end
 
-
-function unwrap(d::Dist{ZeroInflated{B,D}}) where {B,D}
+function unwrap(d::Dist{ZeroInflated{B, D}}) where {B, D}
     #yeah I know again...
     return d.dist.dist
 end
-
 
 function get_proportion_observed(d::Dist{ZeroInflated{B, D}}) where {B, D}
     return (1-d.dist.proba_zero) * d.counts
@@ -71,7 +66,6 @@ end
 function get_proportion_observed(d::Dist)
     return d.counts
 end
-
 
 # function fit(zd::ZeroInflated, x::SampleZI)
 #     if x.iszero

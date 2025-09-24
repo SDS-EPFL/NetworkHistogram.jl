@@ -14,7 +14,7 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 DiscretizeDistributions = "1dbf0e27-43cd-4e03-8ecf-3f7be9d12b15"
 
 [extensions]
-Discretize = "DiscretizeDistributions"
+DiscretizeExt = "DiscretizeDistributions"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

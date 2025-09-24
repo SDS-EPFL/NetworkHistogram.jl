@@ -7,8 +7,6 @@ struct OracleH <: KSelectionRule
     H::Int
 end
 
-
-
 """
     select_number_node_per_block(g::Observations, rule::KSelectionRule)
 

@@ -84,6 +84,7 @@ function Assignment(
     end
 
     for g2 in 1:n_groups, g1 in g2:n_groups
+
         counts[g1, g2] = counts[minmax(g1, g2)...]
         realized[g1, g2] = realized[minmax(g1, g2)...]
         _fast_normalization!(
@@ -166,7 +167,7 @@ function apply_swap!(as::Assignment, s::Swap{<:WorkspaceDiscreteSwap})
                 as.additional_workspace.estimated[g1, g2])
             as.additional_workspace.log_likelihood_per_group[g1, g2] = _fast_ll(
                 as.additional_workspace.estimated[g1, g2], as.additional_workspace.realized[
-                    g1, g2],
+                g1, g2],
                 as.additional_workspace.counts[g1, g2])
         end
     end
