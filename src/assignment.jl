@@ -38,12 +38,13 @@ Base.@propagate_inbounds function Base.getindex(
     return i < length(g) ? g.group_number[1] : g.group_number[2]
 end
 
-mutable struct Assignment{E, D, F}
+mutable struct Assignment{E, D, F, W}
     node_labels::AbstractVector{Int}
     const edges::EdgeList{E}
     const dists::EdgeList{D}
     θ::SymArray{D}
     log_likelihood::SymArray{F}
+    additional_workspace::W
 end
 
 number_nodes(a::Assignment) = length(a.node_labels)
@@ -66,14 +67,13 @@ function get_edges_in_groups(a::Assignment, g1::Int, g2::Int)
 end
 
 function get_edges_in_groups(node_labels, edges_all, g1, g2)
-
     edges = Vector{edge_type(edges_all)}()
     nodes_g1 = findall(x -> x == g1, node_labels)
     nodes_g2 = findall(x -> x == g2, node_labels)
 
     for u in nodes_g1
         for (v, e) in iterate_neighbors(edges_all, u)
-            if  v in nodes_g2 && ((g1 == g2 && u < v) || g1 != g2)
+            if v in nodes_g2 && ((g1 == g2 && u < v) || g1 != g2)
                 push!(edges, e)
             end
         end
@@ -81,14 +81,15 @@ function get_edges_in_groups(node_labels, edges_all, g1, g2)
     return edges
 end
 
-function Assignment(node_labels, edge_list::EdgeList{E}, dist::Dist{D}) where {E, D}
+function Assignment(
+        node_labels, edge_list::EdgeList{E}, dist::Dist{D}) where {E, D}
     dists = fit(dist, edge_list)
     θ, ll = _compute_theta_and_ll(node_labels, dists, edge_list, dist)
-    return Assignment(node_labels, edge_list, dists, θ, ll)
+    return Assignment(node_labels, edge_list, dists, θ, ll, nothing)
 end
 
-
-function _compute_theta_and_ll(node_labels, dists::EdgeList{Dist{D}}, edge_list::EdgeList{E}, dist::Dist{D}) where {E, D}
+function _compute_theta_and_ll(node_labels, dists::EdgeList{Dist{D}},
+        edge_list::EdgeList{E}, dist::Dist{D}) where {E, D}
     number_groups = length(unique(node_labels))
     θ = SymArray(number_groups, zero(dist))
     log_likelihood = SymArray(number_groups, 0.0)
@@ -113,61 +114,4 @@ function _compute_theta_and_ll(node_labels, dists::EdgeList{Dist{D}}, edge_list:
         end
     end
     return θ, log_likelihood
-end
-
-
-
-
-function _compute_theta_and_ll_not_working(
-        node_labels,
-        dists::EdgeList{Dist{D}},
-        edge_list::EdgeList{E},
-        dist::Dist{D}
-) where {E, D}
-    n = nodes(dists)
-    K = length(unique(node_labels))
-
-    # --- PASS 1: accumulate θ in parallel ---
-    partial_thetas = @tasks for u in 1:n
-        @set collect = true
-        @local theta_local = SymArray(K, zero(dist))
-        gu = node_labels[u]
-        for (v, d) in iterate_neighbors(dists, u)
-            if u < v
-                gv = node_labels[v]
-                theta_local[gu, gv] = add_to(theta_local[gu, gv], d)
-            end
-        end
-        theta_local
-    end
-    # reduce into the final θ
-    θ = SymArray(K, zero(dist))
-    for t in partial_thetas
-        for j in 1:K, i in j:K
-            θ[i, j] = add_to(θ[i, j], t[i, j])
-        end
-    end
-
-    # --- PASS 2: compute log‐likelihoods in parallel ---
-    partial_lls = @tasks for u in 1:n
-        @set collect = true
-        @local ll_local = SymArray(K, 0.0)
-        gu = node_labels[u]
-        for (v, e) in iterate_neighbors(edge_list, u)
-            if u < v
-                gv = node_labels[v]
-                ll_local[gu, gv] += logpdf(θ[gu, gv], e)
-            end
-        end
-        ll_local
-    end
-    # reduce into the final ll
-    ll = SymArray(K, 0.0)
-    for p in partial_lls
-        for j in 1:K, i in j:K
-            ll[i, j] += p[i, j]
-        end
-    end
-
-    return θ, ll
 end

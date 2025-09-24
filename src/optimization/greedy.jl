@@ -9,7 +9,10 @@ mutable struct GreedyParams
     progress_bar::Bool
 end
 
-GreedyParams() = GreedyParams(100_000, RandomGroupSwap(), Strict(), PreviousBestValue(10_000), true)
+function GreedyParams()
+    GreedyParams(
+        100_000, RandomGroupSwap(), Strict(), PreviousBestValue(10_000), true)
+end
 
 function greedy_optimize(g, initial_labels, params::GreedyParams)
     @debug "making assignment"
@@ -19,17 +22,19 @@ function greedy_optimize(g, initial_labels, params::GreedyParams)
     return a
 end
 
-
 function greedy_improve!(a::Assignment; params = GreedyParams())
     # allocate memory for swap
     swap = make_swap(a, (1, 1))
 
     # display progress bar
-    p = ProgressUnknown(enabled = params.progress_bar, showspeed = true, desc = "Greedy search: ")
+    p = ProgressUnknown(enabled = params.progress_bar,
+        showspeed = true, desc = "Greedy search: ")
 
-    for i in 1:params.max_iter
+    for i in 1:(params.max_iter)
         local_search!(a, swap, params)
-        next!(p; showvalues = [("ll: ", loglikelihood(a)), info_to_print(params.stop_rule)])
+        next!(p;
+            showvalues = [
+                ("ll: ", loglikelihood(a)), info_to_print(params.stop_rule)])
         if stopping_rule(a, params.stop_rule)
             if i < 10
                 @warn "Greedy search stopped early after $(i) iterations"

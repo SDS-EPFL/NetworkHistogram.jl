@@ -1,21 +1,23 @@
 struct Dist{D}
     dist::D
     counts::Int
-    Dist(d,counts::Int) = counts < 0 ? error("Counts cannot be negative") : new{typeof(d)}(d, counts)
+    function Dist(d, counts::Int)
+        counts < 0 ? error("Counts cannot be negative") :
+        new{typeof(d)}(d, counts)
+    end
 end
 
-
-
 Dist(d) = Dist(d, 1)
-zero(d::Dist) = Dist(zero(d.dist),0)
+zero(d::Dist) = Dist(zero(d.dist), 0)
 
 Base.broadcastable(x::Dist) = Ref(x)
 
 function add_to(avgdist::Dist{D}, dist::D) where {D}
-    inner_dist = agg_params(avgdist.dist, dist, avgdist.counts / (avgdist.counts + 1), 1 / (avgdist.counts + 1))
+    inner_dist = agg_params(
+        avgdist.dist, dist, avgdist.counts / (avgdist.counts + 1),
+        1 / (avgdist.counts + 1))
     return Dist(inner_dist, avgdist.counts + 1)
 end
-
 
 function remove_from(avgdist::Dist{D}, dist::D) where {D}
     if avgdist.counts <= 0
@@ -26,9 +28,12 @@ function remove_from(avgdist::Dist{D}, dist::D) where {D}
     # else
     #     error("Cannot remove from a distribution with 1 count unless the parameters are the same, got $(params(avgdist)) and $(params(dist))")
     # end
-    return Dist(agg_params(avgdist.dist, dist, avgdist.counts / max(1,(avgdist.counts - 1)), - 1 / max(1,(avgdist.counts - 1))), avgdist.counts -1)
+    return Dist(
+        agg_params(
+            avgdist.dist, dist, avgdist.counts / max(1, (avgdist.counts - 1)),
+            -1 / max(1, (avgdist.counts - 1))),
+        avgdist.counts - 1)
 end
-
 
 ## probably this is fucked ...
 # add_to(d::Dist, dist::Dist) = add_to(d, dist.dist)
@@ -36,22 +41,23 @@ end
 function add_to(avgdist::Dist{D}, dist::Dist{D}) where {D}
     Dist(
         agg_params(
-            avgdist.dist, dist.dist, avgdist.counts / (avgdist.counts + dist.counts),
+            avgdist.dist, dist.dist, avgdist.counts /
+                                     (avgdist.counts + dist.counts),
             dist.counts / (avgdist.counts + dist.counts)),
         avgdist.counts + dist.counts)
 end
 function remove_from(avgdist::Dist, dist::Dist)
     Dist(
         agg_params(
-            avgdist.dist, dist.dist, avgdist.counts / max(1, (avgdist.counts - dist.counts)),
-            - dist.counts / max(1, (avgdist.counts - dist.counts))),
+            avgdist.dist, dist.dist,
+            avgdist.counts / max(1, (avgdist.counts - dist.counts)),
+            -dist.counts / max(1, (avgdist.counts - dist.counts))),
         avgdist.counts - dist.counts)
 end
 
 # expose compression step that assumes there is a pdf(d, typeof(compressed(x))) properly defined
 # by default do nothing
 _fast_compressed_obs(d, x) = x
-
 
 # what to delegate to the underlying distribution
 for f in [:logpdf, :sample, :distance, :eltype, :params, :_fast_compressed_obs]
@@ -65,18 +71,16 @@ loglikelihood(d::Dist, x) = isempty(x) ? 0.0 : sum(logpdf(d, y) for y in x)
 # loglikelihood(d::Dist, x) = sum(logpdf(d, y) for y in x)
 unwrap(d::Dist) = d.dist
 
-
-
-
 # Bernoulli distribution (example)
 
-struct Bernoulli{T<:Real}
+struct Bernoulli{T <: Real}
     p::T
 end
 
-
 zero(d::Bernoulli) = Bernoulli(zero(d.p))
-agg_params(d1::Bernoulli, d2::Bernoulli, w1, w2) = Bernoulli(w1 * d1.p + w2 * d2.p)
+function agg_params(d1::Bernoulli, d2::Bernoulli, w1, w2)
+    Bernoulli(w1 * d1.p + w2 * d2.p)
+end
 fit(::Bernoulli, x) = Bernoulli(mean(x))
 distance(d1::Bernoulli, d2::Bernoulli) = abs(d1.p - d2.p)
 logpdf(d::Bernoulli, x) = log(d.p * x + (1 - d.p) * (1 - x))
