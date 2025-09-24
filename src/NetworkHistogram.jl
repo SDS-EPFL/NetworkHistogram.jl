@@ -4,8 +4,6 @@ using StaticArrays
 using ProgressMeter
 import StatsAPI: loglikelihood, fit, params
 import Base: convert, eltype, zero
-using OhMyThreads: TaskLocalValue, @tasks, @local
-using Clustering
 
 include("utils/include.jl")
 using .FastSymArray
