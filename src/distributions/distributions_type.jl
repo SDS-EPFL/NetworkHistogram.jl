@@ -7,6 +7,10 @@ struct Dist{D}
     end
 end
 
+function Base.show(io::IO, d::Dist)
+    print(io, "$(d.dist)")
+end
+
 Dist(d) = Dist(d, 1)
 zero(d::Dist) = Dist(zero(d.dist), 0)
 

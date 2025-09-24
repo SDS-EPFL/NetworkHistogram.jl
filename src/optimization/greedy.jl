@@ -1,4 +1,5 @@
 include("swap_workspace.jl")
+include("swap_categorical.jl")
 include("config_rules/include.jl")
 
 mutable struct GreedyParams

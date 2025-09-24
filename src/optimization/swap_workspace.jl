@@ -13,23 +13,30 @@ mutable struct Swap{W}
     workspace::W
 end
 
+function make_swap_workspace!(ws, a::Assignment)
+    ws.θ = deepcopy(a.θ)
+    ws.log_likelihood_per_group = deepcopy(a.log_likelihood)
+end
+
+function revert_swap_workspace!(a::Assignment, ws)
+    a.θ = deepcopy(ws.θ)
+    a.log_likelihood = deepcopy(ws.log_likelihood_per_group)
+end
+
 function make_swap(a::Assignment, id)
     return Swap(id[1], id[2], make_workspace(a))
 end
 
 function make_swap!(swap::Swap, a::Assignment, id)
     swap.u, swap.v = id
-
-    swap.workspace.θ = deepcopy(a.θ)
-    swap.workspace.log_likelihood_per_group = deepcopy(a.log_likelihood)
+    make_swap_workspace!(swap.workspace, a)
 end
 
 function revert_swap!(assignment::Assignment, swap::Swap)
     # swap labels back to original
     swap_node_labels!(assignment, swap.u, swap.v)
     # restore saved θ and log likelihoods
-    assignment.θ = deepcopy(swap.workspace.θ)
-    assignment.log_likelihood = deepcopy(swap.workspace.log_likelihood_per_group)
+    revert_swap_workspace!(assignment, swap.workspace)
 end
 
 function swap_node_labels!(a::Assignment, i, j)
