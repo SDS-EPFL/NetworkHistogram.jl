@@ -1,7 +1,12 @@
 module DiscretizeExt
 
 using NetworkHistogram
-using StatsBase
-using DiscreteDistributions
+import NetworkHistogram: test_extension_disc
+
+using DiscretizeDistributions
+
+function test_extension_disc()
+    return "Discretize extension works!"
+end
 
 end

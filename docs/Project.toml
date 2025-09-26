@@ -1,4 +1,7 @@
 [deps]
+DiscretizeDistributions = "1dbf0e27-43cd-4e03-8ecf-3f7be9d12b15"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+IntervalArithmetic = "d1acc4aa-44c8-5952-acd4-ba5d80a2a253"
 LiveServer = "16fef848-5104-11e9-1b77-fb7a48bbb589"
 NetworkHistogram = "7806f430-7229-459c-b2e6-df35e8e4eb5d"

@@ -43,9 +43,13 @@ function sum_tri_with_diag(a::SymArray)
     return sum(values(a.d))
 end
 
-function eltype(a::SymArray{F}) where {F}
+function eltype(::SymArray{F}) where {F}
     return F
 end
+
+# function zeros(::Type{SymArray{F}}, k::Int) where {F}
+#     return SymArray(k, zero(F))
+# end
 
 function convert(::Type{SymArray{F}}, a::AbstractMatrix{F}) where {F}
     @assert size(a, 1) == size(a, 2)

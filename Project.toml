@@ -12,8 +12,12 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [weakdeps]
 DiscretizeDistributions = "1dbf0e27-43cd-4e03-8ecf-3f7be9d12b15"
+Bootstrap = "e28b5b4c-05e8-5b66-bc03-6f0c0a0a06e0"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 
 [extensions]
+DistExt = "Distributions"
+BootstrapExt = "Bootstrap"
 DiscretizeExt = "DiscretizeDistributions"
 
 [extras]

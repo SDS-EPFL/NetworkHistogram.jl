@@ -59,17 +59,9 @@ function Assignment(
     n_nodes = length(node_labels)
     dists = fit(dist, edge_list)
     realized = SymArray(n_groups, zeros(Float64, num_categories(unwrap(dist))))
-    estimated = SymArray(
-        n_groups, zeros(Float64, num_categories(unwrap(dist))))
+    estimated = SymArray(n_groups, zeros(Float64, num_categories(unwrap(dist))))
     counts = SymArray(n_groups, 0)
-    # realized = Matrix{Vector{Int}}(undef, n_groups, n_groups)
-    # counts = Matrix{Int}(undef, n_groups, n_groups)
-    # estimated = Matrix{Vector{Float64}}(undef, n_groups, n_groups)
-    # for index in eachindex(realized)
-    #     realized[index] = copy(zeros(Int, num_categories(unwrap(dist))))
-    #     estimated[index] = copy(zeros(Float64, num_categories(unwrap(dist))))
-    # end
-    # fill!(counts, 0)
+
     for u in 1:n_nodes
         g1 = node_labels[u]
         for (v, e) in iterate_neighbors(edge_list, u)
@@ -84,7 +76,6 @@ function Assignment(
     end
 
     for g2 in 1:n_groups, g1 in g2:n_groups
-
         counts[g1, g2] = counts[minmax(g1, g2)...]
         realized[g1, g2] = realized[minmax(g1, g2)...]
         _fast_normalization!(
@@ -167,7 +158,7 @@ function apply_swap!(as::Assignment, s::Swap{<:WorkspaceDiscreteSwap})
                 as.additional_workspace.estimated[g1, g2])
             as.additional_workspace.log_likelihood_per_group[g1, g2] = _fast_ll(
                 as.additional_workspace.estimated[g1, g2], as.additional_workspace.realized[
-                g1, g2],
+                    g1, g2],
                 as.additional_workspace.counts[g1, g2])
         end
     end
