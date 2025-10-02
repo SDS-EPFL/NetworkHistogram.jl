@@ -1,60 +1,14 @@
-mutable struct WorkspaceDiscreteSwap{
-    D, C <: SymArray, R <: SymArray,
-    R2 <: SymArray, S <: SymArray{D},
-    L <: SymArray}
-    θ::S
+mutable struct WorkspaceDiscreteSwap{C <: SymArray, R <: SymArray,
+    R2 <: SymArray, L <: SymArray}
     log_likelihood_per_group::L
     counts::C
     realized::R
     estimated::R2
 end
 
-struct Cat{M, V <: AbstractVector{<:Real}}
-    p::V
-    function Cat(p::AbstractVector{<:Real})
-        new{Val{length(p)}, typeof(p)}(p / sum(p))
-    end
-end
-
-function Base.show(io::IO, c::Cat)
-    print(io, "Cat($(c.p))")
-end
-
-num_categories(::Type{Cat{Val{M}, V}}) where {M, V} = M
-num_categories(::Cat{Val{M}, V}) where {M, V} = M
-zero(c::Cat{Val{M}, V}) where {M, V} = Cat(ones(eltype(V), M))
-distance(c1::Cat{M, V}, c2::Cat{M, V}) where {M, V} = sum(abs.(c1.p .- c2.p))
-eltype(::Cat{M, V}) where {M, V} = Int
-params(c::Cat{M, V}) where {M, V} = (c.p,)
-logpdf(c::Cat, x::Int) = log(c.p[x])
-function fit(::Cat{Val{M}, V}, x::AbstractVector{Int}) where {M, V}
-    p_est = zeros(eltype(V), M)
-    for xi in x
-        p_est[xi] += 1
-    end
-    return Cat{Val{M}, V}(p_est ./ length(x))
-end
-
-function sample(c::Cat{Val{M}, V}) where {M, V}
-    return findfirst(x -> x >= rand(), cumsum(c.p))
-end
-
-function fit(::Cat{Val{M}, V}, x::Int) where {M, V}
-    p_est = zeros(eltype(V), M)
-    p_est[x] = 1.0
-    return Cat(p_est)
-end
-
-function set_params!(c::Dist{Cat{M, V}}, p::V) where {M, V}
-    set_params!(c.dist, p)
-end
-function set_params!(c::Cat{M, V}, p::V) where {M, V}
-    c.p .= p
-end
-
 function Assignment(
         node_labels, edge_list::EdgeList{E},
-        dist::Dist{D}) where {E, D <: Cat}
+        dist::Dist{Cat{M, T}}) where {E, M, T}
     n_groups = length(unique(node_labels))
     n_nodes = length(node_labels)
     dists = fit(dist, edge_list)
@@ -86,16 +40,12 @@ function Assignment(
     log_likelihood_per_group = SymArray(n_groups, 0.0)
     for g2 in 1:n_groups
         for g1 in g2:n_groups
-            set_params!(θ[g1, g2], estimated[g1, g2])
-            for m in 1:num_categories(unwrap(dist))
-                if realized[g1, g2][m] > 0
-                    log_likelihood_per_group[g1, g2] += realized[g1, g2][m] *
-                                                        logpdf(θ[g1, g2], m)
-                end
-            end
+            θ[g1, g2] = Dist(Cat(SVector{M}(estimated[g1, g2])))
+            log_likelihood_per_group[g1, g2] = logpdf_cat(
+                estimated[g1, g2], realized[g1, g2])
         end
     end
-    w = WorkspaceDiscreteSwap(deepcopy(θ), deepcopy(log_likelihood_per_group),
+    w = WorkspaceDiscreteSwap(deepcopy(log_likelihood_per_group),
         counts, deepcopy(realized), deepcopy(estimated))
     return Assignment(
         node_labels, edge_list, dists, θ, log_likelihood_per_group, w)
@@ -107,17 +57,14 @@ function make_workspace(a::Assignment{E, Dist{D},
 end
 
 function make_swap_workspace!(ws::WorkspaceDiscreteSwap, a::Assignment)
-    ws.θ = deepcopy(a.θ)
     ws.log_likelihood_per_group = deepcopy(a.log_likelihood)
     ws.realized = deepcopy(a.additional_workspace.realized)
     ws.estimated = deepcopy(a.additional_workspace.estimated)
 end
 
 function revert_swap_workspace!(a::Assignment, ws::WorkspaceDiscreteSwap)
-    a.θ = deepcopy(ws.θ)
     a.log_likelihood = deepcopy(ws.log_likelihood_per_group)
     as = a.additional_workspace
-    as.θ = deepcopy(ws.θ)
     as.log_likelihood_per_group = deepcopy(ws.log_likelihood_per_group)
     as.realized = deepcopy(ws.realized)
     as.estimated = deepcopy(ws.estimated)
@@ -151,19 +98,18 @@ function apply_swap!(as::Assignment, s::Swap{<:WorkspaceDiscreteSwap})
     _fast_normalization!.(as.additional_workspace.estimated,
         as.additional_workspace.realized, as.additional_workspace.counts)
     swap_node_labels!(as, u, v)
-
+    m = size(as.additional_workspace.estimated[1, 1], 1)
     for g2 in 1:n_groups
         for g1 in g2:n_groups
-            set_params!(as.additional_workspace.θ[g1, g2],
-                as.additional_workspace.estimated[g1, g2])
-            as.additional_workspace.log_likelihood_per_group[g1, g2] = _fast_ll(
+            as.θ[g1, g2] = Dist(Cat(SVector{m}(as.additional_workspace.estimated[g1, g2])))
+            # set_params!(as.additional_workspace.θ[g1, g2],
+            #     as.additional_workspace.estimated[g1, g2])
+            as.additional_workspace.log_likelihood_per_group[g1, g2] = logpdf_cat(
                 as.additional_workspace.estimated[g1, g2], as.additional_workspace.realized[
-                    g1, g2],
-                as.additional_workspace.counts[g1, g2])
+                    g1, g2])
         end
     end
 
-    as.θ = deepcopy(as.additional_workspace.θ)
     as.log_likelihood = deepcopy(as.additional_workspace.log_likelihood_per_group)
 end
 
@@ -175,17 +121,4 @@ function _fast_normalization!(p::AbstractVector, r::AbstractVector, c::Real)
     else
         fill!(p, 0.0)
     end
-end
-
-function _fast_ll(
-        p::AbstractVector, r::AbstractVector, c::Real)
-    ll = zero(eltype(p))
-    if c > 0
-        @inbounds for m in eachindex(p)
-            if r[m] > 0
-                ll += r[m] * log(p[m])
-            end
-        end
-    end
-    return ll
 end

@@ -3,18 +3,20 @@ using NetworkHistogram
 using StatsBase
 using Random
 using Distributions
+using StaticArrays
 
 @testset "Swap workspace likelihood update (Categorical)" begin
     Random.seed!(42)
     n = 10
     k = 2
     m = 3
-    d_mine = NetworkHistogram.Cat(fill(1 / m, m))
+    ps = SVector{m}(fill(1 / m, m))
+    d_mine = NetworkHistogram.Cat(ps)
     # Create a block model with two groups
     sbm = NetworkHistogram.BlockModel(k, d_mine)
-    sbm[1, 1] = NetworkHistogram.Cat([0.7, 0.2, 0.1])
-    sbm[2, 2] = NetworkHistogram.Cat([0.1, 0.3, 0.6])
-    sbm[1, 2] = NetworkHistogram.Cat([0.3, 0.4, 0.3])
+    sbm[1, 1] = NetworkHistogram.Cat(SVector{3}([0.7, 0.2, 0.1]))
+    sbm[2, 2] = NetworkHistogram.Cat(SVector{3}([0.1, 0.3, 0.6]))
+    sbm[1, 2] = NetworkHistogram.Cat(SVector{3}([0.3, 0.4, 0.3]))
 
     labels = StatsBase.inverse_rle(1:k, fill(n ÷ k, k))
     A = NetworkHistogram.sample(sbm, labels)
