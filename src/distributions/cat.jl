@@ -6,7 +6,7 @@ function Cat(p::SVector{M, T}) where {M, T}
 end
 
 function Base.show(io::IO, c::Cat)
-    Base.print(io, c.p)
+    Base.print(io, "Cat($(c.p))")
 end
 
 num_categories(::Type{Cat{M, T}}) where {M, T} = M

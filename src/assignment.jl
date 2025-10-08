@@ -38,8 +38,8 @@ Base.@propagate_inbounds function Base.getindex(
     return i < length(g) ? g.group_number[1] : g.group_number[2]
 end
 
-mutable struct Assignment{E, D, F, W}
-    node_labels::AbstractVector{Int}
+mutable struct Assignment{E, D, F, W, V <: AbstractVector{Int}}
+    node_labels::V
     const edges::EdgeList{E}
     const dists::EdgeList{D}
     θ::SymArray{D}

@@ -12,7 +12,7 @@ end
 
 function GreedyParams()
     GreedyParams(
-        100_000, RandomGroupSwap(), Strict(), PreviousBestValue(10_000), true)
+        100_000, RandomNodeSwap(), Strict(), PreviousBestValue(10_000), true)
 end
 
 function greedy_optimize(g, initial_labels, params::GreedyParams)
@@ -25,7 +25,7 @@ end
 
 function greedy_improve!(a::Assignment; params = GreedyParams())
     # allocate memory for swap
-    swap = make_swap(a, (1, 1))
+    swap = make_swap(a, (1, 2))
 
     # display progress bar
     p = ProgressUnknown(enabled = params.progress_bar,

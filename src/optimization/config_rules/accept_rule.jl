@@ -19,4 +19,5 @@ function accept_reject_update!(a::Assignment, swap::Swap, ::Strict)
     if loglikelihood(a) <= current_score
         revert_swap!(a, swap)
     end
+    return nothing
 end

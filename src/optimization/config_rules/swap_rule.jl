@@ -15,7 +15,7 @@ current assignment `node_assignment`.
 select_swap
 
 function select_indices_swap(assignment::Assignment, ::RandomNodeSwap)
-    return StatsBase.sample(1:number_nodes(assignment), 2; replace = false)
+    return Tuple(StatsBase.sample(1:number_nodes(assignment), 2; replace = false))
 end
 
 function select_indices_swap(assignment::Assignment, ::RandomGroupSwap)
@@ -23,5 +23,5 @@ function select_indices_swap(assignment::Assignment, ::RandomGroupSwap)
         1:number_groups(assignment), 2; replace = false)
     index1 = rand(findall(x -> x == groups[1], assignment.node_labels))
     index2 = rand(findall(x -> x == groups[2], assignment.node_labels))
-    return (index1, index2)
+    return index1, index2
 end
