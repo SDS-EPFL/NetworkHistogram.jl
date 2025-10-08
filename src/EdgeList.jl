@@ -71,11 +71,11 @@ function _from_adj_to_edge_list(
     return EdgeList(data, name_list)
 end
 
-function _fast_compressed_obs(d::Dist, A::AbstractMatrix)
-    _from_adj_to_edge_list(A, x -> _fast_compressed_obs(d, x))
+function _fast_compressed_obs(d::Dist, A::AbstractMatrix, zeroinflated)
+    _from_adj_to_edge_list(A, x -> _fast_compressed_obs(d, x, zeroinflated))
 end
-function _fast_compressed_obs(d::Dist, A::EdgeList{E}) where {E}
-    _make_shift_broadcast(A.data, x -> _fast_compressed_obs(d, x))
+function _fast_compressed_obs(d::Dist, A::EdgeList{E}, zeroinflated) where {E}
+    _make_shift_broadcast(A.data, x -> _fast_compressed_obs(d, x, zeroinflated))
 end
 
 function _make_shift_broadcast(A::EdgeList, f)

@@ -57,8 +57,8 @@ function fit(zi::ZeroInflated{D, F}, x::SampleZI) where {D, F}
     end
 end
 
-function _fast_compressed_obs(zi::ZeroInflated, x, filter = iszero)
-    return SampleZI(_fast_compressed_obs(zi.dist, x), filter(x))
+function _fast_compressed_obs(zi::ZeroInflated, x, zero_inflated; filter = iszero)
+    return SampleZI(_fast_compressed_obs(zi.dist, x, zero_inflated), filter(x))
 end
 
 function unwrap(d::Dist{ZeroInflated{B, D}}) where {B, D}
@@ -72,6 +72,14 @@ end
 
 function get_proportion_observed(d::Dist)
     return d.counts
+end
+
+function sample(zi::ZeroInflated{D, F}, args...) where {D, F}
+    if rand() < zi.proba_zero
+        return SampleZI(zero(eltype(zi.dist)), true)
+    else
+        return SampleZI(sample(zi.dist, args...), false)
+    end
 end
 
 # function fit(zd::ZeroInflated, x::SampleZI)

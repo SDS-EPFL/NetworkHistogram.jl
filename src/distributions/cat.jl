@@ -53,5 +53,5 @@ function get_ref_dist(dist::Categorical, ::Val{false})
     return Dist(Cat(SVector{ncategories(dist)}(dist.p)))
 end
 
-_fast_compressed_obs(d::Categorical, x, ::Val{true}) = x .+ one(eltype(x))
-_fast_compressed_obs(d::Categorical, x, ::Val{false}) = x
+_fast_compressed_obs(d::Categorical, x::Int, ::Val{true}) = x + one(x)
+_fast_compressed_obs(d::Categorical, x::Int, ::Val{false}) = x

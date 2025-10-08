@@ -8,6 +8,7 @@ function _nethist(data_input, dist_user, initial_node_labels,
         params::GreedyParams, zero_inflated)
     @info "preprocessing data"
     dist = get_ref_dist(dist_user, zero_inflated)
+    @show dist
     g = preprocess_data(data_input, dist, zero_inflated)
 
     @info "started optimization"

@@ -21,7 +21,9 @@ export EdgeList, neighbors, nodes, loglikelihood, zero, fit, agg_params, logpdf
 function test_extension_dist end
 function test_extension_boot end
 function test_extension_disc end
+function from_adjs_to_decorated end
 
 export test_extension_dist, test_extension_boot, test_extension_disc
 
+export from_adjs_to_decorated
 end

@@ -16,14 +16,17 @@ StructArrays = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
 [weakdeps]
 Bootstrap = "e28b5b4c-05e8-5b66-bc03-6f0c0a0a06e0"
 DiscretizeDistributions = "1dbf0e27-43cd-4e03-8ecf-3f7be9d12b15"
+LightMC = "b58f5c6e-c887-41d6-b553-02118416cd5d"
 
 [extensions]
 BootstrapExt = "Bootstrap"
 DiscretizeExt = "DiscretizeDistributions"
+LightMCExt = "LightMC"
 
 [compat]
 BenchmarkTools = "1.6.0"
 Distributions = "0.25.120"
+LightMC = "1.0.0"
 StructArrays = "0.7.1"
 
 [extras]

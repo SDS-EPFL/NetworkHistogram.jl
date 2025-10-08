@@ -5,7 +5,7 @@ struct BlockModel{D, K, T}
 end
 
 function BlockModel(k::Int, d::D) where {D}
-    sizes = @SVector fill(1/k, k)
+    sizes = @SVector fill(1 / k, k)
     cumulative_sizes = SVector{k}(cumsum(sizes))
     _dists = SymArray(k, d)
     return BlockModel{D, k, Float64}(_dists, sizes, cumulative_sizes)
@@ -16,7 +16,8 @@ function BlockModel(a::Assignment)
     sizes = SVector{k}(proportions(a))
     cumulative_sizes = SVector{k}(cumsum(sizes))
     _dists = unwrap.(a.θ)
-    return BlockModel{eltype(_dists), k, eltype(cumulative_sizes)}(_dists, sizes, cumulative_sizes)
+    return BlockModel{eltype(_dists), k, eltype(cumulative_sizes)}(
+        _dists, sizes, cumulative_sizes)
 end
 
 function BlockModel(nodes_labels, θ)
@@ -24,7 +25,16 @@ function BlockModel(nodes_labels, θ)
     sizes = SVector{k}(counts(nodes_labels) / length(nodes_labels))
     cumulative_sizes = SVector{k}(cumsum(sizes))
     _dists = unwrap.(θ)
-    return BlockModel{eltype(_dists), k, eltype(cumulative_sizes)}(_dists, sizes, cumulative_sizes)
+    return BlockModel{eltype(_dists), k, eltype(cumulative_sizes)}(
+        _dists, sizes, cumulative_sizes)
+end
+
+function BlockModel(θ::AbstractMatrix{D}) where {D}
+    k = size(θ, 1)
+    sizes = @SVector fill(1 / k, k)
+    cumulative_sizes = SVector{k}(cumsum(sizes))
+    _dists = convert(SymArray{D}, θ)
+    return BlockModel{D, k, Float64}(_dists, sizes, cumulative_sizes)
 end
 
 function map_ξ_to_block(bm::BlockModel, ξ::T) where {T <: Real}
