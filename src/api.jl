@@ -6,14 +6,14 @@ end
 
 function _nethist(data_input, dist_user, initial_node_labels,
         params::GreedyParams, zero_inflated)
-    @debug "preprocessing data"
+    @info "preprocessing data"
     dist = get_ref_dist(dist_user, zero_inflated)
-    g = preprocess_data(data_input, dist)
+    g = preprocess_data(data_input, dist, zero_inflated)
 
-    @debug "started optimizatiion"
+    @info "started optimization"
     out = greedy_optimize(g, initial_node_labels, params)
 
-    @debug "finished optimizatiion with loglikelihood $(loglikelihood(out))"
+    @info "finished optimization with loglikelihood $(loglikelihood(out))"
     return postprocess(out)
 end
 
@@ -24,8 +24,8 @@ function get_ref_dist(dist::D, ::Val{false}) where {D}
     return Dist(dist)
 end
 
-function preprocess_data(data, dist::Dist)
-    A = EdgeList(_fast_compressed_obs(dist, data))
+function preprocess_data(data, dist::Dist, zero_inflated)
+    A = EdgeList(_fast_compressed_obs(dist, data, zero_inflated))
     return A, dist
 end
 

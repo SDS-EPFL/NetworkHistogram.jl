@@ -61,7 +61,7 @@ end
 
 # expose compression step that assumes there is a pdf(d, typeof(compressed(x))) properly defined
 # by default do nothing
-_fast_compressed_obs(d, x) = x
+_fast_compressed_obs(d, x, zero_inflated) = x
 
 # what to delegate to the underlying distribution
 for f in [:logpdf, :sample, :distance, :eltype, :params, :_fast_compressed_obs]
@@ -91,4 +91,3 @@ logpdf(d::Bernoulli, x) = log(d.p * x + (1 - d.p) * (1 - x))
 params(d::Bernoulli) = (d.p,)
 eltype(d::Bernoulli) = Bool
 sample(d::Bernoulli) = Bool(rand() <= d.p)
-_fast_compressed_obs(d::Bernoulli, x) = x

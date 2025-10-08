@@ -1,4 +1,11 @@
 
+## TODO: define proper distribution that is zero inflated?
+
+# struct ZIDist{S, F} <: UniVariateDistribution{S}
+#     dist::UnivariateDistribution{S}
+#     proba_zero::F
+# end
+
 struct ZeroInflated{D, F}
     dist::D
     proba_zero::F
@@ -60,7 +67,7 @@ function unwrap(d::Dist{ZeroInflated{B, D}}) where {B, D}
 end
 
 function get_proportion_observed(d::Dist{ZeroInflated{B, D}}) where {B, D}
-    return (1-d.dist.proba_zero) * d.counts
+    return (1 - d.dist.proba_zero) * d.counts
 end
 
 function get_proportion_observed(d::Dist)
