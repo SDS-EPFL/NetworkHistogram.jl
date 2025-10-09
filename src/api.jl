@@ -6,11 +6,11 @@ end
 
 function _nethist(data_input, dist_user, initial_node_labels,
         params::GreedyParams, zero_inflated)
-    @info "preprocessing data"
+    @debug "preprocessing data"
     dist = get_ref_dist(dist_user, zero_inflated)
     g = preprocess_data(data_input, dist, zero_inflated)
 
-    @info "started optimization"
+    @debug "started optimization"
     out = greedy_optimize(g, initial_node_labels, params)
 
     @info "finished optimization with loglikelihood $(loglikelihood(out))"
@@ -31,5 +31,7 @@ end
 
 function postprocess(out)
     return out
+    return Assignment(out.node_labels, out.edges, out.dists, SymArray(unwrap.(out.θ)),
+        out.log_likelihood, out.additional_workspace)
     return out.node_labels, BlockModel(out)
 end

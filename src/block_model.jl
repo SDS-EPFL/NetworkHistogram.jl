@@ -94,3 +94,34 @@ end
 function ordered_latents(bm::BlockModel, n::Int)
     return sort(map(x -> map_ξ_to_block(bm, x), rand(n)))
 end
+
+function get_probability_matrix(
+        bm::BlockModel{D}, latents::AbstractVector, default_dist = nothing) where {D}
+    # hack for dirac at 0 dist (no self-loop)
+    if isnothing(default_dist)
+        try
+            default_dist = zero(bm[1, 1])
+        catch e
+            if !is(e, MethodError)
+                rethrow(e)
+            end
+            error("Please provide a default distribution for the diagonal as it could not be inferred")
+        end
+    end
+    n = length(latents)
+    A = Array{D, 2}(undef, n, n)
+    for j in 1:n
+        for i in 1:n
+            if i == j
+                A[i, i] = default_dist
+            else
+                A[i, j] = bm[latents[i], latents[j]]
+            end
+        end
+    end
+    return A
+end
+
+function get_probability_matrix(a::Assignment, default_dist = nothing)
+    return get_probability_matrix(BlockModel(a.θ), a.node_labels, default_dist)
+end

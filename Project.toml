@@ -17,17 +17,14 @@ StructArrays = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
 Bootstrap = "e28b5b4c-05e8-5b66-bc03-6f0c0a0a06e0"
 DiscretizeDistributions = "1dbf0e27-43cd-4e03-8ecf-3f7be9d12b15"
 LightMC = "b58f5c6e-c887-41d6-b553-02118416cd5d"
+Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 
 [extensions]
 BootstrapExt = "Bootstrap"
 DiscretizeExt = "DiscretizeDistributions"
 LightMCExt = "LightMC"
+MakieExt = "Makie"
 
-[compat]
-BenchmarkTools = "1.6.0"
-Distributions = "0.25.120"
-LightMC = "1.0.0"
-StructArrays = "0.7.1"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

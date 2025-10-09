@@ -75,6 +75,9 @@ loglikelihood(d::Dist, x) = isempty(x) ? 0.0 : sum(logpdf(d, y) for y in x)
 # loglikelihood(d::Dist, x) = sum(logpdf(d, y) for y in x)
 unwrap(d::Dist) = d.dist
 
+Base.promote_rule(::Type{Dist{D}}, ::Type{D}) where {D} = D
+Base.convert(::Type{D}, d::Dist{D}) where {D} = d.dist
+
 # Bernoulli distribution (example)
 
 struct Bernoulli{T <: Real}

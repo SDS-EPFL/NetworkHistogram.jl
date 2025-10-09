@@ -25,6 +25,10 @@ function SymArray(k::T, d::AbstractArray) where {T <: Real}
         k)
 end
 
+function SymArray(d::AbstractMatrix{F}) where {F}
+    return convert(SymArray{F}, d)
+end
+
 function Base.size(a::SymArray)
     return (a.k, a.k)
 end

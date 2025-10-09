@@ -1,4 +1,3 @@
-
 const Cat{M, T} = Categorical{T, SVector{M, T}}
 
 function Cat(p::SVector{M, T}) where {M, T}
@@ -21,7 +20,7 @@ function fit(c::Cat{M, T}, xs::AbstractVector{Int}) where {M, T}
     return Cat(SVector{M}(counts(xs, M) ./ total))
 end
 
-function fit(c::Cat{M, T}, x::Int) where {M, T}
+function fit(::Cat{M, T}, x::Int) where {M, T}
     ps = zeros(T, M)
     ps[x] = one(T)
     return Cat(SVector{M}(ps))
@@ -55,3 +54,11 @@ end
 
 _fast_compressed_obs(d::Categorical, x::Int, ::Val{true}) = x + one(x)
 _fast_compressed_obs(d::Categorical, x::Int, ::Val{false}) = x
+
+function tv_distance(c1::Cat, c2::Cat)
+    return sum(abs.(c1.p .- c2.p)) / 2
+end
+
+function l2_distance(c1::Cat, c2::Cat)
+    return sqrt(sum((c1.p .- c2.p) .^ 2))
+end
