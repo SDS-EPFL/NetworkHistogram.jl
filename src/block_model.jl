@@ -1,5 +1,5 @@
-struct BlockModel{D, V}
-    _dists::SymArray{D}
+struct BlockModel{D, V, M <: AbstractMatrix{D}}
+    _dists::M
     sizes::V
     cum_sizes::V
 end
@@ -122,6 +122,35 @@ function get_probability_matrix(
     return A
 end
 
-function get_probability_matrix(a::Assignment, default_dist = nothing)
-    return get_probability_matrix(BlockModel(a.θ), a.node_labels, default_dist)
+function get_probability_matrix(
+        a::Assignment, default_dist = nothing, node_labels = a.node_labels)
+    return get_probability_matrix(BlockModel(a.θ), node_labels, default_dist)
+end
+
+function align_sbm!(sbm::BlockModel, perm)
+    sbm._dists .= sbm._dists[perm, perm]
+    sbm.sizes .= sbm.sizes[perm]
+    sbm.cum_sizes .= cumsum(sbm.sizes)
+end
+
+"""
+    order_groups(a::Assignment, latents::AbstractVector)
+
+Order the groups of an assignment according to the true latents. This is an heuristic
+approach, which is not guaranteed to find the true ordering of the groups.
+"""
+function order_groups(a::Assignment, latents::AbstractVector)
+    n = number_nodes(a)
+    k = number_groups(a)
+    sort_perm = sortperm(latents)
+    sorted_group_labels = a.node_labels[sort_perm]
+    dummy_group_labels = repeat(1:k, inner = n ÷ k + 1)[1:n]
+    counts = Dict(group => countmap(dummy_group_labels[sorted_group_labels .== group])
+    for group in 1:k)
+    return sort(
+        1:k, by = x -> Tuple(get(counts[x], g, 0) for g in 1:k), rev = true)
+end
+
+function align_sbm_true_latents!(sbm::BlockModel, a::Assignment, latents)
+    align_sbm!(sbm, order_groups(a, latents))
 end

@@ -1,7 +1,8 @@
 # NetworkHistogram.jl
 
-Implementation of the network histogram for graphon estimation from the paper [Network histograms and universality of blockmodel approximation](https://doi.org/10.1073/pnas.1400374111) by Sofia C. Olhede and Patrick J. Wolfe.
-
+Implementation of the network histogram for graphon estimation from the paper
+[Network histograms and universality of blockmodel approximation](https://doi.org/10.1073/pnas.1400374111)
+by Sofia C. Olhede and Patrick J. Wolfe.
 
 ## Installation
 
@@ -11,7 +12,8 @@ Pkg.add("NetworkHistogram")
 
 ## Usage
 
-We fit the estimator and then extract the estimated graphon matrix and node labels.
+We fit the estimator and then extract the estimated graphon matrix and node
+labels.
 
 ```julia
 using NetworkHistogram, LinearAlgebra
@@ -29,5 +31,5 @@ sbm_matrix = estimate.θ
 node_labels = estimate.node_labels
 ```
 
-You can control the optimization process by modifying the rules used in the optimization. 
-Check out [Optimization hyper-parameters](@ref) for more information.
+You can control the optimization process by modifying the rules used in the
+optimization.
