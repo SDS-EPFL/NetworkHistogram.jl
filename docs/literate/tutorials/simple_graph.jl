@@ -63,7 +63,7 @@ end
 
 # Now, let's sample a graph with 400 nodes from our graphon `W`.
 n = 400
-A, u_true = sample_graph(W, n)
+A, u_true = sample_graph(W, n);
 
 # We can visualize the adjacency matrix of the sampled graph.
 # To make the block structure visible, we sort the nodes by their latent positions.
@@ -95,7 +95,7 @@ end
 
 # First, we need to represent our graph in a format that the package understands.
 # We can use an `EdgeList` to store the edges of the graph.
-edge_list = EdgeList(A)
+edge_list = EdgeList(A);
 
 # We also need to define the model for the edges. Since our graph is unweighted,
 # we can use a `Bernoulli` distribution. The `Dist` wrapper is used to
@@ -107,7 +107,7 @@ dist = NetworkHistogram.Bernoulli(0.5) # The initial probability doesn't matter 
 k = floor(Int, sqrt(n))
 oracle_labels = inverse_rle(1:k, fill(n ÷ k, k))
 
-initial_assignment = shuffle(oracle_labels)
+initial_assignment = shuffle(oracle_labels);
 
 # Now, we create an `Assignment` object, which holds all the information
 # about the model and the current state of the node groupings.
