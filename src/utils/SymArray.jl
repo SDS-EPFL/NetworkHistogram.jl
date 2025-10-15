@@ -56,7 +56,7 @@ sym = SymArray(5, 0.0)  # 5×5 matrix of zeros
 ```
 """
 function SymArray(k::T, d::F) where {F, T <: Real}
-    @assert k > 0
+    k > 0 || throw(ArgumentError("Matrix dimension k=$k must be positive"))
     return SymArray{F}(
         Dict{Tuple{Int, Int}, F}(minmax(i, j) => deepcopy(d) for i in 1:k
         for j in i:k),
@@ -64,7 +64,7 @@ function SymArray(k::T, d::F) where {F, T <: Real}
 end
 
 function SymArray(k::T, d::AbstractArray) where {T <: Real}
-    @assert k > 0
+    k > 0 || throw(ArgumentError("Matrix dimension k=$k must be positive"))
     return SymArray{typeof(d)}(
         Dict{Tuple{Int, Int}, typeof(d)}(minmax(i, j) => deepcopy(d)
         for i in 1:k
@@ -76,8 +76,25 @@ end
     SymArray(d::AbstractMatrix{F})
 
 Create a SymArray from an existing matrix. The matrix should be symmetric.
+Validates symmetry with a tolerance for floating-point errors.
 """
 function SymArray(d::AbstractMatrix{F}) where {F}
+    size(d, 1) == size(d, 2) || throw(ArgumentError(
+        "Input matrix must be square, got size $(size(d))"))
+
+    # Validate symmetry for floating-point types
+    if F <: AbstractFloat
+        k = size(d, 1)
+        max_asymmetry = zero(F)
+        for j in 1:k, i in 1:(j - 1)
+            max_asymmetry = max(max_asymmetry, abs(d[i, j] - d[j, i]))
+        end
+        tol = sqrt(eps(F)) * maximum(abs, d)
+        if max_asymmetry > tol
+            @warn "Input matrix has asymmetry up to $max_asymmetry (tolerance: $tol). Using upper triangle."
+        end
+    end
+
     return convert(SymArray{F}, d)
 end
 
@@ -87,12 +104,12 @@ end
 
 Base.@propagate_inbounds function Base.getindex(a::SymArray, i, j)
     @boundscheck checkbounds(a, i, j)
-    return a.d[minmax(i, j)]
+    @inbounds return a.d[minmax(i, j)]
 end
 
 Base.@propagate_inbounds function Base.setindex!(a::SymArray, v, i, j)
     @boundscheck checkbounds(a, i, j)
-    a.d[minmax(i, j)] = v
+    @inbounds a.d[minmax(i, j)] = v
 end
 
 """

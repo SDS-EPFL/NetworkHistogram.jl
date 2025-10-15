@@ -44,7 +44,9 @@ struct Dist{D}
     dist::D
     counts::Int
     function Dist(d, counts::Int)
-        counts < 0 ? error("Counts cannot be negative") :
+        if counts < 0
+            throw(ArgumentError("Counts ($counts) cannot be negative"))
+        end
         new{typeof(d)}(d, counts)
     end
 end
@@ -233,6 +235,15 @@ For a distribution to work with NetworkHistogram, it must implement:
 """
 struct Bernoulli{T <: Real}
     p::T
+    function Bernoulli(p::T) where {T <: Real}
+        if isnan(p) || isinf(p)
+            throw(ArgumentError("Bernoulli parameter p=$p must be finite"))
+        end
+        if !(0 <= p <= 1)
+            throw(ArgumentError("Bernoulli parameter p=$p must be in [0, 1]"))
+        end
+        new{T}(p)
+    end
 end
 
 zero(d::Bernoulli) = Bernoulli(zero(d.p))

@@ -1,6 +1,10 @@
-mutable struct WorkspaceSwap{D, F}
+# Reasonable default capacity for affected groups in a swap
+const MAX_AFFECTED_GROUPS = 16
+
+mutable struct WorkspaceSwap{D, F, G}
     θ::SymArray{D}
     log_likelihood_per_group::SymArray{F}
+    groups_buffer::G  # Pre-allocated buffer for affected group pairs
 end
 
 function make_workspace(a::Assignment)
@@ -8,7 +12,9 @@ function make_workspace(a::Assignment)
     k = number_groups(a)
     θ_copy = SymArray(k, zero(a.θ[1, 1]))
     ll_copy = SymArray(k, 0.0)
-    return WorkspaceSwap(θ_copy, ll_copy)
+    groups_buffer = Set{Tuple{Int, Int}}()
+    sizehint!(groups_buffer, MAX_AFFECTED_GROUPS)
+    return WorkspaceSwap(θ_copy, ll_copy, groups_buffer)
 end
 
 mutable struct Swap{W}
@@ -60,25 +66,14 @@ function swap_node_labels!(a::Assignment, i, j)
     a.node_labels[i], a.node_labels[j] = a.node_labels[j], a.node_labels[i]
 end
 
-# for reference and testing
-function _slow_swap!(a::Assignment, s::Swap)
-    swap_node_labels!(a, s.u, s.v)
-    a.θ,
-    a.log_likelihood = _compute_theta_and_ll(
-        a.node_labels, a.dists, a.edges, a.θ[1, 1])
-end
-
-# apply_swap!(a::Assignment, s::Swap) = _slow_swap!(a, s)
-
 function apply_swap!(a::Assignment, s::Swap)
     u, v = s.u, s.v
     gu = a.node_labels[u]
     gv = a.node_labels[v]
 
-    # Pre-allocate with reasonable capacity to avoid resizing
-    # Most swaps affect at most degree(u) + degree(v) + 1 group pairs
-    groups_concerned = Set{Tuple{Int, Int}}()
-    sizehint!(groups_concerned, 16)  # Reasonable default
+    # Reuse pre-allocated buffer instead of allocating new Set each time
+    groups_concerned = s.workspace.groups_buffer
+    empty!(groups_concerned)
     push!(groups_concerned, minmax(gu, gv))
 
     @inbounds for (node, d) in iterate_neighbors(a.dists, u)

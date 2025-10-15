@@ -129,23 +129,6 @@ function get_edge(A::EdgeList{E}, i::Int, j::Int) where {E}
     return zero(E)  # If edge not found in the iteration
 end
 
-# function EdgeList(A::AbstractMatrix{<:Union{Missing,E}}) where {E}
-#     n = size(A, 1)
-#     data = Vector{Vector{E}}(undef, n)
-#     name_list = Vector{Vector{Int}}(undef, n)
-#     for j in 1:n
-#         data[j] = Vector{E}(undef, 0)
-#         name_list[j] = Vector{Int}(undef, 0)
-#         for i in 1:n
-#             if !ismissing(A[i,j]) # gonna be an issue with MC! have to define 0 chain and fast operations on them
-#                 push!(name_list[j], i)
-#                 push!(data[j], A[i, j])
-#             end
-#         end
-#     end
-#     return EdgeList(data, name_list)
-# end
-
 # Internal function to convert adjacency matrix to EdgeList format
 function _from_adj_to_edge_list(
         A::AbstractMatrix, function_to_apply = identity)

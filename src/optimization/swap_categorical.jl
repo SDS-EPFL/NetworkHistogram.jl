@@ -45,29 +45,84 @@ function Assignment(
                 estimated[g1, g2], realized[g1, g2])
         end
     end
-    w = WorkspaceDiscreteSwap(deepcopy(log_likelihood_per_group),
-        counts, deepcopy(realized), deepcopy(estimated))
-    return Assignment(
+
+    # Pre-allocate workspace with copies of current state
+    w = WorkspaceDiscreteSwap(
+        SymArray(n_groups, 0.0),
+        SymArray(n_groups, 0),
+        SymArray(n_groups, zeros(Float64, M)),
+        SymArray(n_groups, zeros(Float64, M))
+    )
+
+    # Create assignment first
+    assignment = Assignment(
         node_labels, edge_list, dists, θ, log_likelihood_per_group, w)
+
+    # Now copy the actual workspace data into w
+    for g2 in 1:n_groups, g1 in g2:n_groups
+        w.log_likelihood_per_group[g1, g2] = log_likelihood_per_group[g1, g2]
+        w.counts[g1, g2] = counts[g1, g2]
+        copyto!(w.realized[g1, g2], realized[g1, g2])
+        copyto!(w.estimated[g1, g2], estimated[g1, g2])
+    end
+
+    return assignment
 end
 
 function make_workspace(a::Assignment{E, Dist{D},
         F, W}) where {E, F, D <: Cat, W}
-    return deepcopy(a.additional_workspace)
+    # Pre-allocate workspace instead of deepcopy
+    k = number_groups(a)
+    m = num_categories(unwrap(a.θ[1, 1]))
+
+    log_ll = SymArray(k, 0.0)
+    counts = SymArray(k, 0)
+    realized = SymArray(k, zeros(Float64, m))
+    estimated = SymArray(k, zeros(Float64, m))
+
+    return WorkspaceDiscreteSwap(log_ll, counts, realized, estimated)
+end
+
+function copy_categorical_workspace!(
+        dest::WorkspaceDiscreteSwap, src_assignment::Assignment)
+    # In-place copy without allocation
+    copy_symarray!(dest.log_likelihood_per_group, src_assignment.log_likelihood)
+
+    src_ws = src_assignment.additional_workspace
+    # Copy counts (scalars)
+    copy_symarray!(dest.counts, src_ws.counts)
+
+    # Copy vector-valued SymArrays element by element
+    @inbounds for key in keys(src_ws.realized.d)
+        copyto!(dest.realized.d[key], src_ws.realized.d[key])
+    end
+
+    @inbounds for key in keys(src_ws.estimated.d)
+        copyto!(dest.estimated.d[key], src_ws.estimated.d[key])
+    end
 end
 
 function make_swap_workspace!(ws::WorkspaceDiscreteSwap, a::Assignment)
-    ws.log_likelihood_per_group = deepcopy(a.log_likelihood)
-    ws.realized = deepcopy(a.additional_workspace.realized)
-    ws.estimated = deepcopy(a.additional_workspace.estimated)
+    # Use in-place copy instead of deepcopy
+    copy_categorical_workspace!(ws, a)
 end
 
 function revert_swap_workspace!(a::Assignment, ws::WorkspaceDiscreteSwap)
-    a.log_likelihood = deepcopy(ws.log_likelihood_per_group)
+    # Use in-place copy instead of deepcopy
+    copy_symarray!(a.log_likelihood, ws.log_likelihood_per_group)
+
     as = a.additional_workspace
-    as.log_likelihood_per_group = deepcopy(ws.log_likelihood_per_group)
-    as.realized = deepcopy(ws.realized)
-    as.estimated = deepcopy(ws.estimated)
+    copy_symarray!(as.log_likelihood_per_group, ws.log_likelihood_per_group)
+    copy_symarray!(as.counts, ws.counts)
+
+    # Copy vector-valued SymArrays element by element
+    @inbounds for key in keys(ws.realized.d)
+        copyto!(as.realized.d[key], ws.realized.d[key])
+    end
+
+    @inbounds for key in keys(ws.estimated.d)
+        copyto!(as.estimated.d[key], ws.estimated.d[key])
+    end
 end
 
 function apply_swap!(as::Assignment, s::Swap{<:WorkspaceDiscreteSwap})

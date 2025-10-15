@@ -1,0 +1,83 @@
+{
+    "julia_version": "1.12.0",
+    "timestamp": "2025-10-15 23:26:47",
+    "benchmarks": {
+        "bernoulli_swap_n500_k5": {
+            "max_ms": 3.89675,
+            "min_ms": 2.490625,
+            "mean_ms": 2.67821422,
+            "median_ms": 2.5600625,
+            "std_ms": 0.30520369156501004
+        },
+        "assignment_creation_n200": {
+            "max_us": 1076.709,
+            "min_us": 918.375,
+            "median_us": 966.5625,
+            "mean_us": 967.24371,
+            "std_us": 27.151506778246986
+        },
+        "categorical_swap_n50_k2_m3": {
+            "max_ms": 0.031625,
+            "min_ms": 0.008,
+            "mean_ms": 0.00841167,
+            "median_ms": 0.008125,
+            "std_ms": 0.0023503062085265367
+        },
+        "edgelist_creation_n200": {
+            "max_us": 3455.5,
+            "min_us": 196.875,
+            "median_us": 253.354,
+            "mean_us": 289.45708,
+            "std_us": 320.40221672081117
+        },
+        "loglikelihood_n200": {
+            "max_us": 0.039495991983967936,
+            "min_us": 0.014612224448897794,
+            "median_us": 0.015947895791583167,
+            "mean_us": 0.015709479959919836,
+            "std_us": 0.001707683939625983
+        },
+        "bernoulli_optimize_n100_1k": {
+            "max_ms": 131.9495,
+            "min_ms": 63.998125,
+            "mean_ms": 96.4309377,
+            "median_ms": 92.050771,
+            "std_ms": 31.092325846843277
+        },
+        "categorical_swap_n200_k3_m4": {
+            "max_ms": 0.070375,
+            "min_ms": 0.034333,
+            "mean_ms": 0.03502833,
+            "median_ms": 0.034666,
+            "std_ms": 0.0035768376333930193
+        },
+        "bernoulli_swap_n50_k2": {
+            "max_ms": 0.057292,
+            "min_ms": 0.042458,
+            "mean_ms": 0.04351547,
+            "median_ms": 0.043292,
+            "std_ms": 0.001701379543966091
+        },
+        "categorical_swap_n500_k5_m5": {
+            "max_ms": 0.112416,
+            "min_ms": 0.088375,
+            "mean_ms": 0.08935744,
+            "median_ms": 0.088833,
+            "std_ms": 0.003347376689350657
+        },
+        "categorical_optimize_n100_1k": {
+            "max_ms": 17.914792,
+            "min_ms": 8.9885,
+            "mean_ms": 13.7015751,
+            "median_ms": 14.930396,
+            "std_ms": 3.4717329142617093
+        },
+        "bernoulli_swap_n200_k3": {
+            "max_ms": 0.774791,
+            "min_ms": 0.534542,
+            "mean_ms": 0.5486900100000001,
+            "median_ms": 0.5379165,
+            "std_ms": 0.03468300186071855
+        }
+    }
+}

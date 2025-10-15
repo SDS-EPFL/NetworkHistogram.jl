@@ -45,6 +45,9 @@ mutable struct Assignment{E, D, F, W, V <: AbstractVector{Int}}
     additional_workspace::W
 end
 
+# Default capacity for edge collection - typical node degree in sparse networks
+const DEFAULT_EDGE_CAPACITY = 32
+
 """
     number_nodes(a::Assignment)
 
@@ -126,7 +129,7 @@ end
 function get_edges_in_groups(node_labels, edges_all, g1, g2)
     edges = Vector{edge_type(edges_all)}()
     # Pre-size the vector to avoid repeated reallocations
-    sizehint!(edges, 32)
+    sizehint!(edges, DEFAULT_EDGE_CAPACITY)
 
     @inbounds for u in eachindex(node_labels)
         if node_labels[u] != g1

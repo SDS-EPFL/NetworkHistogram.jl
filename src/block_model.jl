@@ -61,6 +61,7 @@ end
 Create a block model with `k` uniform-sized blocks, each initialized with distribution `d`.
 """
 function BlockModel(k::Int, d::D) where {D}
+    k > 0 || throw(ArgumentError("Number of blocks k=$k must be positive"))
     sizes = fill(1 / k, k)
     cumulative_sizes = cumsum(sizes)
     _dists = SymArray(k, d)
@@ -78,6 +79,11 @@ function BlockModel(a::Assignment)
     sizes = proportions(a)
     cumulative_sizes = cumsum(sizes)
     _dists = unwrap.(a.θ)
+
+    # Validate that sizes sum to approximately 1.0
+    size_sum = sum(sizes)
+    abs(size_sum - 1.0) < 1e-10 || @warn "Block sizes sum to $size_sum, expected 1.0"
+
     return BlockModel(_dists, sizes, cumulative_sizes)
 end
 
@@ -91,6 +97,11 @@ function BlockModel(nodes_labels, θ)
     sizes = counts(nodes_labels) / length(nodes_labels)
     cumulative_sizes = cumsum(sizes)
     _dists = unwrap.(θ)
+
+    # Validate that sizes sum to approximately 1.0
+    size_sum = sum(sizes)
+    abs(size_sum - 1.0) < 1e-10 || @warn "Block sizes sum to $size_sum, expected 1.0"
+
     return BlockModel(_dists, sizes, cumulative_sizes)
 end
 
