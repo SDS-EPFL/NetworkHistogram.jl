@@ -37,8 +37,9 @@ function logpdf_cat(p::AbstractVector, obs::Int)
     return log(p[obs])
 end
 
+# Efficient log-likelihood computation for categorical observations
+# Uses xlogy(x,y) = x*log(y) which handles edge cases properly
 function logpdf_cat(p::AbstractVector, count_observed::AbstractVector)
-    #TODO make non allocating with mapreduce ?
     return sum(_xlogy.(count_observed, p))
 end
 
