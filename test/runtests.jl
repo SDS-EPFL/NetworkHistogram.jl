@@ -17,7 +17,7 @@ end
     include("test_swap_workspace.jl")
     include("test_cat_case.jl")
     include("test_get_edges_in_groups.jl")
-    
+
     # Only run performance tests if BenchmarkTools is available
     if RUN_BENCHMARKS
         @testset "Performance Regression" begin

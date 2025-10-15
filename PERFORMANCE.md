@@ -1,6 +1,7 @@
 # Performance Optimization Guide for NetworkHistogram
 
-This repository now includes a comprehensive performance regression test suite to help improve the optimization speed of NetworkHistogram algorithms.
+This repository now includes a comprehensive performance regression test suite
+to help improve the optimization speed of NetworkHistogram algorithms.
 
 ## 🎯 Quick Start
 
@@ -23,6 +24,7 @@ julia dev/run_benchmarks.jl current
 ```
 
 This will automatically compare against your baseline and show:
+
 - Which operations got faster/slower
 - By how much (speedup factor and percentage)
 - Detailed timing statistics
@@ -36,16 +38,19 @@ julia --project=. -e 'using Pkg; Pkg.test()'
 ## 📊 What Gets Benchmarked
 
 ### Core Operations
+
 - **Single swap operations** (Bernoulli & Categorical networks)
   - Small networks: n=50 nodes
   - Medium networks: n=200 nodes
   - Large networks: n=500 nodes
 
 ### Full Workflows
+
 - Complete optimization runs (1,000 iterations)
 - End-to-end performance measurement
 
 ### Components
+
 - Assignment creation
 - EdgeList creation
 - Log-likelihood computation
@@ -53,40 +58,49 @@ julia --project=. -e 'using Pkg; Pkg.test()'
 
 ## 🔍 Key Hotspots for Optimization
 
-Based on the workflow in `test_decorated_paper.jl`, these are the critical bottlenecks:
+Based on the workflow in `test_decorated_paper.jl`, these are the critical
+bottlenecks:
 
 ### 1. `apply_swap!` Function
+
 **Location**: `src/optimization/swap_workspace.jl`, `swap_categorical.jl`
 
-**Why it matters**: Called millions of times during optimization (once per iteration)
+**Why it matters**: Called millions of times during optimization (once per
+iteration)
 
 **Current bottlenecks**:
+
 - Uses `deepcopy` for state management
 - Iterates over all neighbors repeatedly
 - Allocates temporary arrays
 
 **Optimization ideas**:
+
 - Pre-allocate workspace buffers
 - Use in-place operations
 - Cache neighbor lists
 - Reduce `deepcopy` usage
 
 ### 2. `get_edges_in_groups` Function
+
 **Location**: `src/assignment.jl`
 
 **Why it matters**: Called during log-likelihood recomputation
 
 **Current bottlenecks**:
+
 - Uses `findall` (allocates)
 - Creates new vector each time
 - Linear search through nodes
 
 **Optimization ideas**:
+
 - Pre-compute group membership indices
 - Use pre-allocated output buffers
 - Cache results for frequently accessed group pairs
 
 ### 3. Log-likelihood Updates
+
 **Location**: `src/optimization/swap_workspace.jl`, `swap_categorical.jl`
 
 **Why it matters**: Must be computed after each swap
@@ -94,6 +108,7 @@ Based on the workflow in `test_decorated_paper.jl`, these are the critical bottl
 **Current approach**: Recomputes only affected group pairs (good!)
 
 **Optimization ideas**:
+
 - Batch `logpdf` computations
 - Use vectorized operations
 - Cache intermediate calculations
@@ -181,7 +196,8 @@ using BenchmarkTools
 ## 📚 Resources
 
 - **Detailed benchmarking guide**: See `dev/BENCHMARKING.md`
-- **Julia Performance Tips**: https://docs.julialang.org/en/v1/manual/performance-tips/
+- **Julia Performance Tips**:
+  https://docs.julialang.org/en/v1/manual/performance-tips/
 - **BenchmarkTools.jl**: https://juliaci.github.io/BenchmarkTools.jl/stable/
 - **Profile module**: https://docs.julialang.org/en/v1/stdlib/Profile/
 

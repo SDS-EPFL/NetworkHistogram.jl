@@ -30,16 +30,19 @@ julia dev/visualize_benchmarks.jl --all
 ## 🎯 Priority Hotspots
 
 ### 1. `apply_swap!` 🔴 CRITICAL
+
 - **File**: `src/optimization/swap_workspace.jl`, `swap_categorical.jl`
 - **Why**: Called ~1M times per run
 - **Fix**: Reduce allocations, avoid `deepcopy`
 
 ### 2. `get_edges_in_groups` 🟡 MODERATE
+
 - **File**: `src/assignment.jl`
 - **Why**: Called during LL updates
 - **Fix**: Pre-allocate, cache group membership
 
 ### 3. Edge iteration 🟢 LOW
+
 - **File**: `src/EdgeList.jl`
 - **Why**: Used everywhere
 - **Fix**: Ensure type stability
@@ -47,6 +50,7 @@ julia dev/visualize_benchmarks.jl --all
 ## 🛠️ Common Optimizations
 
 ### Check Allocations
+
 ```julia
 using BenchmarkTools
 @btime my_function($args) samples=1 evals=1
@@ -54,6 +58,7 @@ using BenchmarkTools
 ```
 
 ### Profile Code
+
 ```julia
 using Profile
 @profile my_function(args)
@@ -61,6 +66,7 @@ Profile.print(maxdepth=15)
 ```
 
 ### Type Stability
+
 ```julia
 using Cthulhu
 @descend my_function(args)
@@ -90,7 +96,8 @@ using Cthulhu
 
 ## 🔄 Workflow
 
-1. **Baseline** → 2. **Profile** → 3. **Optimize** → 4. **Benchmark** → 5. **Test** → Repeat
+1. **Baseline** → 2. **Profile** → 3. **Optimize** → 4. **Benchmark** → 5.
+   **Test** → Repeat
 
 ## 💡 Tips
 
@@ -103,16 +110,19 @@ using Cthulhu
 ## 🆘 Troubleshooting
 
 ### "BenchmarkTools not found"
+
 ```bash
 julia --project=test -e 'using Pkg; Pkg.add("BenchmarkTools")'
 ```
 
 ### Results vary
+
 - Close other apps
 - Use `--threads=1`
 - Increase samples
 
 ### Too slow
+
 - Reduce samples
 - Use smaller networks
 - Run specific benchmarks
