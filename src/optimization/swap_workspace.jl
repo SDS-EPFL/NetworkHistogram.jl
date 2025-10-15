@@ -4,7 +4,11 @@ mutable struct WorkspaceSwap{D, F}
 end
 
 function make_workspace(a::Assignment)
-    return WorkspaceSwap(deepcopy(a.θ), deepcopy(a.log_likelihood))
+    # Pre-allocate workspace with same structure
+    k = number_groups(a)
+    θ_copy = SymArray(k, zero(a.θ[1, 1]))
+    ll_copy = SymArray(k, 0.0)
+    return WorkspaceSwap(θ_copy, ll_copy)
 end
 
 mutable struct Swap{W}
@@ -13,18 +17,31 @@ mutable struct Swap{W}
     workspace::W
 end
 
+function copy_symarray!(dest::SymArray, src::SymArray)
+    # In-place copy without allocation
+    # SymArray stores data in a dictionary .d
+    # Just overwrite the values - don't empty first!
+    @inbounds for key in keys(src.d)
+        dest.d[key] = src.d[key]
+    end
+end
+
 function make_swap_workspace!(ws, a::Assignment)
-    ws.θ = deepcopy(a.θ)
-    ws.log_likelihood_per_group = deepcopy(a.log_likelihood)
+    # Use in-place copy instead of deepcopy
+    copy_symarray!(ws.θ, a.θ)
+    copy_symarray!(ws.log_likelihood_per_group, a.log_likelihood)
 end
 
 function revert_swap_workspace!(a::Assignment, ws)
-    a.θ = deepcopy(ws.θ)
-    a.log_likelihood = deepcopy(ws.log_likelihood_per_group)
+    # Use in-place copy instead of deepcopy
+    copy_symarray!(a.θ, ws.θ)
+    copy_symarray!(a.log_likelihood, ws.log_likelihood_per_group)
 end
 
 function make_swap(a::Assignment, id)
-    return Swap(id[1], id[2], make_workspace(a))
+    ws = make_workspace(a)
+    make_swap_workspace!(ws, a)  # Actually copy the current state
+    return Swap(id[1], id[2], ws)
 end
 
 function make_swap!(swap::Swap, a::Assignment, id)
@@ -57,9 +74,14 @@ function apply_swap!(a::Assignment, s::Swap)
     u, v = s.u, s.v
     gu = a.node_labels[u]
     gv = a.node_labels[v]
-    groups_concerned = Set{Tuple{Int, Int}}([minmax(gu, gv)])
 
-    for (node, d) in iterate_neighbors(a.dists, u)
+    # Pre-allocate with reasonable capacity to avoid resizing
+    # Most swaps affect at most degree(u) + degree(v) + 1 group pairs
+    groups_concerned = Set{Tuple{Int, Int}}()
+    sizehint!(groups_concerned, 16)  # Reasonable default
+    push!(groups_concerned, minmax(gu, gv))
+
+    @inbounds for (node, d) in iterate_neighbors(a.dists, u)
         if node == v
             continue
         end
@@ -70,7 +92,7 @@ function apply_swap!(a::Assignment, s::Swap)
         push!(groups_concerned, minmax(gv, g1))
     end
 
-    for (index, (node, d)) in enumerate(iterate_neighbors(a.dists, v))
+    @inbounds for (index, (node, d)) in enumerate(iterate_neighbors(a.dists, v))
         if node == u
             continue
         end
@@ -82,7 +104,7 @@ function apply_swap!(a::Assignment, s::Swap)
     end
 
     swap_node_labels!(a, u, v)
-    for (g1, g2) in groups_concerned
+    @inbounds for (g1, g2) in groups_concerned
         a.log_likelihood[g1, g2] = 0.0
         for e in get_edges_in_groups(a.node_labels, a.edges, g1, g2)
             a.log_likelihood[g1, g2] += logpdf(a.θ[g1, g2], e)

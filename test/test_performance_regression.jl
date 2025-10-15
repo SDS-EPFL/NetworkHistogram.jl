@@ -31,7 +31,13 @@ function create_test_sbm_bernoulli(n_groups::Int, n_nodes::Int; seed = 42)
         end
     end
 
-    labels = StatsBase.inverse_rle(1:n_groups, fill(n_nodes ÷ n_groups, n_groups))
+    # Ensure labels has exactly n_nodes elements
+    base_size = n_nodes ÷ n_groups
+    remainder = n_nodes % n_groups
+    sizes = fill(base_size, n_groups)
+    sizes[1:remainder] .+= 1  # Distribute remainder to first groups
+    labels = StatsBase.inverse_rle(1:n_groups, sizes)
+    @assert length(labels) == n_nodes
     A = NetworkHistogram.sample(sbm, labels)
     return A, labels, d
 end
@@ -52,7 +58,13 @@ function create_test_sbm_categorical(
         end
     end
 
-    labels = StatsBase.inverse_rle(1:n_groups, fill(n_nodes ÷ n_groups, n_groups))
+    # Ensure labels has exactly n_nodes elements
+    base_size = n_nodes ÷ n_groups
+    remainder = n_nodes % n_groups
+    sizes = fill(base_size, n_groups)
+    sizes[1:remainder] .+= 1  # Distribute remainder to first groups
+    labels = StatsBase.inverse_rle(1:n_groups, sizes)
+    @assert length(labels) == n_nodes
     A = NetworkHistogram.sample(sbm, labels)
     return A, labels, d
 end
@@ -72,7 +84,7 @@ end
             b_swap = @benchmark begin
                 NetworkHistogram.apply_swap!($assignment, $swap)
                 NetworkHistogram.revert_swap!($assignment, $swap)
-            end samples=100 evals=1
+            end setup=(NetworkHistogram.make_swap_workspace!($swap.workspace, $assignment)) samples=100 evals=1
 
             # Verify correctness
             ll_after = NetworkHistogram.loglikelihood(assignment)
@@ -94,7 +106,7 @@ end
             b_swap = @benchmark begin
                 NetworkHistogram.apply_swap!($assignment, $swap)
                 NetworkHistogram.revert_swap!($assignment, $swap)
-            end samples=100 evals=1
+            end setup=(NetworkHistogram.make_swap_workspace!($swap.workspace, $assignment)) samples=100 evals=1
 
             ll_after = NetworkHistogram.loglikelihood(assignment)
             @test isapprox(ll_before, ll_after, atol = 1e-10)
@@ -115,7 +127,7 @@ end
             b_swap = @benchmark begin
                 NetworkHistogram.apply_swap!($assignment, $swap)
                 NetworkHistogram.revert_swap!($assignment, $swap)
-            end samples=50 evals=1
+            end setup=(NetworkHistogram.make_swap_workspace!($swap.workspace, $assignment)) samples=50 evals=1
 
             ll_after = NetworkHistogram.loglikelihood(assignment)
             @test isapprox(ll_before, ll_after, atol = 1e-10)
@@ -200,16 +212,16 @@ end
             # Randomize initial labels
             initial_labels = rand(1:3, 100)
 
-            params = NetworkHistogram.GreedyParams(
-                1_000,  # Small number for testing
-                NetworkHistogram.RandomNodeSwap(),
-                NetworkHistogram.Strict(),
-                NetworkHistogram.PreviousBestValue(500),
-                false  # No progress bar for benchmarking
-            )
-
             b_optimize = @benchmark begin
-                NetworkHistogram.nethist($A, $d, $initial_labels, $params)
+                # Create fresh params for each benchmark iteration
+                params = NetworkHistogram.GreedyParams(
+                    1_000,  # Small number for testing
+                    NetworkHistogram.RandomNodeSwap(),
+                    NetworkHistogram.Strict(),
+                    NetworkHistogram.PreviousBestValue(500),
+                    false  # No progress bar for benchmarking
+                )
+                NetworkHistogram.nethist($A, $d, $initial_labels, params)
             end samples=10 evals=1
 
             @info "Bernoulli full optimization (n=100, 1k iters)" median=median(b_optimize.times) /
@@ -223,16 +235,16 @@ end
             # Randomize initial labels
             initial_labels = rand(1:3, 100)
 
-            params = NetworkHistogram.GreedyParams(
-                1_000,
-                NetworkHistogram.RandomNodeSwap(),
-                NetworkHistogram.Strict(),
-                NetworkHistogram.PreviousBestValue(500),
-                false
-            )
-
             b_optimize = @benchmark begin
-                NetworkHistogram.nethist($A, $d, $initial_labels, $params)
+                # Create fresh params for each benchmark iteration
+                params = NetworkHistogram.GreedyParams(
+                    1_000,
+                    NetworkHistogram.RandomNodeSwap(),
+                    NetworkHistogram.Strict(),
+                    NetworkHistogram.PreviousBestValue(500),
+                    false
+                )
+                NetworkHistogram.nethist($A, $d, $initial_labels, params)
             end samples=10 evals=1
 
             @info "Categorical full optimization (n=100, 1k iters)" median=median(b_optimize.times) /

@@ -125,12 +125,15 @@ end
 
 function get_edges_in_groups(node_labels, edges_all, g1, g2)
     edges = Vector{edge_type(edges_all)}()
-    nodes_g1 = findall(x -> x == g1, node_labels)
-    nodes_g2 = findall(x -> x == g2, node_labels)
+    # Pre-size the vector to avoid repeated reallocations
+    sizehint!(edges, 32)
 
-    for u in nodes_g1
+    @inbounds for u in eachindex(node_labels)
+        if node_labels[u] != g1
+            continue
+        end
         for (v, e) in iterate_neighbors(edges_all, u)
-            if v in nodes_g2 && ((g1 == g2 && u < v) || g1 != g2)
+            if node_labels[v] == g2 && ((g1 == g2 && u < v) || g1 != g2)
                 push!(edges, e)
             end
         end
