@@ -35,7 +35,11 @@ function create_test_sbm_bernoulli(n_groups::Int, n_nodes::Int; seed = 42)
         end
     end
 
-    labels = StatsBase.inverse_rle(1:n_groups, fill(n_nodes ÷ n_groups, n_groups))
+    base_size = n_nodes ÷ n_groups
+    remainder = n_nodes % n_groups
+    sizes = fill(base_size, n_groups)
+    sizes[1:remainder] .+= 1
+    labels = StatsBase.inverse_rle(1:n_groups, sizes)
     A = NetworkHistogram.sample(sbm, labels)
     return A, labels, d
 end
@@ -55,7 +59,11 @@ function create_test_sbm_categorical(
         end
     end
 
-    labels = StatsBase.inverse_rle(1:n_groups, fill(n_nodes ÷ n_groups, n_groups))
+    base_size = n_nodes ÷ n_groups
+    remainder = n_nodes % n_groups
+    sizes = fill(base_size, n_groups)
+    sizes[1:remainder] .+= 1
+    labels = StatsBase.inverse_rle(1:n_groups, sizes)
     A = NetworkHistogram.sample(sbm, labels)
     return A, labels, d
 end
@@ -108,7 +116,7 @@ function profile_full_optimization(
         max_iter,
         NetworkHistogram.RandomNodeSwap(),
         NetworkHistogram.Strict(),
-        NetworkHistogram.PreviousBestValue(max_iter ÷ 2),
+        NetworkHistogram.PreviousBestValue(max_iter),
         false
     )
 
@@ -192,28 +200,6 @@ function print_results()
     Profile.print(maxdepth = 15)
 
     println("\n" * "="^70)
-    println("Generating flamegraph...")
-    println("="^70)
-
-    # Try to use ProfileView if available
-    try
-        @eval using ProfileView
-        println("\nOpening ProfileView (flamegraph)...")
-        ProfileView.view()
-        println("Close the ProfileView window to continue...")
-    catch
-        # Try PProf
-        try
-            @eval using PProf
-            println("\nGenerating flamegraph with PProf...")
-            PProf.pprof()
-        catch
-            println("\nNo flamegraph viewer available.")
-            println("To visualize results, install ProfileView.jl or PProf.jl:")
-            println("  julia> using Pkg")
-            println("  julia> Pkg.add(\"ProfileView\")  # or \"PProf\"")
-        end
-    end
 end
 
 function print_help()

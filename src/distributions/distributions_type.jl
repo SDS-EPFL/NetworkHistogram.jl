@@ -247,12 +247,16 @@ struct Bernoulli{T <: Real}
 end
 
 zero(d::Bernoulli) = Bernoulli(zero(d.p))
+zero(::Type{Bernoulli{T}}) where {T} = Bernoulli(zero(T))
 function agg_params(d1::Bernoulli, d2::Bernoulli, w1, w2)
-    Bernoulli(w1 * d1.p + w2 * d2.p)
+    p = w1 * d1.p + w2 * d2.p
+    # Clamp to [0, 1] to handle floating-point arithmetic errors
+    p = clamp(p, 0.0, 1.0)
+    Bernoulli(p)
 end
 fit(::Bernoulli, x) = Bernoulli(mean(x))
 distance(d1::Bernoulli, d2::Bernoulli) = abs(d1.p - d2.p)
 logpdf(d::Bernoulli, x) = log(d.p * x + (1 - d.p) * (1 - x))
 params(d::Bernoulli) = (d.p,)
 eltype(d::Bernoulli) = Bool
-sample(d::Bernoulli) = Bool(rand() <= d.p)
+sample(d::Bernoulli) = rand() <= d.p

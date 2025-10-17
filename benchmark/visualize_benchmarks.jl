@@ -18,6 +18,7 @@ using JSON3
 using Dates
 using Printf
 using Statistics
+using PrettyTables
 
 function load_benchmark(filepath)
     if !isfile(filepath)
@@ -82,26 +83,12 @@ function compare_multiple(files)
     # Print header
     println("\n" * "="^100)
     println("Benchmark Comparison Across Versions")
-    println("="^100)
+    println("="^100 * "\n")
 
-    # Create table
-    header = ["Benchmark", [b.file for b in benchmarks]...]
-    col_widths = [40, fill(18, length(benchmarks))...]
+    # Prepare data for table
+    table_data = []
+    baseline_vals = Dict{String, Float64}()
 
-    # Print header
-    print(rpad("Benchmark", col_widths[1]))
-    for (i, b) in enumerate(benchmarks)
-        print(rpad(b.file[1:min(end, 16)], col_widths[i + 1]))
-    end
-    println()
-    print(rpad("", col_widths[1]))
-    for (i, b) in enumerate(benchmarks)
-        print(rpad(b.timestamp[1:min(end, 16)], col_widths[i + 1]))
-    end
-    println()
-    println("-"^sum(col_widths))
-
-    # Print each metric
     for metric in all_metrics
         # Skip if metric has no values
         values = [haskey(b.metrics, metric) ? b.metrics[metric] : NaN for b in benchmarks]
@@ -109,42 +96,90 @@ function compare_multiple(files)
             continue
         end
 
-        # Shorten metric name for display
-        display_name = metric
-        if length(display_name) > col_widths[1] - 2
-            display_name = metric[1:(col_widths[1] - 5)] * "..."
-        end
-
-        print(rpad(display_name, col_widths[1]))
-
+        row = Any[metric]
         baseline_val = values[1]
+        baseline_vals[metric] = baseline_val
+
         for (i, val) in enumerate(values)
             if isnan(val)
-                print(rpad("N/A", col_widths[i + 1]))
+                push!(row, "N/A")
             else
-                speedup = if !isnan(baseline_val) && baseline_val > 0 && i > 1
-                    baseline_val / val
-                else
-                    1.0
-                end
-
-                # Format with speedup indicator
-                val_str = @sprintf("%.2f ms", val)
-                if i > 1 && !isnan(baseline_val)
-                    if speedup > 1.05
-                        val_str *= " ✓"
-                    elseif speedup < 0.95
-                        val_str *= " ✗"
-                    end
-                end
-                print(rpad(val_str, col_widths[i + 1]))
+                push!(row, round(val, digits = 2))
             end
         end
-        println()
+
+        push!(table_data, row)
     end
 
-    println("="^100)
-    println("\nLegend: ✓ = >5% faster, ✗ = >5% slower")
+    if isempty(table_data)
+        println("No metrics to display")
+        return
+    end
+
+    # Create headers
+    headers = ["Benchmark"]
+    for b in benchmarks
+        short_name = length(b.file) > 16 ? b.file[1:13] * "..." : b.file
+        push!(headers, short_name)
+    end
+
+    # Create subheaders with timestamps
+    subheaders = [""]
+    for b in benchmarks
+        short_ts = length(b.timestamp) > 16 ? b.timestamp[1:16] : b.timestamp
+        push!(subheaders, short_ts)
+    end
+
+    # Create highlighters for improvements and regressions
+    # We'll color entire rows based on whether the value improved or regressed vs baseline
+    hl_improvement = TextHighlighter(
+        (data, i, j) -> begin
+            # Check if current value (in any column after baseline) shows improvement
+            baseline_idx = 2  # First value column
+            baseline_val = data[i, baseline_idx]
+
+            if j > 2 && baseline_val isa Number && baseline_val > 0
+                current_val = data[i, j]
+                if current_val isa Number
+                    speedup = baseline_val / current_val
+                    return speedup > 1.05  # >5% improvement
+                end
+            end
+            return false
+        end,
+        crayon"green"
+    )
+
+    hl_regression = TextHighlighter(
+        (data, i, j) -> begin
+            # Check if current value (in any column after baseline) shows regression
+            baseline_idx = 2  # First value column
+            baseline_val = data[i, baseline_idx]
+
+            if j > 2 && baseline_val isa Number && baseline_val > 0
+                current_val = data[i, j]
+                if current_val isa Number
+                    speedup = baseline_val / current_val
+                    return speedup < 0.95  # >5% regression
+                end
+            end
+            return false
+        end,
+        crayon"red"
+    )    # Convert table_data to matrix
+    data_matrix = permutedims(hcat([vcat(row...) for row in table_data]...))
+
+    # Print table
+    pretty_table(
+        data_matrix;
+        column_labels = headers,
+        highlighters = [hl_improvement, hl_regression],
+        alignment = vcat(:l, fill(:r, length(benchmarks))),
+        table_format = TextTableFormat(borders = text_table_borders__unicode_rounded)
+    )
+
+    println("\nLegend: Green = >5% faster, Red = >5% slower (compared to first column)")
+    println("All values in milliseconds (ms)")
     println()
 
     # Calculate aggregate statistics

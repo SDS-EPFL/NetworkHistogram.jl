@@ -17,7 +17,9 @@ using StaticArrays
 using BenchmarkTools
 using JSON3
 using Dates
+using PrettyTables
 using NetworkHistogram
+using LoggingExtras
 
 # Create output directory if it doesn't exist
 const BENCHMARK_DIR = joinpath(@__DIR__, "benchmark_results")
@@ -84,7 +86,7 @@ function benchmark_single_swap(
     b = @benchmark begin
         NetworkHistogram.apply_swap!($assignment, $swap)
         NetworkHistogram.revert_swap!($assignment, $swap)
-    end setup=(NetworkHistogram.make_swap_workspace!($swap.workspace, $assignment)) samples=samples evals=1
+    end setup=(NetworkHistogram.make_swap_workspace!($swap.workspace, $assignment)) samples=samples #evals=1
 
     return Dict(
         "median_ms" => median(b.times) / 1e6,
@@ -112,11 +114,11 @@ function benchmark_full_optimization(
             $max_iter,
             NetworkHistogram.RandomNodeSwap(),
             NetworkHistogram.Strict(),
-            NetworkHistogram.PreviousBestValue($max_iter ÷ 2),
+            NetworkHistogram.PreviousBestValue($max_iter),
             false
         )
         NetworkHistogram.nethist($A, $d, $initial_labels, params)
-    end samples=samples evals=1
+    end #samples=samples evals=1
 
     return Dict(
         "median_ms" => median(b.times) / 1e6,
@@ -261,12 +263,15 @@ function compare_with_baseline(results, baseline_file)
 
     baseline = JSON3.read(read(baseline_file, String))
 
-    println("\n" * "="^70)
+    println("\n" * "="^80)
     println("Performance Comparison vs Baseline")
     println("Baseline: $(baseline["timestamp"])")
-    println("="^70)
+    println("="^80 * "\n")
 
-    for (key, value) in results["benchmarks"]
+    # Prepare data for table
+    table_data = []
+
+    for (key, value) in sort(collect(results["benchmarks"]), by = x -> string(x[1]))
         if haskey(baseline["benchmarks"], key)
             baseline_val = baseline["benchmarks"][key]
 
@@ -301,18 +306,67 @@ function compare_with_baseline(results, baseline_file)
             speedup = baseline_median / current_median
             change_pct = (speedup - 1) * 100
 
-            status = if speedup > 1.05
-                "✓ FASTER"
-            elseif speedup < 0.95
-                "✗ SLOWER"
-            else
-                "≈ SIMILAR"
-            end
-
-            println("$status $key: $(round(speedup, digits=2))x ($(round(change_pct, sigdigits=3))%)")
-            println("         Current: $(round(current_median, digits=2)) $unit | Baseline: $(round(baseline_median, digits=2)) $unit")
+            push!(table_data,
+                (
+                    string(key),
+                    baseline_median,
+                    current_median,
+                    unit,
+                    speedup,
+                    change_pct
+                ))
         end
     end
+
+    if isempty(table_data)
+        println("No comparable benchmarks found.")
+        return
+    end
+
+    # Create table with headers
+    headers = ["Benchmark", "Baseline", "Current", "Unit", "Speedup", "Change (%)"]
+
+    # Extract data into columns
+    benchmark_names = [row[1] for row in table_data]
+    baseline_vals = [round(row[2], digits = 3) for row in table_data]
+    current_vals = [round(row[3], digits = 3) for row in table_data]
+    units = [row[4] for row in table_data]
+    speedups = [round(row[5], digits = 3) for row in table_data]
+    changes = [round(row[6], digits = 2) for row in table_data]
+
+    # Create highlighters for improvements (green) and regressions (red)
+    # These highlight entire rows based on speedup value
+    hl_improvement = TextHighlighter(
+        (data, i, j) -> data[i, 5] > 1.05,  # Speedup column 5, >5% improvement
+        crayon"green"
+    )
+
+    hl_regression = TextHighlighter(
+        (data, i, j) -> data[i, 5] < 0.95,  # Speedup column 5, >5% regression
+        crayon"red"
+    )
+
+    # Print the table
+    pretty_table(
+        hcat(benchmark_names, baseline_vals, current_vals, units, speedups, changes);
+        column_labels = headers,
+        highlighters = [hl_improvement, hl_regression],
+        alignment = [:l, :r, :r, :c, :r, :r],
+        table_format = TextTableFormat(borders = text_table_borders__unicode_rounded)
+    )
+
+    # Print summary statistics
+    all_speedups = [row[5] for row in table_data]
+    n_improved = count(s -> s > 1.05, all_speedups)
+    n_regressed = count(s -> s < 0.95, all_speedups)
+    n_similar = length(all_speedups) - n_improved - n_regressed
+    geomean_speedup = exp(sum(log.(all_speedups)) / length(all_speedups))
+
+    println("\nSummary:")
+    println("  Geometric mean speedup: $(round(geomean_speedup, digits=3))x")
+    println("  Benchmarks improved:    $n_improved")
+    println("  Benchmarks regressed:   $n_regressed")
+    println("  Benchmarks similar:     $n_similar")
 end
 
 # Main execution
@@ -332,5 +386,11 @@ function main()
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    main()
+    # Filter logs from NetworkHistogram module
+    logger_filter = EarlyFilteredLogger(global_logger()) do args
+        return !(args._module === NetworkHistogram)
+    end
+    with_logger(logger_filter) do
+        main()
+    end
 end

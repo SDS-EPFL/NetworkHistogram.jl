@@ -46,134 +46,126 @@ function print_help()
     """)
 end
 
-function ensure_dependencies()
-    println("Checking dependencies...")
-
-    # Check if BenchmarkTools and JSON3 are available
+function ensure_dependencies(tries = 0)
+    tries == 0 && @info "Checking dependencies..."
+    # Check if benchmark dependencies are installed
     try
+        @eval using StaticArrays
         @eval using BenchmarkTools
         @eval using JSON3
-    catch
-        println("Installing required dependencies...")
-        Pkg.activate("test")
-        Pkg.add(["BenchmarkTools", "JSON3"])
-        Pkg.activate(".")
-    end
+        @eval using PrettyTables
+        @eval using LoggingExtras
 
-    println("Dependencies OK ✓")
+        @info "Dependencies OK ✓"
+    catch
+        if tries >= 2
+            error("Failed to install dependencies after multiple attempts.")
+        elseif tries == 1
+            @info "Trying to instantiate project..."
+            Pkg.instantiate()
+            ensure_dependencies(tries + 1)
+        else
+            @info "Activating benchmark project"
+            Pkg.activate("benchmark")
+            ensure_dependencies(tries + 1)
+        end
+    end
 end
 
 function run_baseline()
-    ensure_dependencies()
-
     baseline_file = joinpath("benchmark", "benchmark_results", "baseline.json")
 
     if isfile(baseline_file)
-        print("Baseline already exists. Overwrite? (y/N): ")
+        printstyled(
+            "Baseline already exists. Overwrite? (y/N): ", color = :light_yellow, blink = true)
         response = readline()
         if lowercase(strip(response)) != "y"
-            println("Aborted.")
+            @info "Aborted."
             return
         end
     end
 
-    println("\nRunning baseline benchmarks...")
-    println("This may take several minutes...\n")
+    @info "Running baseline benchmarks... \nThis may take several minutes...\n"
 
-    run(`julia --project=. benchmark/benchmark_optimization.jl $baseline_file`)
+    run(`julia --project=benchmark benchmark/benchmark_optimization.jl $baseline_file`)
 
-    println("\n✓ Baseline established at: $baseline_file")
-    println("\nNext steps:")
-    println("  1. Make your performance improvements")
-    println("  2. Run: julia run_benchmarks.jl current")
-    println("  3. Review the performance comparison")
+    @info "\n✓ Baseline established at: $baseline_file" *
+          "\n     Next steps: " *
+          "\n  1.  Make your performance improvements" *
+          "\n  2. Run: julia run_benchmarks.jl current" *
+          "\n  3. Review the performance comparison"
 end
 
 function run_current()
-    ensure_dependencies()
-
     baseline_file = joinpath("benchmark", "benchmark_results", "baseline.json")
 
     if !isfile(baseline_file)
-        println("⚠ Warning: No baseline found!")
-        println("Consider running: julia run_benchmarks.jl baseline")
-        println("\nContinuing anyway...\n")
+        @warn "⚠ Warning: No baseline found! \n Consider running: julia run_benchmarks.jl baseline"
+        @info "\nContinuing anyway...\n"
     end
 
     timestamp = Dates.format(Dates.now(), "yyyy-mm-ddTHH-MM-SS")
     current_file = joinpath("benchmark", "benchmark_results", "current_$timestamp.json")
 
-    println("Running current benchmarks...")
-    println("This may take several minutes...\n")
+    @info "Running current benchmarks... \n This may take several minutes...\n"
 
     if isfile(baseline_file)
-        run(`julia --project=. benchmark/benchmark_optimization.jl $current_file $baseline_file`)
+        run(`julia --project=benchmark benchmark/benchmark_optimization.jl $current_file $baseline_file`)
     else
-        run(`julia --project=. benchmark/benchmark_optimization.jl $current_file`)
+        run(`julia --project=benchmark benchmark/benchmark_optimization.jl $current_file`)
     end
 
-    println("\n✓ Results saved to: $current_file")
+    @info "✓ Results saved to: $current_file"
 end
 
 function compare_benchmarks(file1, file2)
-    ensure_dependencies()
-
     if !isfile(file1)
-        println("Error: File not found: $file1")
+        @error "Error: File not found: $file1"
         return
     end
 
     if !isfile(file2)
-        println("Error: File not found: $file2")
+        @error "Error: File not found: $file2"
         return
     end
 
-    println("Comparing benchmarks...")
-    println("  Baseline: $file2")
-    println("  Current:  $file1\n")
+    @info "Comparing benchmarks... \n  Baseline: $file2 \n  Current:  $file1\n"
 
     # Re-run comparison
-    run(`julia --project=. benchmark/benchmark_optimization.jl $file1 $file2`)
+    run(`julia --project=benchmark benchmark/benchmark_optimization.jl $file1 $file2`)
 end
 
 function clean_results()
     results_dir = joinpath("benchmark", "benchmark_results")
 
     if !isdir(results_dir)
-        println("No results directory found.")
+        @info "No results directory found."
         return
     end
 
     files = filter(f -> endswith(f, ".json") && f != "baseline.json", readdir(results_dir))
 
     if isempty(files)
-        println("No benchmark results to clean.")
+        @info "No benchmark results to clean."
         return
     end
 
-    println("Found $(length(files)) benchmark result file(s):")
+    @info "Found $(length(files)) benchmark result file(s):"
     for f in files
-        println("  - $f")
+        @info "  - $f"
     end
 
-    print("\nDelete these files? (y/N): ")
+    printstyled("\nDelete these files? (y/N): ", color = :light_yellow, blink = true)
     response = readline()
 
     if lowercase(strip(response)) == "y"
         for f in files
             rm(joinpath(results_dir, f))
         end
-        println("✓ Cleaned $(length(files)) file(s)")
+        @info "✓ Cleaned $(length(files)) file(s)"
     else
-        println("Aborted.")
+        @info "Aborted."
     end
-end
-
-function run_tests()
-    ensure_dependencies()
-
-    println("Running full test suite...")
-    Pkg.test()
 end
 
 # Main execution
@@ -183,6 +175,8 @@ function main()
         return
     end
 
+    ensure_dependencies()
+
     command = ARGS[1]
 
     if command == "baseline"
@@ -191,8 +185,7 @@ function main()
         run_current()
     elseif command == "compare"
         if length(ARGS) < 3
-            println("Error: compare requires two file arguments")
-            println("Usage: julia run_benchmarks.jl compare FILE1 FILE2")
+            @error "Error: compare requires two file arguments \n Usage: julia run_benchmarks.jl compare FILE1 FILE2"
             return
         end
         compare_benchmarks(ARGS[2], ARGS[3])
@@ -201,7 +194,7 @@ function main()
     elseif command == "test"
         run_tests()
     else
-        println("Error: Unknown command '$command'")
+        @info "Error: Unknown command '$command'"
         print_help()
     end
 end
