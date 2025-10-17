@@ -2,23 +2,26 @@
 FastSymArray - Efficient symmetric matrix storage
 
 This module provides `SymArray`, a memory-efficient storage for symmetric matrices
-that only stores the upper triangle (including diagonal) of the matrix.
+that only stores the upper triangle (including diagonal) of the matrix using a sparse matrix.
 """
 module FastSymArray
 
-import Base: eltype, convert
-export SymArray, eltype
+using SparseArrays
+using LinearAlgebra
+import Base: eltype, convert, size, getindex, setindex!, copy!, similar,
+             IndexStyle, axes, length, iterate, copyto!
+export SymArray, eltype, copy_with_array!, sum_tri_with_diag
 
 """
     SymArray{F} <: AbstractArray{F, 2}
 
-A symmetric matrix that stores only the upper triangle to save memory.
+A symmetric matrix that stores only the upper triangle using a sparse matrix.
 
 For a k×k symmetric matrix, only k(k+1)/2 elements are stored instead of k².
+This implementation uses Julia's SparseMatrixCSC for efficient storage and access.
 
 # Fields
-- `d::Dict{Tuple{Int, Int}, F}`: Dictionary storing (i,j) → value for i ≤ j
-- `k::Int`: Dimension of the square matrix
+- `uppertrian::SparseMatrixCSC{F, Int}`: Sparse matrix storing the upper triangle (i ≤ j)
 
 # Examples
 ```julia
@@ -36,9 +39,8 @@ sym = SymArray(A)
 
 See also: [`sum_tri_with_diag`](@ref)
 """
-mutable struct SymArray{F} <: AbstractArray{F, 2}
-    d::Dict{Tuple{Int, Int}, F}
-    k::Int
+mutable struct SymArray{F} <: AbstractSparseMatrix{F, Int}
+    uppertrian::SparseMatrixCSC{F, Int}
 end
 
 """
@@ -57,19 +59,48 @@ sym = SymArray(5, 0.0)  # 5×5 matrix of zeros
 """
 function SymArray(k::T, d::F) where {F, T <: Real}
     k > 0 || throw(ArgumentError("Matrix dimension k=$k must be positive"))
-    return SymArray{F}(
-        Dict{Tuple{Int, Int}, F}(minmax(i, j) => deepcopy(d) for i in 1:k
-        for j in i:k),
-        k)
+
+    # Pre-allocate arrays with exact size needed for upper triangle
+    n_elements = div(k * (k + 1), 2)
+    I_indices = Vector{Int}(undef, n_elements)
+    J_indices = Vector{Int}(undef, n_elements)
+    values = Vector{F}(undef, n_elements)
+
+    idx = 1
+    for j in 1:k
+        for i in 1:j
+            I_indices[idx] = i
+            J_indices[idx] = j
+            values[idx] = deepcopy(d)
+            idx += 1
+        end
+    end
+
+    uppertrian = sparse(I_indices, J_indices, values, k, k)
+    return SymArray{F}(uppertrian)
 end
 
 function SymArray(k::T, d::AbstractArray) where {T <: Real}
     k > 0 || throw(ArgumentError("Matrix dimension k=$k must be positive"))
-    return SymArray{typeof(d)}(
-        Dict{Tuple{Int, Int}, typeof(d)}(minmax(i, j) => deepcopy(d)
-        for i in 1:k
-        for j in i:k),
-        k)
+
+    # Pre-allocate arrays with exact size needed for upper triangle
+    n_elements = div(k * (k + 1), 2)
+    I_indices = Vector{Int}(undef, n_elements)
+    J_indices = Vector{Int}(undef, n_elements)
+    values = Vector{typeof(d)}(undef, n_elements)
+
+    idx = 1
+    for j in 1:k
+        for i in 1:j
+            I_indices[idx] = i
+            J_indices[idx] = j
+            values[idx] = deepcopy(d)
+            idx += 1
+        end
+    end
+
+    uppertrian = sparse(I_indices, J_indices, values, k, k)
+    return SymArray{typeof(d)}(uppertrian)
 end
 
 """
@@ -98,18 +129,61 @@ function SymArray(d::AbstractMatrix{F}) where {F}
     return convert(SymArray{F}, d)
 end
 
-function Base.size(a::SymArray)
-    return (a.k, a.k)
+function size(a::SymArray)
+    return size(a.uppertrian)
 end
 
-Base.@propagate_inbounds function Base.getindex(a::SymArray, i, j)
-    @boundscheck checkbounds(a, i, j)
-    @inbounds return a.d[minmax(i, j)]
+# IndexStyle trait - use CartesianIndex for 2D arrays
+Base.IndexStyle(::Type{<:SymArray}) = IndexCartesian()
+
+# axes function
+function axes(a::SymArray)
+    return axes(a.uppertrian)
 end
 
-Base.@propagate_inbounds function Base.setindex!(a::SymArray, v, i, j)
+# length function
+function length(a::SymArray)
+    return length(a.uppertrian)
+end
+
+Base.@propagate_inbounds function getindex(a::SymArray{F}, i::Int, j::Int) where {F}
     @boundscheck checkbounds(a, i, j)
-    @inbounds a.d[minmax(i, j)] = v
+    if i <= j
+        @inbounds return a.uppertrian[i, j]
+    else
+        @inbounds return a.uppertrian[j, i]
+    end
+end
+
+Base.@propagate_inbounds function setindex!(a::SymArray{F}, v, i::Int, j::Int) where {F}
+    @boundscheck checkbounds(a, i, j)
+    if i <= j
+        @inbounds a.uppertrian[i, j] = v
+    else
+        @inbounds a.uppertrian[j, i] = v
+    end
+end
+
+# similar function for creating similar arrays
+function similar(a::SymArray{F}) where {F}
+    k = size(a, 1)
+    return SymArray(k, zero(F))
+end
+
+function similar(a::SymArray, ::Type{T}) where {T}
+    k = size(a, 1)
+    return SymArray(k, zero(T))
+end
+
+function similar(a::SymArray, ::Type{T}, dims::Dims{2}) where {T}
+    dims[1] == dims[2] || throw(ArgumentError("SymArray must be square"))
+    return SymArray(dims[1], zero(T))
+end
+
+function copyto!(dest::SymArray{F}, src::SymArray{F}) where {F}
+    size(dest) == size(src) || throw(DimensionMismatch("arrays must have the same size"))
+    copyto!(dest.uppertrian, src.uppertrian)
+    return dest
 end
 
 """
@@ -124,7 +198,7 @@ Efficiently sum all elements in the symmetric matrix (counting each off-diagonal
 This is more efficient than `sum(a)` because it only sums stored elements.
 """
 function sum_tri_with_diag(a::SymArray)
-    return sum(values(a.d))
+    return sum(a.uppertrian.nzval)
 end
 
 function eltype(::SymArray{F}) where {F}
@@ -134,26 +208,122 @@ end
 function convert(::Type{SymArray{F}}, a::AbstractMatrix{F}) where {F}
     @assert size(a, 1) == size(a, 2)
     k = size(a, 1)
-    res = SymArray(k, a[1, 1])
-    for j in axes(a, 2)
-        for i in axes(a, 1)
-            if i <= j
-                res[i, j] = a[i, j]
-            end
+
+    # Directly build upper triangle sparse matrix
+    # Pre-allocate with exact size needed
+    I_indices = Vector{Int}(undef, div(k * (k + 1), 2))
+    J_indices = Vector{Int}(undef, div(k * (k + 1), 2))
+    values = Vector{F}(undef, div(k * (k + 1), 2))
+
+    idx = 1
+    for j in 1:k
+        for i in 1:j
+            I_indices[idx] = i
+            J_indices[idx] = j
+            values[idx] = a[i, j]
+            idx += 1
         end
     end
-    return res
+
+    uppertrian = sparse(I_indices, J_indices, values, k, k)
+    return SymArray{F}(uppertrian)
 end
 
 function convert(::Type{AbstractMatrix{F}}, a::SymArray{F}) where {F}
-    k = a.k
-    m = zeros(F, k, k)
-    for i in 1:k
-        for j in i:k
-            m[i, j] = a[i, j]
+    # Reconstruct full symmetric matrix from upper triangle
+    # m = upper + upper' - Diagonal(upper) creates the full symmetric matrix
+    m = a.uppertrian + transpose(a.uppertrian) -
+        SparseArrays.spdiagm(0 => diag(a.uppertrian))
+    return Matrix(m)
+end
+
+function copy!(dest::SymArray{F}, src::SymArray{F}) where {F <: Real}
+    copyto!(dest, src)
+    return dest
+end
+
+function copy_with_array!(dest::SymArray{F}, src::SymArray{F}) where {F <: AbstractArray}
+    @inbounds for index in eachindex(dest)
+        copyto!(dest[index], src[index])
+    end
+    return dest
+end
+
+# Broadcasting support - custom style to maintain symmetric structure
+struct SymArrayStyle <: Broadcast.AbstractArrayStyle{2} end
+SymArrayStyle(::Val{2}) = SymArrayStyle()
+
+Base.BroadcastStyle(::Type{<:SymArray}) = SymArrayStyle()
+
+# When broadcasting with scalars or other styles, keep SymArrayStyle
+Base.BroadcastStyle(::SymArrayStyle, ::Broadcast.DefaultArrayStyle{0}) = SymArrayStyle()
+Base.BroadcastStyle(::Broadcast.DefaultArrayStyle{0}, ::SymArrayStyle) = SymArrayStyle()
+
+# When broadcasting with other arrays, use default array style
+function Base.BroadcastStyle(::SymArrayStyle, ::Broadcast.DefaultArrayStyle)
+    Broadcast.DefaultArrayStyle{2}()
+end
+function Base.BroadcastStyle(::Broadcast.DefaultArrayStyle, ::SymArrayStyle)
+    Broadcast.DefaultArrayStyle{2}()
+end
+
+# When broadcasting between SymArrays, keep SymArrayStyle
+Base.BroadcastStyle(::SymArrayStyle, ::SymArrayStyle) = SymArrayStyle()
+
+# Custom similar for broadcasted SymArrays
+function Base.similar(
+        bc::Broadcast.Broadcasted{SymArrayStyle}, ::Type{ElType}) where {ElType}
+    # For mutating functions that return Nothing, don't allocate a SymArray
+    if ElType === Nothing
+        # Find the first SymArray in the broadcast expression
+        A = find_first_symarray(bc)
+        # Return a similar array with the same element type as the input
+        # This allows the broadcast to work but the result won't be used
+        return similar(Array{ElType}, axes(bc))
+    end
+    # Find the first SymArray in the broadcast expression to get dimensions
+    A = find_first_symarray(bc)
+    return SymArray(size(A, 1), zero(ElType))
+end
+
+# Helper function to find a SymArray in the broadcast tree
+find_first_symarray(bc::Broadcast.Broadcasted) = find_first_symarray(bc.args)
+find_first_symarray(args::Tuple{}) = error("No SymArray found in broadcast")
+find_first_symarray(args::Tuple) = find_first_symarray_in_args(args[1], Base.tail(args))
+
+# Handle direct SymArray
+find_first_symarray_in_args(x::SymArray, rest) = x
+# Handle Extruded SymArray (from broadcasting)
+find_first_symarray_in_args(x::Broadcast.Extruded{<:SymArray}, rest) = x.x
+# Handle nested broadcasts
+find_first_symarray_in_args(x::Broadcast.Broadcasted, rest) = find_first_symarray(x)
+# Keep searching
+find_first_symarray_in_args(x, rest) = find_first_symarray(rest)
+
+# Custom copyto! for efficient broadcasting
+function Base.copyto!(dest::SymArray, bc::Broadcast.Broadcasted{SymArrayStyle})
+    # Broadcast only over the upper triangle for efficiency
+    axes(dest) == axes(bc) || throwdm(axes(dest), axes(bc))
+    bc′ = Broadcast.preprocess(dest, bc)
+
+    # Only compute upper triangle
+    k = size(dest, 1)
+    @inbounds for j in 1:k
+        for i in 1:j
+            dest[i, j] = bc′[CartesianIndex(i, j)]
         end
     end
-    return m
+    return dest
+end
+
+# For broadcasting that returns Nothing (like with mutating functions)
+function Base.copyto!(dest::AbstractArray, bc::Broadcast.Broadcasted{SymArrayStyle})
+    # Fall back to default behavior
+    Broadcast.materialize!(dest, bc)
+end
+
+@inline function throwdm(axdest, axsrc)
+    throw(DimensionMismatch("destination axes $axdest are not compatible with source axes $axsrc"))
 end
 
 end

@@ -85,7 +85,7 @@ node partition) fits the observed network data.
 # Returns
 - `Float64`: Total log-likelihood value
 """
-@inline function loglikelihood(a::Assignment)
+function loglikelihood(a::Assignment)
     return FastSymArray.sum_tri_with_diag(a.log_likelihood)
 end
 
@@ -101,7 +101,7 @@ Get the group label for a specific node.
 # Returns
 - `Int`: Group index that the node belongs to
 """
-@inline function group(a::Assignment, node::Int)
+function group(a::Assignment, node::Int)
     @boundscheck checkbounds(a.node_labels, node)
     @inbounds return a.node_labels[node]
 end

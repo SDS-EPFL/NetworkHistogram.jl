@@ -21,8 +21,8 @@ function Assignment(
         for (v, e) in iterate_neighbors(edge_list, u)
             g2 = node_labels[v]
             if v < u
-                counts[minmax(g1, g2)...] += 1
-                realized[minmax(g1, g2)...][e] += 1
+                counts[g1, g2] += 1
+                realized[g1, g2][e] += 1
             else
                 break
             end
@@ -30,8 +30,6 @@ function Assignment(
     end
 
     for g2 in 1:n_groups, g1 in g2:n_groups
-        counts[g1, g2] = counts[minmax(g1, g2)...]
-        realized[g1, g2] = realized[minmax(g1, g2)...]
         _fast_normalization!(
             estimated[g1, g2], realized[g1, g2], counts[g1, g2])
     end
@@ -86,20 +84,24 @@ end
 function copy_categorical_workspace!(
         dest::WorkspaceDiscreteSwap, src_assignment::Assignment)
     # In-place copy without allocation
-    copy_symarray!(dest.log_likelihood_per_group, src_assignment.log_likelihood)
+    copy!(dest.log_likelihood_per_group, src_assignment.log_likelihood)
 
-    src_ws = src_assignment.additional_workspace
     # Copy counts (scalars)
-    copy_symarray!(dest.counts, src_ws.counts)
+    copy!(dest.counts, src_assignment.additional_workspace.counts)
 
     # Copy vector-valued SymArrays element by element
-    @inbounds for key in keys(src_ws.realized.d)
-        copyto!(dest.realized.d[key], src_ws.realized.d[key])
-    end
+    # Use sparse matrix iteration instead of .d dictionary
+    k = size(dest.realized, 1)
+    copy_with_array!(dest.realized, src_assignment.additional_workspace.realized)
+    copy_with_array!(dest.estimated, src_assignment.additional_workspace.estimated)
 
-    @inbounds for key in keys(src_ws.estimated.d)
-        copyto!(dest.estimated.d[key], src_ws.estimated.d[key])
-    end
+    # @inbounds for j in 1:k, i in 1:j
+    #     copyto!(dest.realized[i, j], src_ws.realized[i, j])
+    # end
+
+    # @inbounds for j in 1:k, i in 1:j
+    #     copyto!(dest.estimated[i, j], src_ws.estimated[i, j])
+    # end
 end
 
 function make_swap_workspace!(ws::WorkspaceDiscreteSwap, a::Assignment)
@@ -109,20 +111,23 @@ end
 
 function revert_swap_workspace!(a::Assignment, ws::WorkspaceDiscreteSwap)
     # Use in-place copy instead of deepcopy
-    copy_symarray!(a.log_likelihood, ws.log_likelihood_per_group)
+    copy!(a.log_likelihood, ws.log_likelihood_per_group)
 
-    as = a.additional_workspace
-    copy_symarray!(as.log_likelihood_per_group, ws.log_likelihood_per_group)
-    copy_symarray!(as.counts, ws.counts)
+    copy!(a.additional_workspace.log_likelihood_per_group, ws.log_likelihood_per_group)
+    copy!(a.additional_workspace.counts, ws.counts)
 
     # Copy vector-valued SymArrays element by element
-    @inbounds for key in keys(ws.realized.d)
-        copyto!(as.realized.d[key], ws.realized.d[key])
-    end
+    # Use sparse matrix iteration instead of .d dictionary
+    k = size(ws.realized, 1)
+    copy_with_array!(a.additional_workspace.realized, ws.realized)
+    copy_with_array!(a.additional_workspace.estimated, ws.estimated)
+    # @inbounds for j in 1:k, i in 1:j
+    #     copyto!(as.realized[i, j], ws.realized[i, j])
+    # end
 
-    @inbounds for key in keys(ws.estimated.d)
-        copyto!(as.estimated.d[key], ws.estimated.d[key])
-    end
+    # @inbounds for j in 1:k, i in 1:j
+    #     copyto!(as.estimated[i, j], ws.estimated[i, j])
+    # end
 end
 
 function apply_swap!(as::Assignment, s::Swap{<:WorkspaceDiscreteSwap})
@@ -135,20 +140,20 @@ function apply_swap!(as::Assignment, s::Swap{<:WorkspaceDiscreteSwap})
             continue
         end
         g_inter = as.node_labels[node]
-        as.additional_workspace.counts[minmax(gu, g_inter)...] -= 1
-        as.additional_workspace.realized[minmax(gu, g_inter)...][e] -= 1
-        as.additional_workspace.counts[minmax(gv, g_inter)...] += 1
-        as.additional_workspace.realized[minmax(gv, g_inter)...][e] += 1
+        as.additional_workspace.counts[gu, g_inter] -= 1
+        as.additional_workspace.realized[gu, g_inter][e] -= 1
+        as.additional_workspace.counts[gv, g_inter] += 1
+        as.additional_workspace.realized[gv, g_inter][e] += 1
     end
     for (node, e) in iterate_neighbors(as.edges, v)
         if node == u
             continue
         end
         g_inter = as.node_labels[node]
-        as.additional_workspace.counts[minmax(gv, g_inter)...] -= 1
-        as.additional_workspace.realized[minmax(gv, g_inter)...][e] -= 1
-        as.additional_workspace.counts[minmax(gu, g_inter)...] += 1
-        as.additional_workspace.realized[minmax(gu, g_inter)...][e] += 1
+        as.additional_workspace.counts[gv, g_inter] -= 1
+        as.additional_workspace.realized[gv, g_inter][e] -= 1
+        as.additional_workspace.counts[gu, g_inter] += 1
+        as.additional_workspace.realized[gu, g_inter][e] += 1
     end
     _fast_normalization!.(as.additional_workspace.estimated,
         as.additional_workspace.realized, as.additional_workspace.counts)
@@ -164,8 +169,8 @@ function apply_swap!(as::Assignment, s::Swap{<:WorkspaceDiscreteSwap})
                     g1, g2])
         end
     end
-
-    as.log_likelihood = deepcopy(as.additional_workspace.log_likelihood_per_group)
+    copy!(as.log_likelihood, as.additional_workspace.log_likelihood_per_group)
+    # as.log_likelihood = deepcopy(as.additional_workspace.log_likelihood_per_group)
 end
 
 function _fast_normalization!(p::AbstractVector, r::AbstractVector, c::Real)

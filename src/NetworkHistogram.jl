@@ -5,6 +5,7 @@ using ProgressMeter
 import StatsAPI: loglikelihood, fit, params
 import Base: convert, eltype, zero
 using Distributions
+using LinearAlgebra
 
 include("utils/include.jl")
 using .FastSymArray

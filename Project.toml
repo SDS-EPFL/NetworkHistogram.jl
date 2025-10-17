@@ -5,12 +5,15 @@ authors = ["Charles Dufour", "Jake Grainger"]
 
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Graphons = "e0c12bfd-47d7-434e-afb7-632611640ca5"
 JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 StatsAPI = "82ae8749-77ed-4fe6-ae5f-f523153014b0"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
@@ -29,7 +32,9 @@ LightMCExt = "LightMC"
 MakieExt = "Makie"
 
 [compat]
+Dates = "1.11.0"
 Graphons = "0.1.0"
+LinearAlgebra = "1.12.0"
 Printf = "1.11.0"
 
 [extras]

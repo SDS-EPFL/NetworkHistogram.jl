@@ -20,6 +20,7 @@ Examples:
 """
 
 using Pkg
+using Dates
 
 # Ensure we're in the right directory
 cd(dirname(@__DIR__))
@@ -65,7 +66,7 @@ end
 function run_baseline()
     ensure_dependencies()
 
-    baseline_file = joinpath("dev", "benchmark_results", "baseline.json")
+    baseline_file = joinpath("benchmark", "benchmark_results", "baseline.json")
 
     if isfile(baseline_file)
         print("Baseline already exists. Overwrite? (y/N): ")
@@ -79,7 +80,7 @@ function run_baseline()
     println("\nRunning baseline benchmarks...")
     println("This may take several minutes...\n")
 
-    run(`julia --project=. benchmark_optimization.jl $baseline_file`)
+    run(`julia --project=. benchmark/benchmark_optimization.jl $baseline_file`)
 
     println("\n✓ Baseline established at: $baseline_file")
     println("\nNext steps:")
@@ -91,7 +92,7 @@ end
 function run_current()
     ensure_dependencies()
 
-    baseline_file = joinpath("dev", "benchmark_results", "baseline.json")
+    baseline_file = joinpath("benchmark", "benchmark_results", "baseline.json")
 
     if !isfile(baseline_file)
         println("⚠ Warning: No baseline found!")
@@ -100,15 +101,15 @@ function run_current()
     end
 
     timestamp = Dates.format(Dates.now(), "yyyy-mm-ddTHH-MM-SS")
-    current_file = joinpath("dev", "benchmark_results", "current_$timestamp.json")
+    current_file = joinpath("benchmark", "benchmark_results", "current_$timestamp.json")
 
     println("Running current benchmarks...")
     println("This may take several minutes...\n")
 
     if isfile(baseline_file)
-        run(`julia --project=. benchmark_optimization.jl $current_file $baseline_file`)
+        run(`julia --project=. benchmark/benchmark_optimization.jl $current_file $baseline_file`)
     else
-        run(`julia --project=. benchmark_optimization.jl $current_file`)
+        run(`julia --project=. benchmark/benchmark_optimization.jl $current_file`)
     end
 
     println("\n✓ Results saved to: $current_file")
@@ -132,11 +133,11 @@ function compare_benchmarks(file1, file2)
     println("  Current:  $file1\n")
 
     # Re-run comparison
-    run(`julia --project=. benchmark_optimization.jl $file1 $file2`)
+    run(`julia --project=. benchmark/benchmark_optimization.jl $file1 $file2`)
 end
 
 function clean_results()
-    results_dir = joinpath("dev", "benchmark_results")
+    results_dir = joinpath("benchmark", "benchmark_results")
 
     if !isdir(results_dir)
         println("No results directory found.")

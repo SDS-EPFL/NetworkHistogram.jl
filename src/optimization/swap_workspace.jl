@@ -23,25 +23,16 @@ mutable struct Swap{W}
     workspace::W
 end
 
-function copy_symarray!(dest::SymArray, src::SymArray)
-    # In-place copy without allocation
-    # SymArray stores data in a dictionary .d
-    # Just overwrite the values - don't empty first!
-    @inbounds for key in keys(src.d)
-        dest.d[key] = src.d[key]
-    end
-end
-
 function make_swap_workspace!(ws, a::Assignment)
     # Use in-place copy instead of deepcopy
-    copy_symarray!(ws.θ, a.θ)
-    copy_symarray!(ws.log_likelihood_per_group, a.log_likelihood)
+    copy!(ws.θ, a.θ)
+    copy!(ws.log_likelihood_per_group, a.log_likelihood)
 end
 
 function revert_swap_workspace!(a::Assignment, ws)
     # Use in-place copy instead of deepcopy
-    copy_symarray!(a.θ, ws.θ)
-    copy_symarray!(a.log_likelihood, ws.log_likelihood_per_group)
+    copy!(a.θ, ws.θ)
+    copy!(a.log_likelihood, ws.log_likelihood_per_group)
 end
 
 function make_swap(a::Assignment, id)
