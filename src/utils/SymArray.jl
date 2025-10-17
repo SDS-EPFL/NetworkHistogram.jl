@@ -10,7 +10,7 @@ using SparseArrays
 using LinearAlgebra
 import Base: eltype, convert, size, getindex, setindex!, copy!, similar,
              IndexStyle, axes, length, iterate, copyto!
-export SymArray, eltype, copy_with_array!, sum_tri_with_diag
+export SymArray, eltype, deepcopy!, sum_tri_with_diag
 
 """
     SymArray{F} <: AbstractArray{F, 2}
@@ -242,7 +242,7 @@ function copy!(dest::SymArray{F}, src::SymArray{F}) where {F <: Real}
     return dest
 end
 
-function copy_with_array!(dest::SymArray{F}, src::SymArray{F}) where {F <: AbstractArray}
+function deepcopy!(dest::SymArray{F}, src::SymArray{F}) where {F <: AbstractArray}
     @inbounds for index in eachindex(dest)
         copyto!(dest[index], src[index])
     end

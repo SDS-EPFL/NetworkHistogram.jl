@@ -22,6 +22,7 @@ preprocessing, optimization, and returns an Assignment representing the estimate
 # Examples
 ```julia
 using NetworkHistogram, LinearAlgebra
+import NetworkHistogram: nethist, GreedyParams
 
 # Binary network
 A = Symmetric(rand(0:1, 100, 100))
@@ -31,8 +32,7 @@ A[diagind(A)] .= 0
 initial_labels = rand(1:3, 100)
 
 # Fit network histogram
-params = GreedyParams()
-result = nethist(A, Bernoulli(0.5), initial_labels, params)
+result = nethist(A, Bernoulli(0.5), initial_labels,  GreedyParams())
 
 # Extract results
 block_matrix = result.θ

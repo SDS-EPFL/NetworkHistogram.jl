@@ -92,8 +92,8 @@ function copy_categorical_workspace!(
     # Copy vector-valued SymArrays element by element
     # Use sparse matrix iteration instead of .d dictionary
     k = size(dest.realized, 1)
-    copy_with_array!(dest.realized, src_assignment.additional_workspace.realized)
-    copy_with_array!(dest.estimated, src_assignment.additional_workspace.estimated)
+    deepcopy!(dest.realized, src_assignment.additional_workspace.realized)
+    deepcopy!(dest.estimated, src_assignment.additional_workspace.estimated)
 
     # @inbounds for j in 1:k, i in 1:j
     #     copyto!(dest.realized[i, j], src_ws.realized[i, j])
@@ -119,8 +119,8 @@ function revert_swap_workspace!(a::Assignment, ws::WorkspaceDiscreteSwap)
     # Copy vector-valued SymArrays element by element
     # Use sparse matrix iteration instead of .d dictionary
     k = size(ws.realized, 1)
-    copy_with_array!(a.additional_workspace.realized, ws.realized)
-    copy_with_array!(a.additional_workspace.estimated, ws.estimated)
+    deepcopy!(a.additional_workspace.realized, ws.realized)
+    deepcopy!(a.additional_workspace.estimated, ws.estimated)
     # @inbounds for j in 1:k, i in 1:j
     #     copyto!(as.realized[i, j], ws.realized[i, j])
     # end
