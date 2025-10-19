@@ -96,7 +96,7 @@ function init!(estimator::SumGreedyEstimator, data, initial_labels)
             if !isnothing(data[i, j]) && i < j
                 label_i = initial_labels[i]
                 edge_value = data[i, j]
-                
+
                 # Update both main and swap workspaces
                 add_counts!(estimator.realized[label_i, label_j], edge_value)
                 add_counts!(estimator.realized_swap[label_i, label_j], edge_value)
@@ -130,74 +130,68 @@ The algorithm proceeds as follows:
 
 # Returns
 - `node_labels::Vector{Int}`: Optimized group assignments for each node
-
-# Performance Notes
-- Uses views to avoid allocating temporary arrays
-- Swap workspace allows O(n) evaluation of swap quality
-- Early stopping can significantly reduce computation time
 """
 function estimate(estimator::SumGreedyEstimator, data, initial_labels; progress = true)
     # Initialize counts and realized values from data
     init!(estimator, data, initial_labels)
     initialise_stop_rule!(estimator.stop_rule, estimator)
-    
+
     # Compute initial loss
     current_loss = score(estimator)
-    
+
     # Start with initial labeling
     node_labels = copy(initial_labels)
-    n_groups = length(unique(node_labels))
-    
+
     # Progress tracking
     pbar = ProgressUnknown(
-        enabled = progress, 
-        showspeed = true, 
+        enabled = progress,
+        showspeed = true,
         desc = "Greedy search: "
     )
-    
+
     # Main optimization loop
     for iter in 1:(estimator.max_iter)
         # Select two nodes to potentially swap
         index1, index2 = select_indices_swap(node_labels, estimator.node_swap_rule)
-        
+
         group1 = node_labels[index1]
         group2 = node_labels[index2]
-        
+
         # Only process if nodes are in different groups
         if group1 != group2
             # Get edge lists for both nodes (views for performance)
             edges_node1 = view(data, :, index1)
             edges_node2 = view(data, :, index2)
-            
+
             # Update swap workspace to reflect the proposed swap
             for j in axes(data, 1)
                 # Skip the swapped nodes themselves
                 if j == index1 || j == index2
                     continue
                 end
-                
+
                 group_j = node_labels[j]
-                
+
                 # Update for node1: remove from group1, add to group2
                 remove_counts!(estimator.realized_swap[group1, group_j], edges_node1[j])
                 estimator.counts_swap[group1, group_j] -= 1
                 add_counts!(estimator.realized_swap[group2, group_j], edges_node1[j])
                 estimator.counts_swap[group2, group_j] += 1
-                
+
                 # Update for node2: remove from group2, add to group1
                 remove_counts!(estimator.realized_swap[group2, group_j], edges_node2[j])
                 estimator.counts_swap[group2, group_j] -= 1
                 add_counts!(estimator.realized_swap[group1, group_j], edges_node2[j])
                 estimator.counts_swap[group1, group_j] += 1
             end
-            
+
             # Tentatively apply swap
             node_labels[index1] = group2
             node_labels[index2] = group1
-            
+
             # Compute new loss
             new_loss = loss_function(estimator.realized_swap, estimator.counts_swap)
-            
+
             # Accept or reject swap
             if new_loss < current_loss
                 # Accept: commit swap to main workspace
@@ -212,13 +206,14 @@ function estimate(estimator::SumGreedyEstimator, data, initial_labels; progress 
                 copy!(estimator.counts_swap, estimator.counts)
             end
         end
-        
+
         # Update progress bar
-        next!(pbar; showvalues = [
-            ("loss", current_loss), 
-            info_to_print(estimator.stop_rule)
-        ])
-        
+        next!(
+            pbar; showvalues = [
+                ("loss", current_loss),
+                info_to_print(estimator.stop_rule)
+            ])
+
         # Check stopping criterion
         if stopping_rule(current_loss, estimator.stop_rule)
             @info "Stopping criterion met at iteration $iter"
@@ -226,7 +221,7 @@ function estimate(estimator::SumGreedyEstimator, data, initial_labels; progress 
             break
         end
     end
-    
+
     return node_labels
 end
 
@@ -260,7 +255,7 @@ Uses @inbounds for speed. Assumes symmetric structure.
 function loss_function(realized, counts)
     total_loss = 0.0
     total_edges = 0.0
-    
+
     # Iterate over upper triangle to avoid double-counting
     @inbounds for j in axes(realized, 2)
         for i in axes(realized, 1)
@@ -273,10 +268,12 @@ function loss_function(realized, counts)
                     total_loss += n_edges - sum_squares / n_edges
                     total_edges += n_edges
                 end
+            else
+                break
             end
         end
     end
-    
+
     return total_edges > 0 ? total_loss / total_edges : 0.0
 end
 
@@ -361,28 +358,28 @@ data, counts, counts_swap, realized, realized_swap = prepare_data_cat(A, k=5)
 - The symmetric array structure avoids redundant storage
 """
 function prepare_data_cat(
-        A::AbstractMatrix{<:Real}, 
-        k::Int; 
-        m::Int = length(unique(A)), 
+        A::AbstractMatrix{<:Real},
+        k::Int;
+        m::Int = length(unique(A)),
         has_zero::Bool = zero(eltype(A)) in A
-    )
-    @info "Preparing data for categorical SBM with $m categories and $k groups."
-    
+)
+    @debug "Preparing data for categorical SBM with $m categories and $k groups."
+
     # Adjust data if zero-indexed (shift to 1-indexing for Julia)
     if has_zero
-        @info "Data contains zero values, using 1-based indexing."
+        @debug "Data contains zero values, using 1-based indexing."
         data = A .+ 1
     else
         data = A
     end
-    
+
     # Initialize count matrices
     counts = SymArray(k, 0)
     counts_swap = SymArray(k, 0)
-    
+
     # Initialize realized value tensors (k×k matrices of m-dimensional vectors)
     realized = SymArray(zero(SizedMatrix{k, k, MVector{m, Int}}))
     realized_swap = SymArray(zero(SizedMatrix{k, k, MVector{m, Int}}))
-    
+
     return data, counts, counts_swap, realized, realized_swap
 end
