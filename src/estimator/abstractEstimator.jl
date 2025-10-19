@@ -97,10 +97,10 @@ function init!(estimator::SumGreedyEstimator, data, initial_labels)
                 label_i = initial_labels[i]
 
                 # Update both main and swap workspaces
-                add_counts!(estimator.realized[label_i, label_j], edge_value)
-                add_counts!(estimator.realized_swap[label_i, label_j], edge_value)
-                estimator.counts[label_i, label_j] += 1
-                estimator.counts_swap[label_i, label_j] += 1
+                add_realized(estimator.realized[label_i, label_j], edge_value)
+                add_realized(estimator.realized_swap[label_i, label_j], edge_value)
+                add_counts!(estimator.counts, edge_value, label_i, label_j)
+                add_counts!(estimator.counts_swap, edge_value, label_i, label_j)
             end
         end
     end
@@ -174,16 +174,16 @@ function estimate(estimator::SumGreedyEstimator, data, initial_labels; progress 
                 edge_val_2 = data[j, index2]
 
                 # Update for node1: remove from group1, add to group2
-                remove_counts!(estimator.realized_swap[group1, group_j], edge_val_1)
-                estimator.counts_swap[group1, group_j] -= 1
-                add_counts!(estimator.realized_swap[group2, group_j], edge_val_1)
-                estimator.counts_swap[group2, group_j] += 1
+                remove_realized(estimator.realized_swap[group1, group_j], edge_val_1)
+                remove_counts!(estimator.counts_swap, edge_val_1, group1, group_j)
+                add_realized(estimator.realized_swap[group2, group_j], edge_val_1)
+                add_counts!(estimator.counts_swap, edge_val_1, group2, group_j)
 
                 # Update for node2: remove from group2, add to group1
-                remove_counts!(estimator.realized_swap[group2, group_j], edge_val_2)
-                estimator.counts_swap[group2, group_j] -= 1
-                add_counts!(estimator.realized_swap[group1, group_j], edge_val_2)
-                estimator.counts_swap[group1, group_j] += 1
+                remove_realized(estimator.realized_swap[group2, group_j], edge_val_2)
+                remove_counts!(estimator.counts_swap, edge_val_2, group2, group_j)
+                add_realized(estimator.realized_swap[group1, group_j], edge_val_2)
+                add_counts!(estimator.counts_swap, edge_val_2, group1, group_j)
             end
 
             # Tentatively apply swap
@@ -286,39 +286,51 @@ end
 # ============================================================================
 
 """
-    add_counts!(parameter::AbstractArray, data_value::AbstractArray)
+    add_realized(parameter::AbstractArray, data_value::AbstractArray)
 
 Add array data value to parameter array (for categorical edge values).
 """
-@inline function add_counts!(parameter::AbstractArray, data_value::AbstractArray)
+@inline function add_realized(parameter::AbstractArray, data_value::AbstractArray)
     @inbounds parameter .+= data_value
 end
 
 """
-    remove_counts!(parameter::AbstractArray, data_value::AbstractArray)
+    remove_realized(parameter::AbstractArray, data_value::AbstractArray)
 
 Remove array data value from parameter array (for categorical edge values).
 """
-@inline function remove_counts!(parameter::AbstractArray, data_value::AbstractArray)
+@inline function remove_realized(parameter::AbstractArray, data_value::AbstractArray)
     @inbounds parameter .-= data_value
 end
 
 """
-    add_counts!(parameter::AbstractArray, data_value::Real)
+    add_realized(parameter::AbstractArray, data_value::Real)
 
 Increment the count for a specific category (for categorical edge values).
 """
-@inline function add_counts!(parameter::AbstractArray, data_value::Real)
+@inline function add_realized(parameter::AbstractArray, data_value::Real)
     @inbounds parameter[data_value] += 1
 end
 
 """
-    remove_counts!(parameter::AbstractArray, data_value::Real)
+    remove_realized(parameter::AbstractArray, data_value::Real)
 
 Decrement the count for a specific category (for categorical edge values).
 """
-@inline function remove_counts!(parameter::AbstractArray, data_value::Real)
+@inline function remove_realized(parameter::AbstractArray, data_value::Real)
     @inbounds parameter[data_value] -= 1
+end
+
+@inline function add_counts!(
+        counts::AbstractArray{T}, data_value::Real, group_i::Int, group_j::Int) where {T <:
+                                                                                       Real}
+    @inbounds counts[group_i, group_j] += one(T)
+end
+
+@inline function remove_counts!(
+        counts::AbstractArray{T}, data_value::Real, group_i::Int, group_j::Int) where {T <:
+                                                                                       Real}
+    @inbounds counts[group_i, group_j] -= one(T)
 end
 
 # ============================================================================
