@@ -255,23 +255,18 @@ For each pair of groups (i,j):
 # Returns
 - Normalized loss value (lower is better)
 
-# Performance
-Uses @inbounds for speed. Assumes symmetric structure.
+# !warning
+    This will need to be modified for other data types!
 """
-@inline function loss_function(realized, counts)
+@inline function loss_function(realized, counts::AbstractArray{<:Real})
     total_loss = 0.0
     total_edges = 0.0
 
-    # Iterate over upper triangle to avoid double-counting
-    # Reorder loops for better cache locality (j outer, i inner)
     @inbounds for j in axes(realized, 2)
-        for i in 1:j  # More efficient iteration pattern
+        for i in 1:j
             n_edges = counts[i, j]
-            # Combine conditions to reduce branching
             if n_edges > 0
-                # Compute sum of squares of realized values inline
                 sum_squares = sum(abs2, realized[i, j])
-                # Add variance-like term to loss
                 total_loss += n_edges - sum_squares / n_edges
                 total_edges += n_edges
             end
@@ -279,6 +274,28 @@ Uses @inbounds for speed. Assumes symmetric structure.
     end
 
     return total_edges > 0 ? total_loss / total_edges : 0.0
+end
+
+# this assumes that sum realized = counts
+@inline function loss_function(realized, counts)
+    total_loss = 0.0
+    total_edges = 0.0
+    @inbounds for j in axes(realized, 2)
+        for i in 1:j
+            for m in eachindex(realized[i, j])
+                total_edges += realized[i, j][m]
+                total_loss += realized[i, j][m] *
+                              (1 -
+                               _fast_div_(realized[i, j][m], counts[i, j][m]))
+            end
+        end
+    end
+    return total_loss / total_edges
+end
+
+@inline function _fast_div_(num::Real, denom::Real)
+    num == 0.0 && denom == 0.0 && return 0.0
+    return num / denom
 end
 
 # ============================================================================
@@ -331,6 +348,16 @@ end
         counts::AbstractArray{T}, data_value::Real, group_i::Int, group_j::Int) where {T <:
                                                                                        Real}
     @inbounds counts[group_i, group_j] -= one(T)
+end
+
+@inline function add_counts!(
+        counts::AbstractArray, data_value, group_i::Int, group_j::Int)
+    @inbounds counts[group_i, group_j] .+= 1#data_value
+end
+
+@inline function remove_counts!(
+        counts::AbstractArray, data_value, group_i::Int, group_j::Int)
+    @inbounds counts[group_i, group_j] .-= 1#data_value
 end
 
 # ============================================================================
