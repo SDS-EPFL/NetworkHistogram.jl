@@ -1,134 +1,388 @@
+"""
+    SBMEstimator
+
+Abstract base type for all Stochastic Block Model (SBM) estimators.
+
+All concrete estimator types should implement:
+- `estimate(estimator, data, initial_labels; progress=true)`: Main estimation function
+- `score(estimator)`: Return current objective value (if applicable)
+"""
 abstract type SBMEstimator end
 
-struct SumGreedyEstimator{C, S, P} <: SBMEstimator
-    counts::C # counts of possible edges between groups
+"""
+    SumGreedyEstimator{C, S, NodeR, StopR}
+
+Greedy optimization estimator for Stochastic Block Models using sum-of-squares loss.
+
+This estimator uses a greedy node-swapping algorithm to minimize the loss function:
+    L = (1/n_edges) * Σᵢⱼ [count(i,j) - ||realized(i,j)||²/count(i,j)]
+
+The algorithm iteratively swaps nodes between groups to improve the block model fit.
+
+# Type Parameters
+- `C`: Type for count matrices (usually symmetric array of integers)
+- `S`: Type for realized value matrices (usually symmetric array of vectors)
+- `NodeR <: NodeSwapRule`: Rule for selecting which nodes to swap
+- `StopR <: StopRule`: Rule for determining when to stop optimization
+
+# Fields
+- `counts::C`: Number of possible edges between each pair of groups
+- `counts_swap::C`: Working copy of counts for swap evaluation
+- `realized::S`: Sum of observed edge values between each pair of groups
+- `realized_swap::S`: Working copy of realized values for swap evaluation
+- `max_iter::Int`: Maximum number of iterations
+- `node_swap_rule::NodeR`: Strategy for selecting nodes to swap
+- `stop_rule::StopR`: Criterion for early stopping
+
+# Example
+```julia
+k = 5  # number of groups
+counts = SymArray(k, 0)
+counts_swap = SymArray(k, 0)
+realized = SymArray(zero(SizedMatrix{k, k, MVector{m, Int}}))
+realized_swap = SymArray(zero(SizedMatrix{k, k, MVector{m, Int}}))
+
+estimator = SumGreedyEstimator(
+    counts, counts_swap, realized, realized_swap,
+    max_iter=100_000,
+    node_swap_rule=RandomGroupSwap(),
+    stop_rule=PreviousBestValue(1000, Inf, :min)
+)
+
+labels = estimate(estimator, data, initial_labels)
+```
+"""
+struct SumGreedyEstimator{C, S, NodeR <: NodeSwapRule, StopR <: StopRule} <: SBMEstimator
+    counts::C
     counts_swap::C
-    realized::S # sums of observed Λ between groups
+    realized::S
     realized_swap::S
     max_iter::Int
-    stop_rule::P
+    node_swap_rule::NodeR
+    stop_rule::StopR
 end
 
-function init!(es::SumGreedyEstimator, data, initial_labels)
+"""
+    score(estimator::SumGreedyEstimator)
+
+Compute the current objective value (loss) for the estimator.
+
+Lower values indicate better fit to a block model structure.
+"""
+function score(estimator::SumGreedyEstimator)
+    return loss_function(estimator.realized, estimator.counts)
+end
+
+"""
+    init!(estimator::SumGreedyEstimator, data, initial_labels)
+
+Initialize the estimator's count and realized value matrices from data.
+
+Iterates through the upper triangle of the adjacency matrix (i < j) to avoid
+double-counting edges in undirected graphs. Updates both the main and swap
+workspace matrices.
+
+# Arguments
+- `estimator::SumGreedyEstimator`: The estimator to initialize
+- `data::AbstractMatrix`: Network adjacency matrix
+- `initial_labels::Vector{Int}`: Initial group assignments for nodes
+"""
+function init!(estimator::SumGreedyEstimator, data, initial_labels)
+    # Iterate over upper triangle to avoid double-counting edges
     for j in axes(data, 2)
         label_j = initial_labels[j]
-        for i in axes(data, 1) # double counting edges in undirected graphs
+        for i in axes(data, 1)
+            # Only process upper triangle (i < j) for undirected graphs
             if !isnothing(data[i, j]) && i < j
-                add_counts!(es.realized[initial_labels[i], label_j], data[i, j])
-                add_counts!(es.realized_swap[initial_labels[i], label_j], data[i, j])
-                es.counts[initial_labels[i], label_j] += 1
-                es.counts_swap[initial_labels[i], label_j] += 1
+                label_i = initial_labels[i]
+                edge_value = data[i, j]
+                
+                # Update both main and swap workspaces
+                add_counts!(estimator.realized[label_i, label_j], edge_value)
+                add_counts!(estimator.realized_swap[label_i, label_j], edge_value)
+                estimator.counts[label_i, label_j] += 1
+                estimator.counts_swap[label_i, label_j] += 1
             end
         end
     end
 end
 
-function estimate(es::SumGreedyEstimator, data, initial_labels)
-    init!(es, data, initial_labels)
-    loss = loss_function(es.realized, es.counts)
-    es.stop_rule.previous_best_value = loss
-    ## optim
+"""
+    estimate(estimator::SumGreedyEstimator, data, initial_labels; progress=true)
+
+Estimate node group assignments using greedy optimization with node swapping.
+
+# Algorithm
+The algorithm proceeds as follows:
+1. Initialize count and realized value matrices from data and initial labels
+2. For each iteration:
+   a. Select two nodes to swap according to the swap rule
+   b. Tentatively swap them and update statistics
+   c. Accept swap if it improves the loss, otherwise revert
+   d. Check stopping criterion
+3. Return final node labels
+
+# Arguments
+- `estimator::SumGreedyEstimator`: The estimator with configuration
+- `data::AbstractMatrix`: Network adjacency matrix (n × n)
+- `initial_labels::Vector{Int}`: Initial group assignments (length n)
+- `progress::Bool`: Whether to show progress bar (default: true)
+
+# Returns
+- `node_labels::Vector{Int}`: Optimized group assignments for each node
+
+# Performance Notes
+- Uses views to avoid allocating temporary arrays
+- Swap workspace allows O(n) evaluation of swap quality
+- Early stopping can significantly reduce computation time
+"""
+function estimate(estimator::SumGreedyEstimator, data, initial_labels; progress = true)
+    # Initialize counts and realized values from data
+    init!(estimator, data, initial_labels)
+    initialise_stop_rule!(estimator.stop_rule, estimator)
+    
+    # Compute initial loss
+    current_loss = score(estimator)
+    
+    # Start with initial labeling
     node_labels = copy(initial_labels)
-    k = length(unique(node_labels))
-    pbar = ProgressUnknown(enabled = true, showspeed = true, desc = "Greedy search: ")
-    for iter in 1:(es.max_iter)
-        next!(pbar)
-        groups = StatsBase.sample(1:k, 2; replace = false)
-        index1 = rand(findall(x -> x == groups[1], node_labels))
-        index2 = rand(findall(x -> x == groups[2], node_labels))
-        #index1, index2 = StatsBase.sample(1:length(node_labels), 2; replace = false)
-        g1 = node_labels[index1]
-        g2 = node_labels[index2]
-        if g1 == g2
-            continue
-        end
-        edges_index1 = view(data, :, index1)
-        edges_index2 = view(data, :, index2)
-        for j in axes(data, 1)
-            if j == index1 || j == index2
-                continue
+    n_groups = length(unique(node_labels))
+    
+    # Progress tracking
+    pbar = ProgressUnknown(
+        enabled = progress, 
+        showspeed = true, 
+        desc = "Greedy search: "
+    )
+    
+    # Main optimization loop
+    for iter in 1:(estimator.max_iter)
+        # Select two nodes to potentially swap
+        index1, index2 = select_indices_swap(node_labels, estimator.node_swap_rule)
+        
+        group1 = node_labels[index1]
+        group2 = node_labels[index2]
+        
+        # Only process if nodes are in different groups
+        if group1 != group2
+            # Get edge lists for both nodes (views for performance)
+            edges_node1 = view(data, :, index1)
+            edges_node2 = view(data, :, index2)
+            
+            # Update swap workspace to reflect the proposed swap
+            for j in axes(data, 1)
+                # Skip the swapped nodes themselves
+                if j == index1 || j == index2
+                    continue
+                end
+                
+                group_j = node_labels[j]
+                
+                # Update for node1: remove from group1, add to group2
+                remove_counts!(estimator.realized_swap[group1, group_j], edges_node1[j])
+                estimator.counts_swap[group1, group_j] -= 1
+                add_counts!(estimator.realized_swap[group2, group_j], edges_node1[j])
+                estimator.counts_swap[group2, group_j] += 1
+                
+                # Update for node2: remove from group2, add to group1
+                remove_counts!(estimator.realized_swap[group2, group_j], edges_node2[j])
+                estimator.counts_swap[group2, group_j] -= 1
+                add_counts!(estimator.realized_swap[group1, group_j], edges_node2[j])
+                estimator.counts_swap[group1, group_j] += 1
             end
-            gj = node_labels[j]
-            remove_counts!(es.realized_swap[g1, gj], edges_index1[j])
-            es.counts_swap[g1, gj] -= 1
-            add_counts!(es.realized_swap[g2, gj], edges_index1[j])
-            es.counts_swap[g2, gj] += 1
-            remove_counts!(es.realized_swap[g2, gj], edges_index2[j])
-            es.counts_swap[g2, gj] -= 1
-            add_counts!(es.realized_swap[g1, gj], edges_index2[j])
-            es.counts_swap[g1, gj] += 1
+            
+            # Tentatively apply swap
+            node_labels[index1] = group2
+            node_labels[index2] = group1
+            
+            # Compute new loss
+            new_loss = loss_function(estimator.realized_swap, estimator.counts_swap)
+            
+            # Accept or reject swap
+            if new_loss < current_loss
+                # Accept: commit swap to main workspace
+                deepcopy!(estimator.realized, estimator.realized_swap)
+                copy!(estimator.counts, estimator.counts_swap)
+                current_loss = new_loss
+            else
+                # Reject: revert labels and workspace
+                node_labels[index1] = group1
+                node_labels[index2] = group2
+                deepcopy!(estimator.realized_swap, estimator.realized)
+                copy!(estimator.counts_swap, estimator.counts)
+            end
         end
-        node_labels[index1] = g2
-        node_labels[index2] = g1
-
-        loss_new = loss_function(es.realized_swap, es.counts_swap)
-        if loss_new < es.stop_rule.previous_best_value
-            es.stop_rule.previous_best_value = loss_new
-            es.stop_rule.iterations_since_best = 0
-            deepcopy!(es.realized, es.realized_swap)
-            copy!(es.counts, es.counts_swap)
-            loss = loss_new
-        else
-            # revert swap
-            node_labels[index1] = g1
-            node_labels[index2] = g2
-            deepcopy!(es.realized_swap, es.realized)
-            copy!(es.counts_swap, es.counts)
-            es.stop_rule.iterations_since_best += 1
-        end
-
-        if es.stop_rule.iterations_since_best >= es.stop_rule.k
+        
+        # Update progress bar
+        next!(pbar; showvalues = [
+            ("loss", current_loss), 
+            info_to_print(estimator.stop_rule)
+        ])
+        
+        # Check stopping criterion
+        if stopping_rule(current_loss, estimator.stop_rule)
             @info "Stopping criterion met at iteration $iter"
             finish!(pbar)
             break
         end
     end
-    return node_labels, losses
+    
+    return node_labels
 end
 
+"""
+    loss_function(realized, counts)
+
+Compute the normalized sum-of-squares loss for block model fitting.
+
+The loss measures how well a block model fits the data by computing:
+    L = (1/N) * Σᵢⱼ [count(i,j) - ||realized(i,j)||²/count(i,j)]
+
+where the sum is over the upper triangle (i ≤ j) to avoid double-counting.
+
+# Mathematical Interpretation
+For each pair of groups (i,j):
+- `count(i,j)` is the number of edges between groups i and j
+- `realized(i,j)` is a vector of observed edge values
+- The term `||realized(i,j)||²/count(i,j)` measures concentration of values
+- Lower loss indicates better block structure (more homogeneous within blocks)
+
+# Arguments
+- `realized`: Symmetric array of realized edge value sums between groups
+- `counts`: Symmetric array of edge counts between groups
+
+# Returns
+- Normalized loss value (lower is better)
+
+# Performance
+Uses @inbounds for speed. Assumes symmetric structure.
+"""
 function loss_function(realized, counts)
-    loss = 0.0
+    total_loss = 0.0
+    total_edges = 0.0
+    
+    # Iterate over upper triangle to avoid double-counting
     @inbounds for j in axes(realized, 2)
         for i in axes(realized, 1)
             if i <= j
-                # θ = realized[i, j] ./ counts[i, j]
-                # loss += sum(xlogx, θ) * counts[i, j]
-                loss += sum(counts[i, j] - sum(abs2, realized[i, j]) / counts[i, j])
+                n_edges = counts[i, j]
+                if n_edges > 0
+                    # Compute sum of squares of realized values
+                    sum_squares = sum(abs2, realized[i, j])
+                    # Add variance-like term to loss
+                    total_loss += n_edges - sum_squares / n_edges
+                    total_edges += n_edges
+                end
             end
         end
     end
-    return loss
+    
+    return total_edges > 0 ? total_loss / total_edges : 0.0
 end
 
+# ============================================================================
+# Count manipulation helpers
+# ============================================================================
+
+"""
+    add_counts!(parameter::AbstractArray, data_value::AbstractArray)
+
+Add array data value to parameter array (for categorical edge values).
+"""
 function add_counts!(parameter::AbstractArray, data_value::AbstractArray)
     @inbounds parameter .+= data_value
 end
 
+"""
+    remove_counts!(parameter::AbstractArray, data_value::AbstractArray)
+
+Remove array data value from parameter array (for categorical edge values).
+"""
 function remove_counts!(parameter::AbstractArray, data_value::AbstractArray)
     @inbounds parameter .-= data_value
 end
 
+"""
+    add_counts!(parameter::AbstractArray, data_value::Real)
+
+Increment the count for a specific category (for categorical edge values).
+"""
 function add_counts!(parameter::AbstractArray, data_value::Real)
     @inbounds parameter[data_value] += 1
 end
 
+"""
+    remove_counts!(parameter::AbstractArray, data_value::Real)
+
+Decrement the count for a specific category (for categorical edge values).
+"""
 function remove_counts!(parameter::AbstractArray, data_value::Real)
     @inbounds parameter[data_value] -= 1
 end
 
-##
-using Makie
+# ============================================================================
+# Data preparation utilities
+# ============================================================================
 
-function Makie.convert_arguments(
-        ::Type{<:AbstractPlot}, graphon::DecoratedSBM, k::Int = 1)
-    x = collect(0:0.01:1)
-    return (x, x, [_extract_param(graphon(xi, yi), k) for xi in x, yi in x])
-end
+"""
+    prepare_data_cat(A::AbstractMatrix{<:Real}, k; m=length(unique(A)), has_zero=zero(eltype(A)) in A)
 
-function _extract_param(d::Distribution, k::Int)
-    return params(d)[k]
-end
+Prepare categorical network data for SumGreedyEstimator.
 
-function _extract_param(d::DiscreteNonParametric, k::Int)
-    return params(d)[2][k]
+Creates the necessary data structures (count matrices and realized value tensors)
+for estimating a categorical Stochastic Block Model with k groups.
+
+# Arguments
+- `A::AbstractMatrix{<:Real}`: Adjacency matrix with categorical edge values
+- `k::Int`: Number of groups to partition nodes into
+- `m::Int`: Number of edge categories (default: inferred from unique values in A)
+- `has_zero::Bool`: Whether the data contains zero values (default: auto-detected)
+
+# Returns
+A tuple containing:
+- `data`: Preprocessed adjacency matrix (shifted if zero-indexed)
+- `counts`: Symmetric k×k array for edge counts (initialized to 0)
+- `counts_swap`: Workspace copy of counts for swap evaluation
+- `realized`: Symmetric k×k array of m-dimensional count vectors (initialized to 0)
+- `realized_swap`: Workspace copy of realized for swap evaluation
+
+# Example
+```julia
+# Network with 3 edge types (0, 1, 2) for no edge, layer 1, layer 2
+A = rand(0:2, 100, 100)
+A = (A + A') .÷ 2  # Make symmetric
+
+data, counts, counts_swap, realized, realized_swap = prepare_data_cat(A, k=5)
+```
+
+# Notes
+- If data contains zeros, they are shifted to 1-indexing for categorical representation
+- The realized arrays use StaticArrays.MVector for performance
+- The symmetric array structure avoids redundant storage
+"""
+function prepare_data_cat(
+        A::AbstractMatrix{<:Real}, 
+        k::Int; 
+        m::Int = length(unique(A)), 
+        has_zero::Bool = zero(eltype(A)) in A
+    )
+    @info "Preparing data for categorical SBM with $m categories and $k groups."
+    
+    # Adjust data if zero-indexed (shift to 1-indexing for Julia)
+    if has_zero
+        @info "Data contains zero values, using 1-based indexing."
+        data = A .+ 1
+    else
+        data = A
+    end
+    
+    # Initialize count matrices
+    counts = SymArray(k, 0)
+    counts_swap = SymArray(k, 0)
+    
+    # Initialize realized value tensors (k×k matrices of m-dimensional vectors)
+    realized = SymArray(zero(SizedMatrix{k, k, MVector{m, Int}}))
+    realized_swap = SymArray(zero(SizedMatrix{k, k, MVector{m, Int}}))
+    
+    return data, counts, counts_swap, realized, realized_swap
 end

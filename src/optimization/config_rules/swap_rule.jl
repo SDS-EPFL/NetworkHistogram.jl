@@ -14,14 +14,22 @@ current assignment `node_assignment`.
 """
 select_swap
 
-function select_indices_swap(assignment::Assignment, ::RandomNodeSwap)
-    return Tuple(StatsBase.sample(1:number_nodes(assignment), 2; replace = false))
+function select_indices_swap(node_labels::AbstractVector{Int}, ::RandomNodeSwap)
+    return Tuple(StatsBase.sample(1:length(node_labels), 2; replace = false))
 end
 
-function select_indices_swap(assignment::Assignment, ::RandomGroupSwap)
-    groups = StatsBase.sample(
-        1:number_groups(assignment), 2; replace = false)
-    index1 = rand(findall(x -> x == groups[1], assignment.node_labels))
-    index2 = rand(findall(x -> x == groups[2], assignment.node_labels))
+function select_indices_swap(node_labels::AbstractVector{Int}, ::RandomGroupSwap,
+        k::Int = length(unique(node_labels)))
+    groups = StatsBase.sample(1:k, 2; replace = false)
+    index1 = rand(findall(x -> x == groups[1], node_labels))
+    index2 = rand(findall(x -> x == groups[2], node_labels))
     return index1, index2
+end
+
+function select_indices_swap(a::Assignment, rule::NodeSwapRule)
+    select_indices_swap(a.node_labels, rule)
+end
+
+function select_indices_swap(assignment::Assignment, rule::RandomGroupSwap)
+    return select_indices_swap(assignment.node_labels, rule, number_groups(assignment))
 end

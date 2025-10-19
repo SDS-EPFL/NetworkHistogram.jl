@@ -7,25 +7,35 @@ end
 function initialise_stop_rule!(stop_rule::StopRule, a, g)
 end
 
-# default score is the log likelihood
 function score(a::Assignment)
-    return loglikelihood(a) #/ binomial(number_nodes(a), 2)
+    return loglikelihood(a)
 end
 
-mutable struct PreviousBestValue{T} <: StopRule
+mutable struct PreviousBestValue{T, S} <: StopRule
     k::Int
     previous_best_value::T
     iterations_since_best::Int
-    function PreviousBestValue(k::Int, x::T = -Inf) where {T <: Real}
-        @assert k > 0
-        # queue stores the best values and at most k subsequent values
-        new{T}(k, x, 0)
-    end
 end
+
+function PreviousBestValue(k::Int, x::T = -Inf, best = :max) where {T <: Real}
+    @argcheck k > 0
+    PreviousBestValue{T, Val(best)}(k, x, 0)
+end
+
+const PreviousMaxValue{T} = PreviousBestValue{T, Val(:max)}
+const PreviousMinValue{T} = PreviousBestValue{T, Val(:min)}
 
 function initialise_stop_rule!(stop_rule::PreviousBestValue, a)
     score_value = score(a)
     stop_rule.previous_best_value = score_value
+end
+
+function compare_to_best(current, past, ::PreviousMaxValue)
+    return current > past
+end
+
+function compare_to_best(current, past, ::PreviousMinValue)
+    return current < past
 end
 
 """
@@ -39,16 +49,17 @@ Returns a Bool with true if we should stop the optimization based on the `stop_r
 """
 stopping_rule
 
-function stopping_rule(assignment::Assignment, stop_rule::PreviousBestValue)
-    score_value = score(assignment)
-    if score_value > stop_rule.previous_best_value
-        stop_rule.previous_best_value = score_value
+function stopping_rule(loss::T, stop_rule::PreviousBestValue{T}) where {T <: Real}
+    if compare_to_best(loss, stop_rule.previous_best_value, stop_rule)
+        stop_rule.previous_best_value = loss
         stop_rule.iterations_since_best = 0
     else
         stop_rule.iterations_since_best += 1
     end
     return stop_rule.iterations_since_best >= stop_rule.k
 end
+
+stopping_rule(a, stop_rule::StopRule) = stopping_rule(score(a), stop_rule)
 
 function info_to_print(stop_rule::PreviousBestValue)
     ("stalled iter: ", stop_rule.iterations_since_best)
