@@ -89,13 +89,12 @@ workspace matrices.
 """
 function init!(estimator::SumGreedyEstimator, data, initial_labels)
     # Iterate over upper triangle to avoid double-counting edges
-    for j in axes(data, 2)
+    @inbounds for j in axes(data, 2)
         label_j = initial_labels[j]
-        for i in axes(data, 1)
-            # Only process upper triangle (i < j) for undirected graphs
-            if !isnothing(data[i, j]) && i < j
+        for i in 1:(j - 1)  # More efficient than i < j check inside loop
+            edge_value = data[i, j]
+            if !isnothing(edge_value)
                 label_i = initial_labels[i]
-                edge_value = data[i, j]
 
                 # Update both main and swap workspaces
                 add_counts!(estimator.realized[label_i, label_j], edge_value)
@@ -149,6 +148,9 @@ function estimate(estimator::SumGreedyEstimator, data, initial_labels; progress 
         desc = "Greedy search: "
     )
 
+    # Update progress bar only every N iterations to reduce overhead
+    progress_update_interval = max(1, estimator.max_iter ÷ 1000)
+
     # Main optimization loop
     for iter in 1:(estimator.max_iter)
         # Select two nodes to potentially swap
@@ -159,29 +161,28 @@ function estimate(estimator::SumGreedyEstimator, data, initial_labels; progress 
 
         # Only process if nodes are in different groups
         if group1 != group2
-            # Get edge lists for both nodes (views for performance)
-            edges_node1 = view(data, :, index1)
-            edges_node2 = view(data, :, index2)
-
             # Update swap workspace to reflect the proposed swap
-            for j in axes(data, 1)
+            # Using @inbounds for performance - loop bounds are guaranteed safe
+            @inbounds for j in axes(data, 1)
                 # Skip the swapped nodes themselves
                 if j == index1 || j == index2
                     continue
                 end
 
                 group_j = node_labels[j]
+                edge_val_1 = data[j, index1]
+                edge_val_2 = data[j, index2]
 
                 # Update for node1: remove from group1, add to group2
-                remove_counts!(estimator.realized_swap[group1, group_j], edges_node1[j])
+                remove_counts!(estimator.realized_swap[group1, group_j], edge_val_1)
                 estimator.counts_swap[group1, group_j] -= 1
-                add_counts!(estimator.realized_swap[group2, group_j], edges_node1[j])
+                add_counts!(estimator.realized_swap[group2, group_j], edge_val_1)
                 estimator.counts_swap[group2, group_j] += 1
 
                 # Update for node2: remove from group2, add to group1
-                remove_counts!(estimator.realized_swap[group2, group_j], edges_node2[j])
+                remove_counts!(estimator.realized_swap[group2, group_j], edge_val_2)
                 estimator.counts_swap[group2, group_j] -= 1
-                add_counts!(estimator.realized_swap[group1, group_j], edges_node2[j])
+                add_counts!(estimator.realized_swap[group1, group_j], edge_val_2)
                 estimator.counts_swap[group1, group_j] += 1
             end
 
@@ -208,11 +209,16 @@ function estimate(estimator::SumGreedyEstimator, data, initial_labels; progress 
         end
 
         # Update progress bar
-        next!(
-            pbar; showvalues = [
-                ("loss", current_loss),
-                info_to_print(estimator.stop_rule)
-            ])
+
+        # Update progress bar only periodically to reduce overhead
+        if progress && (iter % progress_update_interval == 0 || iter == estimator.max_iter)
+            update!(
+                pbar, iter;
+                showvalues = [
+                    ("loss", current_loss),
+                    info_to_print(estimator.stop_rule)
+                ])
+        end
 
         # Check stopping criterion
         if stopping_rule(current_loss, estimator.stop_rule)
@@ -252,24 +258,22 @@ For each pair of groups (i,j):
 # Performance
 Uses @inbounds for speed. Assumes symmetric structure.
 """
-function loss_function(realized, counts)
+@inline function loss_function(realized, counts)
     total_loss = 0.0
     total_edges = 0.0
 
     # Iterate over upper triangle to avoid double-counting
+    # Reorder loops for better cache locality (j outer, i inner)
     @inbounds for j in axes(realized, 2)
-        for i in axes(realized, 1)
-            if i <= j
-                n_edges = counts[i, j]
-                if n_edges > 0
-                    # Compute sum of squares of realized values
-                    sum_squares = sum(abs2, realized[i, j])
-                    # Add variance-like term to loss
-                    total_loss += n_edges - sum_squares / n_edges
-                    total_edges += n_edges
-                end
-            else
-                break
+        for i in 1:j  # More efficient iteration pattern
+            n_edges = counts[i, j]
+            # Combine conditions to reduce branching
+            if n_edges > 0
+                # Compute sum of squares of realized values inline
+                sum_squares = sum(abs2, realized[i, j])
+                # Add variance-like term to loss
+                total_loss += n_edges - sum_squares / n_edges
+                total_edges += n_edges
             end
         end
     end
@@ -286,7 +290,7 @@ end
 
 Add array data value to parameter array (for categorical edge values).
 """
-function add_counts!(parameter::AbstractArray, data_value::AbstractArray)
+@inline function add_counts!(parameter::AbstractArray, data_value::AbstractArray)
     @inbounds parameter .+= data_value
 end
 
@@ -295,7 +299,7 @@ end
 
 Remove array data value from parameter array (for categorical edge values).
 """
-function remove_counts!(parameter::AbstractArray, data_value::AbstractArray)
+@inline function remove_counts!(parameter::AbstractArray, data_value::AbstractArray)
     @inbounds parameter .-= data_value
 end
 
@@ -304,7 +308,7 @@ end
 
 Increment the count for a specific category (for categorical edge values).
 """
-function add_counts!(parameter::AbstractArray, data_value::Real)
+@inline function add_counts!(parameter::AbstractArray, data_value::Real)
     @inbounds parameter[data_value] += 1
 end
 
@@ -313,7 +317,7 @@ end
 
 Decrement the count for a specific category (for categorical edge values).
 """
-function remove_counts!(parameter::AbstractArray, data_value::Real)
+@inline function remove_counts!(parameter::AbstractArray, data_value::Real)
     @inbounds parameter[data_value] -= 1
 end
 
