@@ -5,6 +5,7 @@ authors = ["Charles Dufour", "Jake Grainger"]
 
 [deps]
 ArgCheck = "dce04be8-c92d-5529-be00-80e4d2c0e197"
+Clustering = "aaaa29a8-35af-508c-8bc3-b662a17a0fe5"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Graphons = "e0c12bfd-47d7-434e-afb7-632611640ca5"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -29,6 +30,7 @@ MakieExt = "Makie"
 
 [compat]
 ArgCheck = "2.5.0"
+Clustering = "0.15.8"
 Graphons = "0.1.0"
 LinearAlgebra = "1.12.0"
 
