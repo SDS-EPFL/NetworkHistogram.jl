@@ -174,16 +174,20 @@ function estimate(estimator::SumGreedyEstimator, data, initial_labels; progress 
                 edge_val_2 = data[j, index2]
 
                 # Update for node1: remove from group1, add to group2
-                remove_realized(estimator.realized_swap[group1, group_j], edge_val_1)
-                remove_counts!(estimator.counts_swap, edge_val_1, group1, group_j)
-                add_realized(estimator.realized_swap[group2, group_j], edge_val_1)
-                add_counts!(estimator.counts_swap, edge_val_1, group2, group_j)
+                if !isnothing(edge_val_1)
+                    remove_realized(estimator.realized_swap[group1, group_j], edge_val_1)
+                    remove_counts!(estimator.counts_swap, edge_val_1, group1, group_j)
+                    add_realized(estimator.realized_swap[group2, group_j], edge_val_1)
+                    add_counts!(estimator.counts_swap, edge_val_1, group2, group_j)
+                end
 
                 # Update for node2: remove from group2, add to group1
-                remove_realized(estimator.realized_swap[group2, group_j], edge_val_2)
-                remove_counts!(estimator.counts_swap, edge_val_2, group2, group_j)
-                add_realized(estimator.realized_swap[group1, group_j], edge_val_2)
-                add_counts!(estimator.counts_swap, edge_val_2, group1, group_j)
+                if !isnothing(edge_val_2)
+                    remove_realized(estimator.realized_swap[group2, group_j], edge_val_2)
+                    remove_counts!(estimator.counts_swap, edge_val_2, group2, group_j)
+                    add_realized(estimator.realized_swap[group1, group_j], edge_val_2)
+                    add_counts!(estimator.counts_swap, edge_val_2, group1, group_j)
+                end
             end
 
             # Tentatively apply swap

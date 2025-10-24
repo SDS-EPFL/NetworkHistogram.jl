@@ -204,3 +204,31 @@ function _compute_theta_and_ll(node_labels, dists::EdgeList{Dist{D}},
     end
     return θ, log_likelihood
 end
+
+function get_probability_matrix(
+        a::Assignment, default_dist = nothing, node_labels = a.node_labels)
+    θ = unwrap.(a.θ)
+    D = typeof(first(θ))
+    if isnothing(default_dist)
+        try
+            default_dist = zero(θ[1, 1])
+        catch e
+            if !isa(e, MethodError)
+                rethrow(e)
+            end
+            error("Please provide a default distribution for the diagonal as it could not be inferred")
+        end
+    end
+    n = length(node_labels)
+    A = Array{D, 2}(undef, n, n)
+    for j in 1:n
+        for i in 1:n
+            if i == j
+                A[i, i] = default_dist
+            else
+                A[i, j] = θ[node_labels[i], node_labels[j]]
+            end
+        end
+    end
+    return A
+end

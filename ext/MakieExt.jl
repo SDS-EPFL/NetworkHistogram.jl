@@ -10,7 +10,7 @@ using Makie
 using StatsBase: countmap
 
 import NetworkHistogram: get_probability_matrix, Assignment, heatmap_params,
-                         number_nodes, number_groups, Dist, BlockModel
+                         number_nodes, number_groups, Dist, unwrap
 import Distributions
 import StatsAPI
 
@@ -30,17 +30,6 @@ function Makie.convert_arguments(::Type{<:AbstractPlot}, a::Assignment)
     params_matrix = map(_extract_params, get_probability_matrix(a))
     ps = (getindex.(params_matrix, i) for i in 1:length(params_matrix[1, 2]))
     return ps
-end
-
-"""
-    Makie.convert_arguments(::Type{<:Heatmap}, sbm::BlockModel)
-
-Convert a BlockModel to heatmap arguments for Bernoulli distributions.
-"""
-function Makie.convert_arguments(::Type{<:Heatmap},
-        sbm::BlockModel{D}) where {D <: Union{
-        Dist{T}, T} where {T <: NetworkHistogram.Bernoulli}}
-    return (0:0.01:1, 0:0.01:1, (x, y) -> first(StatsAPI.params(sbm[x, y])))
 end
 
 """
@@ -104,49 +93,6 @@ function heatmap_params(a; colormap = :binary, ordering = false,
         label = "Parameter value", width = ceil(Int, sqrt(default_size)))
     resize_to_layout!(fig)
     return fig
-end
-
-"""
-    order_groups(a::Assignment, latents::AbstractVector)
-
-Order groups based on true latent variables (heuristic alignment).
-
-This is a heuristic approach to match estimated groups to ground truth orderings
-by analyzing the overlap between sorted latents and group assignments.
-
-# Arguments
-- `a::Assignment`: The assignment with estimated groups
-- `latents::AbstractVector`: True latent variables (e.g., block memberships)
-
-# Returns
-- Permutation vector for reordering groups
-"""
-function order_groups(a::Assignment, latents::AbstractVector)
-    n = number_nodes(a)
-    k = number_groups(a)
-    sort_perm = sortperm(latents)
-    sorted_group_labels = a.node_labels[sort_perm]
-    dummy_group_labels = repeat(1:k, inner = n ÷ k + 1)[1:n]
-    counts = Dict(group => countmap(dummy_group_labels[sorted_group_labels .== group])
-    for group in 1:k)
-    return sort(1:k, by = x -> Tuple(get(counts[x], g, 0) for g in 1:k), rev = true)
-end
-
-"""
-    align_sbm_true_latents!(sbm::NetworkHistogram.BlockModel, a::Assignment, latents)
-
-Align a BlockModel's groups to match true latent variables.
-
-# Arguments
-- `sbm::BlockModel`: The block model to align (modified in-place)
-- `a::Assignment`: The assignment
-- `latents`: True latent variables
-
-# Note
-This modifies `sbm` in-place to reorder its blocks.
-"""
-function align_sbm_true_latents!(sbm::NetworkHistogram.BlockModel, a::Assignment, latents)
-    NetworkHistogram.align_sbm!(sbm, order_groups(a, latents))
 end
 
 export heatmap_params

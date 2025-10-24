@@ -112,3 +112,66 @@ end
 function postprocess(out)
     return out
 end
+
+# functions for postprocessing
+
+struct NethistResult{S}
+    node_labels::Vector{Int}
+    model::S
+end
+
+function NethistResult(a::Assignment)
+    return NethistResult(copy(a.node_labels), to_block_model(a))
+end
+
+function to_block_model(a::Assignment{
+        E, Dist{D}}) where {E, D <: Union{Bernoulli, Distributions.Bernoulli}}
+    sizes = counts(a.node_labels) ./ length(a.node_labels)
+    θ::Matrix{Float64} = map(x -> first(params(unwrap(x))), a.θ)
+    return SBM(θ, sizes)
+end
+
+function to_block_model(a::Assignment)
+    @info "Converting Assignment to DecoratedSBM"
+    sizes = counts(a.node_labels) ./ length(a.node_labels)
+    return DecoratedSBM(unwrap.(a.θ), sizes)
+end
+
+function node_labels_to_latents(node_labels::AbstractVector{Int}, sbm)
+    return map(label -> _label_to_latent(label, sbm), node_labels)
+end
+
+function _label_to_latent(label::Int, sbm)
+    return sbm.cumsize[label] - eps()
+end
+
+function align_res_true_latents!(res, a::Assignment, latents)
+    perm = order_groups(a, latents)
+    permute!(res.model, perm)
+    res.node_labels .= map(x -> findfirst(==(x), perm), a.node_labels)
+end
+
+function permute!(sbm, perm)
+    permuted_theta = copy(sbm.θ)
+    sbm.θ .= permuted_theta[perm, perm]
+    sbm.size .= sbm.size[perm]
+    sbm.cumsize .= cumsum(sbm.size)
+end
+
+"""
+    order_groups(a::Assignment, latents::AbstractVector)
+
+Order the groups of an assignment according to the true latents. This is an heuristic
+approach, which is not guaranteed to find the true ordering of the groups.
+"""
+function order_groups(a::Assignment, latents::AbstractVector)
+    n = number_nodes(a)
+    k = number_groups(a)
+    sort_perm = sortperm(latents)
+    sorted_group_labels = a.node_labels[sort_perm]
+    dummy_group_labels = repeat(1:k, inner = n ÷ k + 1)[1:n]
+    counts = Dict(group => countmap(dummy_group_labels[sorted_group_labels .== group])
+    for group in 1:k)
+    return sort(
+        1:k, by = x -> Tuple(get(counts[x], g, 0) for g in 1:k), rev = true)
+end
