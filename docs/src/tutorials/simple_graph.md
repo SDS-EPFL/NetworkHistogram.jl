@@ -26,6 +26,7 @@ using NetworkHistogram
 using Distributions
 
 h = 300; # hide
+Random.seed!(1234);
 nothing #hide
 ````
 
@@ -147,7 +148,8 @@ about the model and the current state of the node groupings.
 
 ````@example simple_graph
 oracle_estimator = Assignment(oracle_labels, edge_list, Dist(dist));
-heatmap_params(oracle_estimator, ordering = false, colorrange = (0, 1))
+sbm_oracle = NetworkHistogram.to_block_model(oracle_estimator);
+Mke.heatmap(sbm_oracle, colormap = :binary, colorrange = (0, 1))
 
 println("Log-likelihood of oracle estimator: ", loglikelihood(oracle_estimator))
 ````
@@ -159,7 +161,7 @@ groups to maximize the log-likelihood.
 ````@example simple_graph
 params_opti = NetworkHistogram.GreedyParams(
     100_000, NetworkHistogram.RandomNodeSwap(), NetworkHistogram.Strict(),
-    NetworkHistogram.PreviousBestValue(2_000), false)
+    NetworkHistogram.PreviousBestValue(2_000), false);
 
 a = nethist(A, dist, initial_assignment, params_opti, false);
 nothing #hide
@@ -174,17 +176,29 @@ We can visualize the fitted histogram.
 heatmap_params(a, ordering = false, colorrange = (0, 1))
 ````
 
-And we can look at the estimated block model.
+We can convert it to a block model for easier interpretation.
 
 ````@example simple_graph
-sbm_fitted = NetworkHistogram.BlockModel(a);
-nothing #hide
+res = NethistResult(a);
+
+let
+    fig = Mke.Figure(size = (1220, 400))
+    titles = ["True Graphon W(u,v)", "Oracle Estimator", "Fitted Network Histogram"]
+    axes = [Mke.Axis(fig[1, i], aspect = Mke.DataAspect(), title = titles[i]) for i in 1:3]
+    Mke.heatmap!(axes[1], 0:0.01:1, 0:0.01:1, W, colormap = :binary, colorrange = (0, 1))
+    Mke.heatmap!(axes[2], sbm_oracle,
+        colormap = :binary, colorrange = (0, 1))
+    Mke.heatmap!(axes[3], res.model, colormap = :binary, colorrange = (0, 1))
+    Mke.Colorbar(fig[1, 4], colormap = :binary,
+        limits = (0, 1), label = "Edge Probability", width = 20)
+    fig
+end
 ````
 
-We first align the groups to the true latent positions.
+the block labels found by the optimization are not necessarily aligned with the true latent positions, hence the need to align them for better visualization.
 
 ````@example simple_graph
-NetworkHistogram.align_sbm_true_latents!(sbm_fitted, a, oracle_estimator.node_labels);
+NetworkHistogram.align_res_true_latents!(res, a, oracle_estimator.node_labels);
 nothing #hide
 ````
 
@@ -196,9 +210,52 @@ let
     titles = ["True Graphon W(u,v)", "Oracle Estimator", "Fitted Network Histogram"]
     axes = [Mke.Axis(fig[1, i], aspect = Mke.DataAspect(), title = titles[i]) for i in 1:3]
     Mke.heatmap!(axes[1], 0:0.01:1, 0:0.01:1, W, colormap = :binary, colorrange = (0, 1))
-    Mke.heatmap!(axes[2], NetworkHistogram.BlockModel(oracle_estimator),
+    Mke.heatmap!(axes[2], sbm_oracle,
         colormap = :binary, colorrange = (0, 1))
-    Mke.heatmap!(axes[3], sbm_fitted, colormap = :binary, colorrange = (0, 1))
+    Mke.heatmap!(axes[3], res.model, colormap = :binary, colorrange = (0, 1))
+    Mke.Colorbar(fig[1, 4], colormap = :binary,
+        limits = (0, 1), label = "Edge Probability", width = 20)
+    fig
+end
+````
+
+We can even fit a Stochastic Shape Model quite easily from the fitted SBM.
+
+````@example simple_graph
+using Clustering
+
+ξ = NetworkHistogram.node_labels_to_latents(res.node_labels, res.model);
+shape_range = 1:(k * (k + 1) ÷ 2 - 1)
+ssm_estimated, criterion_values = Graphons.estimate_ssm(
+    res.model, A, ξ, shape_range)
+
+using Kneedle
+kr = kneedle(shape_range, criterion_values, "convex_dec", 1, scan_type = :smoothing)
+````
+
+ Let's extract the optimal number of shapes using the Kneedle algorithm:
+
+````@example simple_graph
+k_knee = knees(kr)[1]
+ssm_knee = SSM(res.model, k_knee)
+
+Mke.heatmap(ssm_estimated, colormap = :binary, colorrange = (0, 1))
+println("Number of shapes in SSM argmin: ", length(ssm_estimated.θ))
+println("Number of shapes in SSM knee: ", length(ssm_knee.θ))
+println("Number of shapes in SBM: ", length(res.model.θ))
+````
+
+We greatly reduced the number of parameters from the original SBM estimate while preserving much of the structure of the estimated graphon as seen below:
+
+````@example simple_graph
+let
+    fig = Mke.Figure(size = (1220, 400))
+    titles = ["SBM", "SSM argmin", "SSM knee"]
+    axes = [Mke.Axis(fig[1, i], aspect = Mke.DataAspect(), title = titles[i]) for i in 1:3]
+    Mke.heatmap!(axes[1], res.model, colormap = :binary, colorrange = (0, 1))
+    Mke.heatmap!(axes[2], ssm_estimated,
+        colormap = :binary, colorrange = (0, 1))
+    Mke.heatmap!(axes[3], ssm_knee, colormap = :binary, colorrange = (0, 1))
     Mke.Colorbar(fig[1, 4], colormap = :binary,
         limits = (0, 1), label = "Edge Probability", width = 20)
     fig
