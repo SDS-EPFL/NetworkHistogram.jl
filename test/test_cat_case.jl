@@ -12,14 +12,15 @@ using StaticArrays
     m = 3
     ps = SVector{m}(fill(1 / m, m))
     d_mine = NetworkHistogram.Cat(ps)
-    # Create a block model with two groups
-    sbm = NetworkHistogram.BlockModel(k, d_mine)
-    sbm[1, 1] = NetworkHistogram.Cat(SVector{3}([0.7, 0.2, 0.1]))
-    sbm[2, 2] = NetworkHistogram.Cat(SVector{3}([0.1, 0.3, 0.6]))
-    sbm[1, 2] = NetworkHistogram.Cat(SVector{3}([0.3, 0.4, 0.3]))
+
+    θ = [NetworkHistogram.Cat(SVector{3}([0.7, 0.2, 0.1])) NetworkHistogram.Cat(SVector{3}([0.1, 0.3, 0.6]));
+         NetworkHistogram.Cat(SVector{3}([0.1, 0.3, 0.6])) NetworkHistogram.Cat(SVector{3}([0.3, 0.4, 0.3]))]
+    sbm = DecoratedSBM(θ, [0.5, 0.5])
 
     labels = StatsBase.inverse_rle(1:k, fill(n ÷ k, k))
-    A = NetworkHistogram.sample(sbm, labels)
+    latents = vcat(repeat([0.2], n ÷ 2), repeat([0.8], n ÷ 2))
+    A = sample_graph(sbm, latents)
+
     edgelist = NetworkHistogram.EdgeList(A)
     assignment = NetworkHistogram.Assignment(
         labels, edgelist, NetworkHistogram.Dist(d_mine))

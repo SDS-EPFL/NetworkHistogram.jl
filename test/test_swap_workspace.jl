@@ -9,14 +9,14 @@ function manual_loglikelihood(A, node_labels, θ)
     ll = 0.0
     for j in 1:n
         for i in 1:n
-            if i!=j
+            if i != j
                 g1 = node_labels[i]
                 g2 = node_labels[j]
                 ll += NetworkHistogram.logpdf(θ[g1, g2], A[i, j])
             end
         end
     end
-    return ll/2
+    return ll / 2
 end
 
 function slow_swap(a::NetworkHistogram.Assignment, s::NetworkHistogram.Swap)
@@ -29,16 +29,19 @@ end
     Random.seed!(42)
     n = 6
     k = 2
-    p1, p2 = 0.8, 0.3
+    #p1, p2 = 0.8, 0.3
     d = NetworkHistogram.Bernoulli(0.5)
     # Create a block model with two groups
-    sbm = NetworkHistogram.BlockModel(k, d)
-    sbm[1, 1] = NetworkHistogram.Bernoulli(p1)
-    sbm[2, 2] = NetworkHistogram.Bernoulli(p2)
-    sbm[1, 2] = NetworkHistogram.Bernoulli(0.1)
+    # sbm = NetworkHistogram.BlockModel(k, d)
+    # sbm[1, 1] = NetworkHistogram.Bernoulli(p1)
+    # sbm[2, 2] = NetworkHistogram.Bernoulli(p2)
+    # sbm[1, 2] = NetworkHistogram.Bernoulli(0.1)
 
-    labels = StatsBase.inverse_rle(1:k, fill(n÷k, k))
-    A = NetworkHistogram.sample(sbm, labels)
+    sbm = SBM([0.8 0.3; 0.3 0.8], [0.5, 0.5])
+
+    labels = StatsBase.inverse_rle(1:k, fill(n ÷ k, k))
+    latents = [0.1, 0.1, 0.1, 0.9, 0.9, 0.9]
+    A = sample_graph(sbm, latents)
     edgelist = NetworkHistogram.EdgeList(A)
     assignment = NetworkHistogram.Assignment(labels, edgelist, NetworkHistogram.Dist(d))
 
