@@ -24,7 +24,9 @@ include("estimator/abstractEstimator.jl")
 include("estimator/SpectralEstimator.jl")
 include("api.jl")
 
-export EdgeList, neighbors, nodes, loglikelihood, zero, fit, agg_params, logpdf
+export EdgeList, neighbors, nodes, loglikelihood, zero, fit, agg_params, logpdf,
+       GreedyParams, nethist, nethist_discrete_edges, ordered_start_labels, RandomGroupSwap,
+       Strict, PreviousBestValue, nethist_binary_edges
 
 function from_adjs_to_decorated end
 

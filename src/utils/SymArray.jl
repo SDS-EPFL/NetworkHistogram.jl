@@ -298,6 +298,13 @@ function Base.similar(
     return SymArray(similar(A.uppertrian, ElType))
 end
 
+# Custom similar for broadcasted SymArrays
+function Base.similar(
+        bc::Broadcast.Broadcasted{SymArrayStyle}, ::Type{Nothing})
+    A = find_symarray(bc)
+    return similar(Array{Nothing}, axes(bc))
+end
+
 # Helper function to find a SymArray in the broadcast tree
 find_symarray(bc::Broadcast.Broadcasted) = find_symarray(bc.args)
 find_symarray(args::Tuple) = find_symarray(args[1], Base.tail(args))

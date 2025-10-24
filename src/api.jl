@@ -113,6 +113,43 @@ function postprocess(out)
     return out
 end
 
+function nethist_discrete_edges(A, initial_node_labels, params::GreedyParams,
+        k = length(unique(initial_node_labels)))
+    data, counts_main, counts_swap, realized, realized_swap = prepare_data_cat(A, k)
+    m = length(unique(data))
+    es = SumGreedyEstimator(
+        counts_main, counts_swap, realized, realized_swap,
+        params.max_iter, params.swap_rule, params.stop_rule)
+    node_labels = estimate(es, data, initial_node_labels)
+    sizes = counts(node_labels) ./ length(node_labels)
+
+    parameters = similar(es.realized)
+    @inbounds for j in 1:k, i in 1:k
+        parameters[i, j] = [es.realized[i, j][c] / es.counts[i, j] for c in 1:m]
+    end
+    model = DecoratedSBM(Categorical.(parameters), sizes)
+    return NethistResult(node_labels, model)
+end
+
+function nethist_binary_edges(A, initial_node_labels, params::GreedyParams,
+        k = length(unique(initial_node_labels)))
+    data, counts_main, counts_swap, realized, realized_swap = prepare_data_cat(A, k)
+
+    es = SumGreedyEstimator(
+        counts_main, counts_swap, realized, realized_swap,
+        params.max_iter, params.swap_rule, params.stop_rule)
+    node_labels = estimate(es, data, initial_node_labels)
+    sizes = counts(node_labels) ./ length(node_labels)
+
+    θ = Matrix{Float64}(undef, k, k)
+    @inbounds for j in 1:k, i in 1:k
+        θ[i, j] = es.realized[i, j][2] / es.counts[i, j]
+    end
+    model = SBM(θ, sizes)
+
+    return NethistResult(node_labels, model)
+end
+
 # functions for postprocessing
 
 struct NethistResult{S}

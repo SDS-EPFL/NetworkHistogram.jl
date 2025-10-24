@@ -21,7 +21,7 @@ params = GreedyParams()
 
 # Custom parameters with stricter stopping
 params = GreedyParams(
-    50_000,                    # max iterations
+    1_000_000,                    # max iterations
     RandomNodeSwap(),           # random node selection
     Strict(),                   # only accept improvements
     PreviousBestValue(5000),   # stop after 5000 iterations without improvement

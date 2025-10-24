@@ -43,8 +43,8 @@ end
 # To generate a random graph from a graphon, we follow these steps:
 # 1.  **Assign latent positions:** For a graph with `n` nodes, we sample `n` independent and identically distributed random variables $u_1, u_2, \dots, u_n$ from a Uniform(0, 1) distribution. These are the latent positions of our nodes.
 # 2.  **Generate edges:** For each pair of nodes `(i, j)` with `i < j`, we generate a random number from a Bernoulli distribution with probability $W(u_i, u_j)$. This determines whether an edge exists between them. The resulting adjacency matrix `A` will be symmetric.
-# Let's sample a graph with 400 nodes from our graphon `W`.
-n = 400
+# Let's sample a graph with 2000 nodes from our graphon `W`.
+n = 2000
 u_true = rand(n);  # Latent positions
 A = sample_graph(w, u_true);
 
@@ -87,8 +87,8 @@ import NetworkHistogram: Dist, Assignment, nethist
 dist = NetworkHistogram.Bernoulli(0.5) # The initial probability doesn't matter much.
 
 # We start with a random initial assignment of nodes to `k=5` groups.
-k = floor(Int, sqrt(n))
-oracle_labels = inverse_rle(1:k, fill(n ÷ k, k))
+k = 10
+oracle_labels = ordered_start_labels(n, k);
 
 initial_assignment = shuffle(oracle_labels);
 
@@ -103,11 +103,23 @@ println("Log-likelihood of oracle estimator: ", loglikelihood(oracle_estimator))
 # Let's use the `nethist` function with `GreedyParams`, which iteratively moves nodes between
 # groups to maximize the log-likelihood.
 
-params_opti = NetworkHistogram.GreedyParams(
-    100_000, NetworkHistogram.RandomNodeSwap(), NetworkHistogram.Strict(),
-    NetworkHistogram.PreviousBestValue(2_000), false);
+# params_opti = NetworkHistogram.GreedyParams(
+#     100_000, NetworkHistogram.RandomNodeSwap(), NetworkHistogram.Strict(),
+#     NetworkHistogram.PreviousBestValue(2_000), false);
 
-a = nethist(A, dist, initial_assignment, params_opti, false);
+# a = nethist(A, dist, initial_assignment, params_opti, false);
+
+res = NetworkHistogram.nethist_binary_edges(A,
+    initial_assignment, GreedyParams(
+        1_000_000,
+        RandomGroupSwap(),
+        Strict(),
+        PreviousBestValue(1_000, Inf, :min),
+        true
+    ));
+
+a = Assignment(res.node_labels, edge_list, Dist(dist));
+println("Log-likelihood after optimization: ", loglikelihood(a))
 
 # The `Assignment` object `a` now contains the optimized node groupings and
 # the fitted network histogram parameters.
@@ -117,7 +129,7 @@ heatmap_params(a, ordering = false, colorrange = (0, 1))
 
 # We can convert it to a block model for easier interpretation.
 
-res = NethistResult(a);
+# res = NethistResult(a);
 
 let
     fig = Mke.Figure(size = (1220, 400))

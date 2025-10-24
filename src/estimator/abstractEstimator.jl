@@ -226,7 +226,7 @@ function estimate(estimator::SumGreedyEstimator, data, initial_labels; progress 
 
         # Check stopping criterion
         if stopping_rule(current_loss, estimator.stop_rule)
-            @info "Stopping criterion met at iteration $iter"
+            @info "Stopping criterion met at iteration $iter with loss $current_loss"
             finish!(pbar)
             break
         end
