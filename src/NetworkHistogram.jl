@@ -9,13 +9,15 @@ using LinearAlgebra
 using ArgCheck
 using Random: randperm
 
+using Reexport
+@reexport using Graphons
+
 include("utils/include.jl")
 using .FastSymArray
 
 include("distributions/include.jl")
 include("EdgeList.jl")
 include("assignment.jl")
-include("block_model.jl")
 include("optimization/greedy.jl")
 include("estimator/abstractEstimator.jl")
 include("estimator/SpectralEstimator.jl")
