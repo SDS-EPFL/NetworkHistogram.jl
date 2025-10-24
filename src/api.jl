@@ -117,17 +117,17 @@ function nethist_discrete_edges(A, initial_node_labels, params::GreedyParams,
         k = length(unique(initial_node_labels)))
     data, counts_main, counts_swap, realized, realized_swap = prepare_data_cat(A, k)
     m = length(unique(data))
-    es = SumGreedyEstimator(
+    es = GreedyAverage(
         counts_main, counts_swap, realized, realized_swap,
         params.max_iter, params.swap_rule, params.stop_rule)
     node_labels = estimate(es, data, initial_node_labels)
     sizes = counts(node_labels) ./ length(node_labels)
 
-    parameters = similar(es.realized)
+    parameters = Matrix{SVector{m, Float64}}(undef, k, k)
     @inbounds for j in 1:k, i in 1:k
         parameters[i, j] = [es.realized[i, j][c] / es.counts[i, j] for c in 1:m]
     end
-    model = DecoratedSBM(Categorical.(parameters), sizes)
+    model = DecoratedSBM(DiscreteNonParametric.(Ref(0:(m - 1)), parameters), sizes)
     return NethistResult(node_labels, model)
 end
 
@@ -135,7 +135,7 @@ function nethist_binary_edges(A, initial_node_labels, params::GreedyParams,
         k = length(unique(initial_node_labels)))
     data, counts_main, counts_swap, realized, realized_swap = prepare_data_cat(A, k)
 
-    es = SumGreedyEstimator(
+    es = GreedyAverage(
         counts_main, counts_swap, realized, realized_swap,
         params.max_iter, params.swap_rule, params.stop_rule)
     node_labels = estimate(es, data, initial_node_labels)
@@ -182,10 +182,10 @@ function _label_to_latent(label::Int, sbm)
     return sbm.cumsize[label] - eps()
 end
 
-function align_res_true_latents!(res, a::Assignment, latents)
-    perm = order_groups(a, latents)
+function align_res_true_latents!(res, latents)
+    perm = order_groups(res.node_labels, latents)
     permute!(res.model, perm)
-    res.node_labels .= map(x -> findfirst(==(x), perm), a.node_labels)
+    res.node_labels .= map(x -> findfirst(==(x), perm), res.node_labels)
 end
 
 function permute!(sbm, perm)
@@ -195,17 +195,13 @@ function permute!(sbm, perm)
     sbm.cumsize .= cumsum(sbm.size)
 end
 
-"""
-    order_groups(a::Assignment, latents::AbstractVector)
+order_groups(a::Assignment, latents::AbstractVector) = order_groups(a.node_labels, latents)
 
-Order the groups of an assignment according to the true latents. This is an heuristic
-approach, which is not guaranteed to find the true ordering of the groups.
-"""
-function order_groups(a::Assignment, latents::AbstractVector)
-    n = number_nodes(a)
-    k = number_groups(a)
+function order_groups(node_labels, latents::AbstractVector)
+    n = length(node_labels)
+    k = length(unique(node_labels))
     sort_perm = sortperm(latents)
-    sorted_group_labels = a.node_labels[sort_perm]
+    sorted_group_labels = node_labels[sort_perm]
     dummy_group_labels = repeat(1:k, inner = n ÷ k + 1)[1:n]
     counts = Dict(group => countmap(dummy_group_labels[sorted_group_labels .== group])
     for group in 1:k)

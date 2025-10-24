@@ -146,7 +146,7 @@ end
 
 # the block labels found by the optimization are not necessarily aligned with the true latent positions, hence the need to align them for better visualization.
 
-NetworkHistogram.align_res_true_latents!(res, a, oracle_estimator.node_labels);
+NetworkHistogram.align_res_true_latents!(res, oracle_estimator.node_labels);
 
 # and display the true function, the oracle estimator, and the fitted model
 let
