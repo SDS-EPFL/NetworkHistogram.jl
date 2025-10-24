@@ -9,11 +9,12 @@ module FastSymArray
 using SparseArrays
 using LinearAlgebra
 import Base: eltype, convert, size, getindex, setindex!, copy!, similar,
-             IndexStyle, axes, length, iterate, copyto!
-export SymArray, eltype, deepcopy!, sum_tri_with_diag
+             IndexStyle, axes, length, iterate, copyto!, fill!
+export SymArray, eltype, deepcopy!, sum_tri_with_diag, fast_getindex, fast_setindex!
+import SparseArrays: getcolptr, nonzeros, FixedSparseCSC
 
 """
-    SymArray{F} <: AbstractArray{F, 2}
+    SymArray{F} <: AbstractSparseMatrix{F, 2}
 
 A symmetric matrix that stores only the upper triangle using a sparse matrix.
 
@@ -41,6 +42,42 @@ See also: [`sum_tri_with_diag`](@ref)
 """
 mutable struct SymArray{F} <: AbstractSparseMatrix{F, Int}
     uppertrian::SparseMatrixCSC{F, Int}
+end
+
+SymArray(::Type{F}, dims::Int...) where {F} = SymArray(F, dims)
+function SymArray(::Type{F}, dims::NTuple{2, Int}) where {F}
+    if dims[1] != dims[2]
+        throw(ArgumentError("SymArray must be square, got dims=$(dims)"))
+    end
+    SymArray{F}(SparseMatrixCSC{F, Int}(make_csc_format(dims[1], F)...))
+end
+
+SymArray{F}(::UndefInitializer, dims::Int...) where {F} = SymArray{F}(undef, dims)
+function SymArray{F}(::UndefInitializer, dims::NTuple{2, Int}) where {F}
+    return SymArray(F, dims)
+end
+
+function make_csc_format(k::Int, ::Type{F}) where {F}
+    k > 0 || throw(ArgumentError("Matrix dimension k=$k must be positive"))
+
+    n_elements = div(k * (k + 1), 2)  # Number of non-zeros in upper triangle
+
+    colptr = Vector{Int}(undef, k + 1)
+    rowval = Vector{Int}(undef, n_elements)
+    nzval = Vector{F}(undef, n_elements)
+
+    @inbounds for j in 1:(k + 1)
+        colptr[j] = div((j - 1) * j, 2) + 1
+    end
+
+    idx = 1
+    @inbounds for j in 1:k
+        for i in 1:j
+            rowval[idx] = i
+            idx += 1
+        end
+    end
+    return k, k, colptr, rowval, nzval
 end
 
 """
@@ -133,9 +170,6 @@ function size(a::SymArray)
     return size(a.uppertrian)
 end
 
-# IndexStyle trait - use CartesianIndex for 2D arrays
-Base.IndexStyle(::Type{<:SymArray}) = IndexCartesian()
-
 # axes function
 function axes(a::SymArray)
     return axes(a.uppertrian)
@@ -146,44 +180,47 @@ function length(a::SymArray)
     return length(a.uppertrian)
 end
 
-Base.@propagate_inbounds function getindex(a::SymArray{F}, i::Int, j::Int) where {F}
-    @boundscheck checkbounds(a, i, j)
-    if i <= j
-        @inbounds return a.uppertrian[i, j]
-    else
-        @inbounds return a.uppertrian[j, i]
-    end
+# Base.@propagate_inbounds function getindex(a::SymArray{F}, i::Int, j::Int) where {F}
+#     @boundscheck checkbounds(a, i, j)
+#     if i <= j
+#         @inbounds return a.uppertrian[i, j]
+#     else
+#         @inbounds return a.uppertrian[j, i]
+#     end
+# end
+
+# Base.@propagate_inbounds function setindex!(a::SymArray{F}, v, i::Int, j::Int) where {F}
+#     @boundscheck checkbounds(a, i, j)
+#     if i <= j
+#         @inbounds a.uppertrian[i, j] = v
+#     else
+#         @inbounds a.uppertrian[j, i] = v
+#     end
+# end
+
+# faster indexing by avoiding search
+Base.@propagate_inbounds function getindex(A::SymArray, i0::Integer, i1::Integer)
+    i0, i1 = minmax(i0, i1)
+    @boundscheck checkbounds(A, i0, i1)
+    r1 = Int(@inbounds getcolptr(A.uppertrian)[i1])
+    nonzeros(A.uppertrian)[r1 + i0 - 1]
 end
 
-Base.@propagate_inbounds function setindex!(a::SymArray{F}, v, i::Int, j::Int) where {F}
-    @boundscheck checkbounds(a, i, j)
-    if i <= j
-        @inbounds a.uppertrian[i, j] = v
-    else
-        @inbounds a.uppertrian[j, i] = v
-    end
+Base.@propagate_inbounds function setindex!(A::SymArray, v, i::Int, j::Int)
+    i, j = minmax(i, j)
+    @boundscheck checkbounds(A, i, j)
+    r1 = Int(@inbounds getcolptr(A.uppertrian)[j])
+    nonzeros(A.uppertrian)[r1 + i - 1] = v
 end
 
-# similar function for creating similar arrays
-function similar(a::SymArray{F}) where {F}
-    k = size(a, 1)
-    return SymArray(k, zero(F))
+function similar(a::SymArray, ::Type{T} = eltype(a), dims::Dims{2} = size(a)) where {T}
+    return SymArray{T}(undef, dims)
 end
 
-function similar(a::SymArray, ::Type{T}) where {T}
-    k = size(a, 1)
-    return SymArray(k, zero(T))
-end
-
-function similar(a::SymArray, ::Type{T}, dims::Dims{2}) where {T}
-    dims[1] == dims[2] || throw(ArgumentError("SymArray must be square"))
-    return SymArray(dims[1], zero(T))
-end
-
-function copyto!(dest::SymArray{F}, src::SymArray{F}) where {F}
+function copy!(dest::SymArray{F}, src::SymArray{F}) where {F}
     size(dest) == size(src) || throw(DimensionMismatch("arrays must have the same size"))
-    copyto!(dest.uppertrian, src.uppertrian)
-    return dest
+    copy!(dest.uppertrian.nzval, src.uppertrian.nzval)
+    return nothing
 end
 
 """
@@ -198,11 +235,7 @@ Efficiently sum all elements in the symmetric matrix (counting each off-diagonal
 This is more efficient than `sum(a)` because it only sums stored elements.
 """
 function sum_tri_with_diag(a::SymArray)
-    return sum(a.uppertrian.nzval)
-end
-
-function eltype(::SymArray{F}) where {F}
-    return F
+    return sum(a.uppertrian)
 end
 
 function convert(::Type{SymArray{F}}, a::AbstractMatrix{F}) where {F}
@@ -211,43 +244,31 @@ function convert(::Type{SymArray{F}}, a::AbstractMatrix{F}) where {F}
 
     # Directly build upper triangle sparse matrix
     # Pre-allocate with exact size needed
-    I_indices = Vector{Int}(undef, div(k * (k + 1), 2))
-    J_indices = Vector{Int}(undef, div(k * (k + 1), 2))
-    values = Vector{F}(undef, div(k * (k + 1), 2))
-
+    m, n, colptr, rowval, nzval = make_csc_format(k, F)
     idx = 1
-    for j in 1:k
+    @inbounds for j in 1:k
         for i in 1:j
-            I_indices[idx] = i
-            J_indices[idx] = j
-            values[idx] = a[i, j]
+            nzval[idx] = a[i, j]
             idx += 1
         end
     end
-
-    uppertrian = sparse(I_indices, J_indices, values, k, k)
-    return SymArray{F}(uppertrian)
-end
-
-function convert(::Type{AbstractMatrix{F}}, a::SymArray{F}) where {F}
-    # Reconstruct full symmetric matrix from upper triangle
-    # m = upper + upper' - Diagonal(upper) creates the full symmetric matrix
-    m = a.uppertrian + transpose(a.uppertrian) -
-        SparseArrays.spdiagm(0 => diag(a.uppertrian))
-    return Matrix(m)
-end
-
-function copy!(dest::SymArray{F}, src::SymArray{F}) where {F <: Real}
-    copyto!(dest, src)
-    return dest
+    return SymArray(SparseMatrixCSC{F, Int}(m, n, colptr, rowval, nzval))
 end
 
 function deepcopy!(dest::SymArray{F}, src::SymArray{F}) where {F <: AbstractArray}
-    @inbounds for index in eachindex(dest)
-        copyto!(dest[index], src[index])
+    dest_ = dest.uppertrian.nzval
+    src_ = src.uppertrian.nzval
+    @inbounds for index in eachindex(src_)
+        if isassigned(dest_, index)
+            copy!(dest_[index], src_[index])
+        else
+            dest_[index] = copy(src_[index])
+        end
     end
     return dest
 end
+
+deepcopy!(dest::SymArray{F}, src::SymArray{F}) where {F <: Real} = copy!(dest, src)
 
 # Broadcasting support - custom style to maintain symmetric structure
 struct SymArrayStyle <: Broadcast.AbstractArrayStyle{2} end
@@ -273,57 +294,21 @@ Base.BroadcastStyle(::SymArrayStyle, ::SymArrayStyle) = SymArrayStyle()
 # Custom similar for broadcasted SymArrays
 function Base.similar(
         bc::Broadcast.Broadcasted{SymArrayStyle}, ::Type{ElType}) where {ElType}
-    # For mutating functions that return Nothing, don't allocate a SymArray
-    if ElType === Nothing
-        # Find the first SymArray in the broadcast expression
-        A = find_first_symarray(bc)
-        # Return a similar array with the same element type as the input
-        # This allows the broadcast to work but the result won't be used
-        return similar(Array{ElType}, axes(bc))
-    end
-    # Find the first SymArray in the broadcast expression to get dimensions
-    A = find_first_symarray(bc)
-    return SymArray(size(A, 1), zero(ElType))
+    A = find_symarray(bc)
+    return SymArray(similar(A.uppertrian, ElType))
+end
+
+# I don't understand this, but it's needed to avoid errors somehow??
+function Base.similar(bc::Broadcast.Broadcasted{SymArrayStyle}, ::Type{Nothing})
+    return similar(Array{Nothing}, axes(bc))
 end
 
 # Helper function to find a SymArray in the broadcast tree
-find_first_symarray(bc::Broadcast.Broadcasted) = find_first_symarray(bc.args)
-find_first_symarray(args::Tuple{}) = error("No SymArray found in broadcast")
-find_first_symarray(args::Tuple) = find_first_symarray_in_args(args[1], Base.tail(args))
-
-# Handle direct SymArray
-find_first_symarray_in_args(x::SymArray, rest) = x
-# Handle Extruded SymArray (from broadcasting)
-find_first_symarray_in_args(x::Broadcast.Extruded{<:SymArray}, rest) = x.x
-# Handle nested broadcasts
-find_first_symarray_in_args(x::Broadcast.Broadcasted, rest) = find_first_symarray(x)
-# Keep searching
-find_first_symarray_in_args(x, rest) = find_first_symarray(rest)
-
-# Custom copyto! for efficient broadcasting
-function Base.copyto!(dest::SymArray, bc::Broadcast.Broadcasted{SymArrayStyle})
-    # Broadcast only over the upper triangle for efficiency
-    axes(dest) == axes(bc) || throwdm(axes(dest), axes(bc))
-    bc′ = Broadcast.preprocess(dest, bc)
-
-    # Only compute upper triangle
-    k = size(dest, 1)
-    @inbounds for j in 1:k
-        for i in 1:j
-            dest[i, j] = bc′[CartesianIndex(i, j)]
-        end
-    end
-    return dest
-end
-
-# For broadcasting that returns Nothing (like with mutating functions)
-function Base.copyto!(dest::AbstractArray, bc::Broadcast.Broadcasted{SymArrayStyle})
-    # Fall back to default behavior
-    Broadcast.materialize!(dest, bc)
-end
-
-@inline function throwdm(axdest, axsrc)
-    throw(DimensionMismatch("destination axes $axdest are not compatible with source axes $axsrc"))
-end
+find_symarray(bc::Broadcast.Broadcasted) = find_symarray(bc.args)
+find_symarray(args::Tuple) = find_symarray(args[1], Base.tail(args))
+find_symarray(x) = x
+find_symarray(args::Tuple{}) = nothing
+find_symarray(a::SymArray, rest) = a
+find_symarray(::Any, rest) = find_symarray(rest)
 
 end

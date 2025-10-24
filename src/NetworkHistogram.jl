@@ -13,7 +13,8 @@ using Reexport
 @reexport using Graphons
 
 include("utils/include.jl")
-using .FastSymArray
+
+@reexport using .FastSymArray
 
 include("distributions/include.jl")
 include("EdgeList.jl")
@@ -30,4 +31,7 @@ function from_adjs_to_decorated end
 function heatmap_params end
 
 export from_adjs_to_decorated, heatmap_params
+
+export NethistResult
+
 end

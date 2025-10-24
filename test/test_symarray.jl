@@ -3,6 +3,7 @@ using NetworkHistogram
 using NetworkHistogram.FastSymArray
 using SparseArrays
 using LinearAlgebra
+using StaticArrays
 
 @testset "SymArray Array Interface" begin
     @testset "Construction and basic properties" begin
@@ -86,7 +87,7 @@ using LinearAlgebra
         @test a[2, 2] == 4.0
 
         # Test conversion to AbstractMatrix
-        b = convert(AbstractMatrix{Float64}, a)
+        b = convert(Matrix{Float64}, a)
         @test b isa Matrix{Float64}
         @test b == M
         @test b[1, 2] == b[2, 1]  # Verify symmetry
@@ -116,14 +117,14 @@ using LinearAlgebra
         @test_throws ArgumentError similar(a, Float64, (3, 4))
     end
 
-    @testset "copyto! and copy!" begin
+    @testset "copy! and deepcopy!" begin
         a = SymArray(3, 0.0)
         a[1, 1] = 1.0
         a[1, 2] = 2.0
         a[2, 3] = 5.0
 
         b = similar(a)
-        copyto!(b, a)
+        copy!(b, a)
 
         @test b[1, 1] == 1.0
         @test b[1, 2] == 2.0
@@ -131,16 +132,34 @@ using LinearAlgebra
         @test b[2, 3] == 5.0
         @test b[3, 2] == 5.0
 
-        # Test copy!
-        c = similar(a)
-        copy!(c, a)
-        @test c[1, 1] == a[1, 1]
-        @test c[1, 2] == a[1, 2]
-        @test c[2, 3] == a[2, 3]
-
         # Test dimension mismatch
         d = SymArray(4, 0.0)
-        @test_throws DimensionMismatch copyto!(d, a)
+        @test_throws DimensionMismatch copy!(d, a)
+
+        # Test deepcopy!
+        src = SymArray{Vector{Int}}(undef, 4, 4)
+        for j in 1:4, i in j:4
+            src[i, j] = [i, j]
+        end
+
+        # on unassigned dest
+        dest = similar(src)
+        deepcopy!(dest, src)
+        for j in 1:4, i in j:4
+            @test dest[i, j] == src[i, j]
+            @test !(dest[i, j] === src[i, j])  # Ensure deep copy
+        end
+
+        # on assigned dest
+        dest2 = similar(src)
+        for j in 1:4, i in j:4
+            dest2[i, j] = [-1, -1]
+        end
+        deepcopy!(dest2, src)
+        for j in 1:4, i in j:4
+            @test dest2[i, j] == src[i, j]
+            @test !(dest2[i, j] === src[i, j])  # Ensure deep copy
+        end
     end
 
     @testset "Array operations" begin
