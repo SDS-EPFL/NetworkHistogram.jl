@@ -60,8 +60,8 @@ function Assignment(
     for g2 in 1:n_groups, g1 in g2:n_groups
         w.log_likelihood_per_group[g1, g2] = log_likelihood_per_group[g1, g2]
         w.counts[g1, g2] = counts[g1, g2]
-        copyto!(w.realized[g1, g2], realized[g1, g2])
-        copyto!(w.estimated[g1, g2], estimated[g1, g2])
+        copy!(w.realized[g1, g2], realized[g1, g2])
+        copy!(w.estimated[g1, g2], estimated[g1, g2])
     end
 
     return assignment
@@ -96,11 +96,11 @@ function copy_categorical_workspace!(
     deepcopy!(dest.estimated, src_assignment.additional_workspace.estimated)
 
     # @inbounds for j in 1:k, i in 1:j
-    #     copyto!(dest.realized[i, j], src_ws.realized[i, j])
+    #     copy!(dest.realized[i, j], src_ws.realized[i, j])
     # end
 
     # @inbounds for j in 1:k, i in 1:j
-    #     copyto!(dest.estimated[i, j], src_ws.estimated[i, j])
+    #     copy!(dest.estimated[i, j], src_ws.estimated[i, j])
     # end
 end
 
@@ -122,11 +122,11 @@ function revert_swap_workspace!(a::Assignment, ws::WorkspaceDiscreteSwap)
     deepcopy!(a.additional_workspace.realized, ws.realized)
     deepcopy!(a.additional_workspace.estimated, ws.estimated)
     # @inbounds for j in 1:k, i in 1:j
-    #     copyto!(as.realized[i, j], ws.realized[i, j])
+    #     copy!(as.realized[i, j], ws.realized[i, j])
     # end
 
     # @inbounds for j in 1:k, i in 1:j
-    #     copyto!(as.estimated[i, j], ws.estimated[i, j])
+    #     copy!(as.estimated[i, j], ws.estimated[i, j])
     # end
 end
 
@@ -155,8 +155,10 @@ function apply_swap!(as::Assignment, s::Swap{<:WorkspaceDiscreteSwap})
         as.additional_workspace.counts[gu, g_inter] += 1
         as.additional_workspace.realized[gu, g_inter][e] += 1
     end
-    _fast_normalization!.(as.additional_workspace.estimated,
-        as.additional_workspace.realized, as.additional_workspace.counts)
+    @inbounds for index in eachindex(as.additional_workspace.estimated)
+        _fast_normalization!(as.additional_workspace.estimated[index],
+            as.additional_workspace.realized[index], as.additional_workspace.counts[index])
+    end
     swap_node_labels!(as, u, v)
     m = size(as.additional_workspace.estimated[1, 1], 1)
     for g2 in 1:n_groups

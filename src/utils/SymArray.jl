@@ -298,11 +298,6 @@ function Base.similar(
     return SymArray(similar(A.uppertrian, ElType))
 end
 
-# I don't understand this, but it's needed to avoid errors somehow??
-function Base.similar(bc::Broadcast.Broadcasted{SymArrayStyle}, ::Type{Nothing})
-    return similar(Array{Nothing}, axes(bc))
-end
-
 # Helper function to find a SymArray in the broadcast tree
 find_symarray(bc::Broadcast.Broadcasted) = find_symarray(bc.args)
 find_symarray(args::Tuple) = find_symarray(args[1], Base.tail(args))
