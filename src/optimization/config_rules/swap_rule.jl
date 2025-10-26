@@ -15,7 +15,7 @@ current assignment `node_assignment`.
 select_swap
 
 function select_indices_swap(node_labels::AbstractVector{Int}, ::RandomNodeSwap)
-    return Tuple(StatsBase.sample(1:length(node_labels), 2; replace = false))
+    return Tuple(StatsBase.samplepair(1:length(node_labels)))
 end
 
 function select_indices_swap(node_labels::AbstractVector{Int}, ::RandomGroupSwap,

@@ -14,7 +14,7 @@ function W_multiplex(x, y)
     ps = zeros(4)
     ps[2] = sqrt(abs(x - y)) / 2           # layer 1 only
     ps[3] = abs(sin(2π * x) * sin(2π * y)) / 2  # layer 2 only
-    ps[4] = min(x, y) / 4                   # both layers
+    ps[4] = min(x, y) / 2                   # both layers
     ps[1] = 1 - sum(ps[2:4])                # no edge
     return DiscreteNonParametric(0:3, SVector{4}(ps))
 end
@@ -44,17 +44,10 @@ res = NetworkHistogram.nethist_discrete_edges(A,
         RandomGroupSwap(),
         Strict(),
         PreviousBestValue(5_000, Inf, :min),
-        true
+        false # progress bar
     ));
 
-let
-    fig = Mke.Figure(size = (4 * h, h))
-    for m in 1:4
-        ax = Mke.Axis(fig[1, m], aspect = Mke.DataAspect())
-        Mke.heatmap!(ax, res.model, k = m, colormap = :binary, colorrange = (0, 1))
-    end
-    fig
-end
+# Visualize the fitted models for different numbers of groups after aligning with true latents
 
 NetworkHistogram.align_res_true_latents!(res, oracle_labels);
 let
@@ -66,17 +59,18 @@ let
     fig
 end
 
+# The fitted network histogram can be further processed to obtain a smoother estimate of the underlying graphon.
+
 using Clustering
-shape_range = 1:20
+shape_range = 1:30
 ssm_estimated, criterion_values = Graphons.estimate_ssm(
     res.model, A, true_latents, shape_range);
 
 using Kneedle
-# kr = kneedle(shape_range, criterion_values, "convex_dec", 1, scan_type = :smoothing)
-# #  Let's extract the optimal number of shapes using the Kneedle algorithm:
+kr = kneedle(shape_range, criterion_values, "convex_dec", 1, scan_type = :smoothing);
+#  Let's extract the optimal number of shapes using the Kneedle algorithm:
 
-# k_knee = knees(kr)[1]
-# k_knee = 10
+k_knee = knees(kr)[1]
 ssm = SSM(res.model, k_knee)
 
 let
@@ -84,8 +78,11 @@ let
     for (i, model) in enumerate([graphon, res.model, ssm])
         for m in 1:4
             ax = Mke.Axis(fig[i, m], aspect = Mke.DataAspect())
-            Mke.heatmap!(ax, model, k = m, colormap = :binary, colorrange = (0, 1))
+            Mke.hidedecorations!(ax)
+            Mke.heatmap!(ax, model, k = m, colormap = :lipari, colorrange = (0, 1))
         end
     end
+    Mke.Colorbar(fig[2, end + 1], colormap = :lipari,
+        limits = (0, 1), width = 0.05 * h)
     fig
 end

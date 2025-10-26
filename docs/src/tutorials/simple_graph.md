@@ -33,18 +33,16 @@ nothing #hide
 Define a simple step-function graphon
 
 ````@example simple_graph
-W(u, v) = u * v
+w = SimpleContinuousGraphon((x, y) -> x * y)
 ````
 
 We can visualize this graphon as a heatmap.
 
 ````@example simple_graph
 let
-    grid = 0:0.01:1
     fig = Mke.Figure(size = (h + 20, h))
-    ax = Mke.Axis(fig[1, 1], title = "True Graphon W(u,v)",
-        xlabel = "u", ylabel = "v", aspect = Mke.DataAspect())
-    hm = Mke.heatmap!(ax, grid, grid, W, colormap = :binary, colorrange = (0, 1))
+    ax = Mke.Axis(fig[1, 1], title = "True Graphon W(u,v)")
+    hm = Mke.heatmap!(ax, w, colormap = :binary, colorrange = (0, 1))
     Mke.Colorbar(fig[1, 2], hm)
     fig
 end
@@ -57,30 +55,12 @@ end
 To generate a random graph from a graphon, we follow these steps:
 1.  **Assign latent positions:** For a graph with `n` nodes, we sample `n` independent and identically distributed random variables $u_1, u_2, \dots, u_n$ from a Uniform(0, 1) distribution. These are the latent positions of our nodes.
 2.  **Generate edges:** For each pair of nodes `(i, j)` with `i < j`, we generate a random number from a Bernoulli distribution with probability $W(u_i, u_j)$. This determines whether an edge exists between them. The resulting adjacency matrix `A` will be symmetric.
-
-Let's write a function to do this.
-
-````@example simple_graph
-function sample_graph(W_func, n::Int; seed = 123)
-    Random.seed!(seed)
-    u = rand(n) # Latent positions
-    A = zeros(Int, n, n)
-    for i in 1:n
-        for j in (i + 1):n
-            if rand() < W_func(u[i], u[j])
-                A[i, j] = A[j, i] = 1
-            end
-        end
-    end
-    return A, u
-end
-````
-
-Now, let's sample a graph with 400 nodes from our graphon `W`.
+Let's sample a graph with 2000 nodes from our graphon `W`.
 
 ````@example simple_graph
-n = 400
-A, u_true = sample_graph(W, n);
+n = 2000
+u_true = rand(n);  # Latent positions
+A = sample_graph(w, u_true);
 nothing #hide
 ````
 
@@ -136,8 +116,8 @@ dist = NetworkHistogram.Bernoulli(0.5) # The initial probability doesn't matter 
 We start with a random initial assignment of nodes to `k=5` groups.
 
 ````@example simple_graph
-k = floor(Int, sqrt(n))
-oracle_labels = inverse_rle(1:k, fill(n ÷ k, k))
+k = 10
+oracle_labels = ordered_start_labels(n, k);
 
 initial_assignment = shuffle(oracle_labels);
 nothing #hide
@@ -158,13 +138,24 @@ println("Log-likelihood of oracle estimator: ", loglikelihood(oracle_estimator))
 Let's use the `nethist` function with `GreedyParams`, which iteratively moves nodes between
 groups to maximize the log-likelihood.
 
-````@example simple_graph
 params_opti = NetworkHistogram.GreedyParams(
     100_000, NetworkHistogram.RandomNodeSwap(), NetworkHistogram.Strict(),
     NetworkHistogram.PreviousBestValue(2_000), false);
 
 a = nethist(A, dist, initial_assignment, params_opti, false);
-nothing #hide
+
+````@example simple_graph
+res = NetworkHistogram.nethist_binary_edges(A,
+    initial_assignment, GreedyParams(
+        1_000_000,
+        RandomGroupSwap(),
+        Strict(),
+        PreviousBestValue(1_000, Inf, :min),
+        true
+    ));
+
+a = Assignment(res.node_labels, edge_list, Dist(dist));
+println("Log-likelihood after optimization: ", loglikelihood(a))
 ````
 
 The `Assignment` object `a` now contains the optimized node groupings and
@@ -178,14 +169,14 @@ heatmap_params(a, ordering = false, colorrange = (0, 1))
 
 We can convert it to a block model for easier interpretation.
 
-````@example simple_graph
 res = NethistResult(a);
 
+````@example simple_graph
 let
     fig = Mke.Figure(size = (1220, 400))
     titles = ["True Graphon W(u,v)", "Oracle Estimator", "Fitted Network Histogram"]
     axes = [Mke.Axis(fig[1, i], aspect = Mke.DataAspect(), title = titles[i]) for i in 1:3]
-    Mke.heatmap!(axes[1], 0:0.01:1, 0:0.01:1, W, colormap = :binary, colorrange = (0, 1))
+    Mke.heatmap!(axes[1], w, colormap = :binary, colorrange = (0, 1))
     Mke.heatmap!(axes[2], sbm_oracle,
         colormap = :binary, colorrange = (0, 1))
     Mke.heatmap!(axes[3], res.model, colormap = :binary, colorrange = (0, 1))
@@ -198,7 +189,7 @@ end
 the block labels found by the optimization are not necessarily aligned with the true latent positions, hence the need to align them for better visualization.
 
 ````@example simple_graph
-NetworkHistogram.align_res_true_latents!(res, a, oracle_estimator.node_labels);
+NetworkHistogram.align_res_true_latents!(res, oracle_estimator.node_labels);
 nothing #hide
 ````
 
@@ -209,7 +200,7 @@ let
     fig = Mke.Figure(size = (1220, 400))
     titles = ["True Graphon W(u,v)", "Oracle Estimator", "Fitted Network Histogram"]
     axes = [Mke.Axis(fig[1, i], aspect = Mke.DataAspect(), title = titles[i]) for i in 1:3]
-    Mke.heatmap!(axes[1], 0:0.01:1, 0:0.01:1, W, colormap = :binary, colorrange = (0, 1))
+    Mke.heatmap!(axes[1], w, colormap = :binary, colorrange = (0, 1))
     Mke.heatmap!(axes[2], sbm_oracle,
         colormap = :binary, colorrange = (0, 1))
     Mke.heatmap!(axes[3], res.model, colormap = :binary, colorrange = (0, 1))

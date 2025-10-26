@@ -1,4 +1,5 @@
 module NetworkHistogram
+using Accessors
 using StatsBase
 using StaticArrays
 using ProgressMeter
@@ -7,10 +8,16 @@ import Base: convert, eltype, zero
 using Distributions
 using LinearAlgebra
 using ArgCheck
-using Random: randperm
+import Random: randperm, AbstractRNG, rand
+import Distributions: logpdf
+export logpdf
+
+using IntervalArithmetic
 
 using Reexport
 @reexport using Graphons
+
+import Graphons: _extract_param, convert_to_params
 
 include("utils/include.jl")
 
@@ -20,10 +27,12 @@ include("distributions/include.jl")
 include("EdgeList.jl")
 include("assignment.jl")
 include("optimization/greedy.jl")
+include("preprocessor/abstractConvertor.jl")
 include("preprocessor/categorical.jl")
 include("preprocessor/continuous.jl")
 include("estimator/abstractEstimator.jl")
 include("estimator/SpectralEstimator.jl")
+include("distributions/hist_dist.jl")
 include("api.jl")
 
 export EdgeList, neighbors, nodes, loglikelihood, zero, fit, agg_params, logpdf,

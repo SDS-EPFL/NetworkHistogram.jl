@@ -17,3 +17,4 @@ abstract type Result end
 # end
 
 include("GreedyAverage.jl")
+include("GreedySuffStats.jl")

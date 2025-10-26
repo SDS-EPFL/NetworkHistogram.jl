@@ -119,7 +119,7 @@ The algorithm proceeds as follows:
 # Returns
 - `node_labels::Vector{Int}`: Optimized group assignments for each node
 """
-function estimate(estimator::GreedyAverage, data, initial_labels; progress = true)
+function estimate(estimator::GreedyAverage, data, initial_labels; progress = false)
     # Initialize counts and realized values from data
     init!(estimator, data, initial_labels)
     initialise_stop_rule!(estimator.stop_rule, estimator)
@@ -138,7 +138,7 @@ function estimate(estimator::GreedyAverage, data, initial_labels; progress = tru
     )
 
     # Update progress bar only every N iterations to reduce overhead
-    progress_update_interval = max(1, estimator.max_iter ÷ 1000)
+    progress_update_interval = max(1, estimator.max_iter ÷ 5000)
 
     # Main optimization loop
     for iter in 1:(estimator.max_iter)
@@ -216,12 +216,11 @@ function estimate(estimator::GreedyAverage, data, initial_labels; progress = tru
 
         # Check stopping criterion
         if stopping_rule(current_loss, estimator.stop_rule)
-            @info "Stopping criterion met at iteration $iter with loss $current_loss"
-            finish!(pbar)
             break
         end
     end
-
+    finish!(pbar)
+    @info "Optimization finished. Final loss: $current_loss"
     return node_labels
 end
 
@@ -260,32 +259,31 @@ For each pair of groups (i,j):
         for i in 1:j
             n_edges = counts[i, j]
             if n_edges > 0
-                sum_squares = sum(abs2, realized[i, j])
-                total_loss += n_edges - sum_squares / n_edges
+                inter = n_edges - sum(abs2, realized[i, j]) / n_edges
+                total_loss += inter
                 total_edges += n_edges
             end
         end
     end
-
     return total_edges > 0 ? total_loss / total_edges : 0.0
 end
 
-# this assumes that sum realized = counts
-@inline function loss_function(realized, counts)
-    total_loss = 0.0
-    total_edges = 0.0
-    @inbounds for j in axes(realized, 2)
-        for i in 1:j
-            for m in eachindex(realized[i, j])
-                total_edges += realized[i, j][m]
-                total_loss += realized[i, j][m] *
-                              (1 -
-                               _fast_div_(realized[i, j][m], counts[i, j][m]))
-            end
-        end
-    end
-    return total_loss / total_edges
-end
+# # this assumes that sum realized = counts
+# @inline function loss_function(realized, counts)
+#     total_loss = 0.0
+#     total_edges = 0.0
+#     @inbounds for j in axes(realized, 2)
+#         for i in 1:j
+#             for m in eachindex(realized[i, j])
+#                 total_edges += realized[i, j][m]
+#                 total_loss += realized[i, j][m] *
+#                               (1 -
+#                                _fast_div_(realized[i, j][m], counts[i, j][m]))
+#             end
+#         end
+#     end
+#     return total_loss / total_edges
+# end
 
 @inline function _fast_div_(num::Real, denom::Real)
     num == 0.0 && denom == 0.0 && return 0.0

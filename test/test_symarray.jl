@@ -1,6 +1,5 @@
 using Test
 using NetworkHistogram
-using NetworkHistogram.FastSymArray
 using SparseArrays
 using LinearAlgebra
 using StaticArrays
@@ -311,5 +310,21 @@ using StaticArrays
         end
         @test b[50, 50] == 50.0
         @test b[99, 99] == 99.0
+    end
+
+    @testset "Broadcasting" begin
+        a = SymArray{Float64}(undef, 3, 3)
+        fill!(a, 2.0)
+        b = @. a + 2.0
+        @test b isa SymArray
+        @test all(b[i, j] == 4.0 for i in 1:3, j in 1:3)
+
+        c = b ./ a
+        @test c isa SymArray
+        @test all(c[i, j] == 2.0 for i in 1:3, j in 1:3)
+
+        sin_a = @. sin(a)
+        @test sin_a isa SymArray
+        @test all(sin_a[i, j] == sin(2.0) for i in 1:3, j in 1:3)
     end
 end

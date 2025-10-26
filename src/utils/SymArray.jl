@@ -10,8 +10,9 @@ using SparseArrays
 using LinearAlgebra
 import Base: eltype, convert, size, getindex, setindex!, copy!, similar,
              IndexStyle, axes, length, iterate, copyto!, fill!
-export SymArray, eltype, deepcopy!, sum_tri_with_diag, fast_getindex, fast_setindex!
 import SparseArrays: getcolptr, nonzeros, FixedSparseCSC
+
+export SymArray, eltype, deepcopy!, sum_tri_with_diag
 
 """
     SymArray{F} <: AbstractSparseMatrix{F, 2}
@@ -180,25 +181,7 @@ function length(a::SymArray)
     return length(a.uppertrian)
 end
 
-# Base.@propagate_inbounds function getindex(a::SymArray{F}, i::Int, j::Int) where {F}
-#     @boundscheck checkbounds(a, i, j)
-#     if i <= j
-#         @inbounds return a.uppertrian[i, j]
-#     else
-#         @inbounds return a.uppertrian[j, i]
-#     end
-# end
-
-# Base.@propagate_inbounds function setindex!(a::SymArray{F}, v, i::Int, j::Int) where {F}
-#     @boundscheck checkbounds(a, i, j)
-#     if i <= j
-#         @inbounds a.uppertrian[i, j] = v
-#     else
-#         @inbounds a.uppertrian[j, i] = v
-#     end
-# end
-
-# faster indexing by avoiding search
+# faster indexing by avoiding search, modified from SparseArrays
 Base.@propagate_inbounds function getindex(A::SymArray, i0::Integer, i1::Integer)
     i0, i1 = minmax(i0, i1)
     @boundscheck checkbounds(A, i0, i1)
@@ -206,6 +189,7 @@ Base.@propagate_inbounds function getindex(A::SymArray, i0::Integer, i1::Integer
     nonzeros(A.uppertrian)[r1 + i0 - 1]
 end
 
+# faster indexing by avoiding search, modified from SparseArrays
 Base.@propagate_inbounds function setindex!(A::SymArray, v, i::Int, j::Int)
     i, j = minmax(i, j)
     @boundscheck checkbounds(A, i, j)
