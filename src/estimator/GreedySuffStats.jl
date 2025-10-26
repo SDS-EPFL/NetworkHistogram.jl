@@ -31,24 +31,24 @@ function CategoricalSuffStats(num_categories::Int)
     return CategoricalSuffStats{num_categories, Int}(h, 0)
 end
 
-function add_sample(ss::CategoricalSuffStats, sample::Int)
+@inline function add_sample(ss::CategoricalSuffStats, sample::Int)
     ss = @set ss.h[sample] += 1
     ss = @set ss.n += 1
     return ss
 end
 
-function add_sample(ss::CategoricalSuffStats, ::Nothing)
+@inline function add_sample(ss::CategoricalSuffStats, ::Nothing)
     @reset ss.n += 1
     return ss
 end
 
-function remove_sample(ss::CategoricalSuffStats, sample::Int)
+@inline function remove_sample(ss::CategoricalSuffStats, sample::Int)
     ss = @set ss.h[sample] -= 1
     ss = @set ss.n -= 1
     return ss
 end
 
-function remove_sample(ss::CategoricalSuffStats, ::Nothing)
+@inline function remove_sample(ss::CategoricalSuffStats, ::Nothing)
     @reset ss.n -= 1
     return ss
 end
@@ -174,15 +174,18 @@ function init!(es::GreedySuffStats, data, node_labels)
 end
 
 # TODO: allow for non-symmetric data
-function score(matrix_ss, data, node_labels; dist = nothing, norm = 1.0)
+@inline function score(matrix_ss::SymArray, data, node_labels; dist = nothing, norm = 1.0)
     total_loss = 0.0
-    @inbounds for j in axes(matrix_ss, 2)
-        for i in 1:j
-            inter = score(
-                matrix_ss[i, j]; dist = dist, data = data, node_labels = node_labels)
-            total_loss += inter
-        end
+    for m in matrix_ss.uppertrian.nzval
+        total_loss += score(m; dist = dist, data = data, node_labels = node_labels)
     end
+    # @inbounds for j in axes(matrix_ss, 2)
+    #     for i in 1:j
+    #         inter = score(
+    #             matrix_ss[i, j]; dist = dist, data = data, node_labels = node_labels)
+    #         total_loss += inter
+    #     end
+    # end
     return total_loss / norm
 end
 
@@ -238,8 +241,12 @@ function estimate(
         group1 = node_labels[index1]
         group2 = node_labels[index2]
 
-        for j in axes(data, 2)
+        @inbounds for j in axes(data, 2)
 
+            # this check is slow ! (+ 6 μs per iteration on n=2000)
+            if j == index1 || j == index2
+                continue
+            end
             # extract data
             groupj = node_labels[j]
             edge_value_1 = data[j, index1]
@@ -257,7 +264,7 @@ function estimate(
         end
 
         # tentative swap
-        node_labels[index1], node_labels[index2] = group2, group1
+        @inbounds node_labels[index1], node_labels[index2] = group2, group1
         new_loss = score(es.block_ss_swap, data, node_labels, dist = dist, norm = n_edges)
 
         if new_loss < current_loss
