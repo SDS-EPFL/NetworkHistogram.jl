@@ -1,23 +1,12 @@
 abstract type SuffStats end
 
-function add_sample(ss::SuffStats, sample)
-    @error("add_sample not implemented for $(typeof(ss)) and sample $(typeof(sample)) \n
-        you may need to implement a custom sufficient statistics type")
-end
-function remove_sample(ss::SuffStats, sample)
-    @error("remove_sample not implemented for $(typeof(ss)) and sample $(typeof(sample)) \n
-        you may need to implement a custom sufficient statistics type")
-end
+function add_sample end
+function remove_sample end
 
-function make_k_block(k, suff_stats_type; kwargs...)
-    @error("make_k_block not implemented for sufficient statistics type $(suff_stats_type) \n
-        you may need to implement a custom sufficient statistics type")
-end
-
-function score(ss::SuffStats; kwargs...)
-    @error("score not implemented for sufficient statistics type $(typeof(ss)) \n
-        you may need to implement a custom sufficient statistics type")
-end
+add_sample(suffstats::SuffStats, sample, i, j) = add_sample(suffstats, sample)
+remove_sample(suffstats::SuffStats, sample, i, j) = remove_sample(suffstats, sample)
+function make_k_block end
+function score end
 
 ### ========================================================================================
 
@@ -60,8 +49,7 @@ function make_k_block(k, ::Val{:categorical}; num_categories, kwargs...)
 end
 
 @inline function score(ss::CategoricalSuffStats; kwargs...)
-    n = max(ss.n, 1)
-    return n - sum(abs2, ss.h) / n
+    return ss.n - sum(abs2, ss.h) / max(ss.n, 1)
 end
 
 ### ========================================================================================
@@ -75,24 +63,24 @@ function BernoulliSuffStats()
     return BernoulliSuffStats{Int}(0, 0)
 end
 
-function add_sample(ss::BernoulliSuffStats, sample::Bool)
+@inline function add_sample(ss::BernoulliSuffStats, sample::Bool)
     sample && (@reset ss.h += 1)
     @reset ss.n += 1
     return ss
 end
 
-function add_sample(ss::BernoulliSuffStats, ::Nothing)
+@inline function add_sample(ss::BernoulliSuffStats, ::Nothing)
     @reset ss.n += 1
     return ss
 end
 
-function remove_sample(ss::BernoulliSuffStats, sample::Bool)
+@inline function remove_sample(ss::BernoulliSuffStats, sample::Bool)
     sample && (@reset ss.h -= 1)
     @reset ss.n -= 1
     return ss
 end
 
-function remove_sample(ss::BernoulliSuffStats, ::Nothing)
+@inline function remove_sample(ss::BernoulliSuffStats, ::Nothing)
     @reset ss.n -= 1
     return ss
 end
@@ -111,12 +99,18 @@ end
 
 ### ========================================================================================
 
-struct GenericSuffStats{T} <: SuffStats
+abstract type GenericSuffStatsType <: SuffStats end
+
+struct GenericSuffStats{T} <: GenericSuffStatsType
     samples::Vector{T}
 end
 
-function GenericSuffStats{T}() where {T}
+function GenericSuffStats(::AbstractArray{T}) where {T}
     return GenericSuffStats{T}(Vector{T}())
+end
+
+function get_samples(ss::GenericSuffStats)
+    return ss.samples
 end
 
 function add_sample(ss::GenericSuffStats, sample)
@@ -137,17 +131,37 @@ function make_k_block(k, generic; data::AbstractArray, kwargs...)
          Consider using more specialized sufficient statistics types when possible."
     k_block = SymArray{GenericSuffStats{eltype(data)}}(undef, k, k)
     for j in 1:k, i in 1:k
-        k_block[i, j] = GenericSuffStats{eltype(data)}()
+        k_block[i, j] = GenericSuffStats(data)
     end
     return k_block
 end
 
-function score(ss::GenericSuffStats; dist::D, kwargs...) where {D}
+# use indices rather than pushing and deleting samples for better performance ?
+# struct GenericSuffStatsIndex{T} <: GenericSuffStatsType
+#     indices::Vector{Tuple{Int, Int}}
+#     data::T
+# end
+
+# function get_samples(ss::GenericSuffStatsIndex)
+#     return [ss.data[i, j] for (i, j) in ss.indices]
+# end
+
+# function GenericSuffStatsIndex{T}(data::T) where {T}
+#     return GenericSuffStatsIndex{T}(Vector{Tuple{Int, Int}}(), data)
+# end
+
+# function add_sample(ss::GenericSuffStatsIndex, sample, i, j)
+#     push!(ss.indices, (i, j))
+#     return ss
+# end
+
+function score(ss::GenericSuffStatsType; dist::D, kwargs...) where {D}
     if dist === nothing
         @error("No distribution provided for scoring GenericSuffStats")
     end
-    d = fit(D, ss.samples)
-    return -sum(logpdf.(Ref(d), ss.samples))
+    samples = get_samples(ss)
+    d = fit(D, samples)
+    return -sum(logpdf.(d, samples))
 end
 
 ### ========================================================================================
@@ -167,8 +181,9 @@ function init!(es::GreedySuffStats, data, node_labels)
         for i in 1:(j - 1)  # More efficient than i < j check inside loop
             edge_value = data[i, j]
             gi = node_labels[i]
-            es.block_ss[gi, gj] = add_sample(es.block_ss[gi, gj], edge_value)
-            es.block_ss_swap[gi, gj] = add_sample(es.block_ss_swap[gi, gj], edge_value)
+            es.block_ss[gi, gj] = add_sample(es.block_ss[gi, gj], edge_value, i, j)
+            es.block_ss_swap[gi, gj] = add_sample(
+                es.block_ss_swap[gi, gj], edge_value, i, j)
         end
     end
 end
@@ -179,13 +194,18 @@ end
     for m in matrix_ss.uppertrian.nzval
         total_loss += score(m; dist = dist, data = data, node_labels = node_labels)
     end
-    # @inbounds for j in axes(matrix_ss, 2)
-    #     for i in 1:j
-    #         inter = score(
-    #             matrix_ss[i, j]; dist = dist, data = data, node_labels = node_labels)
-    #         total_loss += inter
-    #     end
-    # end
+    return total_loss / norm
+end
+
+@inline function score(matrix_ss, data, node_labels; dist = nothing, norm = 1.0)
+    total_loss = 0.0
+    @inbounds for j in axes(matrix_ss, 2)
+        for i in 1:j
+            inter = score(
+                matrix_ss[i, j]; dist = dist, data = data, node_labels = node_labels)
+            total_loss += inter
+        end
+    end
     return total_loss / norm
 end
 
@@ -253,14 +273,14 @@ function estimate(
             edge_value_2 = data[j, index2]
 
             es.block_ss_swap[group1, groupj] = remove_sample(
-                es.block_ss_swap[group1, groupj], edge_value_1)
+                es.block_ss_swap[group1, groupj], edge_value_1, j, index1)
             es.block_ss_swap[group2, groupj] = add_sample(
-                es.block_ss_swap[group2, groupj], edge_value_1)
+                es.block_ss_swap[group2, groupj], edge_value_1, j, index1)
 
             es.block_ss_swap[group2, groupj] = remove_sample(
-                es.block_ss_swap[group2, groupj], edge_value_2)
+                es.block_ss_swap[group2, groupj], edge_value_2, j, index2)
             es.block_ss_swap[group1, groupj] = add_sample(
-                es.block_ss_swap[group1, groupj], edge_value_2)
+                es.block_ss_swap[group1, groupj], edge_value_2, j, index2)
         end
 
         # tentative swap
