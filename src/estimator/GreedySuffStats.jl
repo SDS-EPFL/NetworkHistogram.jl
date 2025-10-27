@@ -262,25 +262,22 @@ function estimate(
         group2 = node_labels[index2]
 
         @inbounds for j in axes(data, 2)
+            if j != index1 && j != index2
+                # extract data
+                groupj = node_labels[j]
+                edge_value_1 = data[j, index1]
+                edge_value_2 = data[j, index2]
 
-            # this check is slow ! (+ 6 μs per iteration on n=2000)
-            if j == index1 || j == index2
-                continue
+                es.block_ss_swap[group1, groupj] = remove_sample(
+                    es.block_ss_swap[group1, groupj], edge_value_1, j, index1)
+                es.block_ss_swap[group2, groupj] = add_sample(
+                    es.block_ss_swap[group2, groupj], edge_value_1, j, index1)
+
+                es.block_ss_swap[group2, groupj] = remove_sample(
+                    es.block_ss_swap[group2, groupj], edge_value_2, j, index2)
+                es.block_ss_swap[group1, groupj] = add_sample(
+                    es.block_ss_swap[group1, groupj], edge_value_2, j, index2)
             end
-            # extract data
-            groupj = node_labels[j]
-            edge_value_1 = data[j, index1]
-            edge_value_2 = data[j, index2]
-
-            es.block_ss_swap[group1, groupj] = remove_sample(
-                es.block_ss_swap[group1, groupj], edge_value_1, j, index1)
-            es.block_ss_swap[group2, groupj] = add_sample(
-                es.block_ss_swap[group2, groupj], edge_value_1, j, index1)
-
-            es.block_ss_swap[group2, groupj] = remove_sample(
-                es.block_ss_swap[group2, groupj], edge_value_2, j, index2)
-            es.block_ss_swap[group1, groupj] = add_sample(
-                es.block_ss_swap[group1, groupj], edge_value_2, j, index2)
         end
 
         # tentative swap
