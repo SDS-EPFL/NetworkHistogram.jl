@@ -65,7 +65,7 @@ k = 20
 oracle_labels = ordered_start_labels(n, k);
 initial_labels = shuffle(oracle_labels);
 
-max_iter = 500
+max_iter = 1_000_000
 stalled_iters = 5_000
 
 data = convertor.(A)

@@ -44,12 +44,20 @@ mutable struct SymArray{F} <: AbstractSparseMatrix{F, Int}
     uppertrian::SparseMatrixCSC{F, Int}
 end
 
+function check_size(a)
+    if length(a.uppertrian.nzval) == 0
+        println("Warning: SymArray has zero stored elements.")
+    end
+end
+
 SymArray(::Type{F}, dims::Int...) where {F} = SymArray(F, dims)
 function SymArray(::Type{F}, dims::NTuple{2, Int}) where {F}
     if dims[1] != dims[2]
         throw(ArgumentError("SymArray must be square, got dims=$(dims)"))
     end
-    SymArray{F}(SparseMatrixCSC{F, Int}(make_csc_format(dims[1], F)...))
+    a = SymArray{F}(SparseMatrixCSC{F, Int}(make_csc_format(dims[1], F)...))
+    check_size(a)
+    return a
 end
 
 SymArray{F}(::UndefInitializer, dims::Int...) where {F} = SymArray{F}(undef, dims)
@@ -186,12 +194,7 @@ Base.BroadcastStyle(::SymArrayStyle, ::SymArrayStyle) = SymArrayStyle()
 # Custom similar for broadcasted SymArrays
 function Base.similar(
         bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{SymArray}}, ::Type{ElType}) where {ElType}
-    A = find_symarray(bc)
-    if A == nothing
-        return SymArray(similar(SparseMatrixCSC{ElType, Int}, axes(bc)...))
-    else
-        return SymArray(similar(A.uppertrian, ElType))
-    end
+    return SymArray{ElType}(undef, size(bc)...)
 end
 
 # Helper function to find a SymArray in the broadcast tree
