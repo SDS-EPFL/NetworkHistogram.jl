@@ -30,7 +30,7 @@ function init!(es::GreedySuffStats, data, node_labels)
 end
 
 # TODO: allow for non-symmetric data
-@inline function score(matrix_ss::SymArray; norm = 1.0)
+@inline function score(matrix_ss::SymArray{<:SuffStats}; norm = 1.0)
     total_loss = 0.0
     for m in matrix_ss.uppertrian.nzval
         total_loss += score(m)
@@ -38,7 +38,7 @@ end
     return total_loss / norm
 end
 
-@inline function score(matrix_ss; norm = 1.0)
+@inline function score(matrix_ss::AbstractMatrix{<:SuffStats}; norm = 1.0)
     total_loss = 0.0
     @inbounds for j in axes(matrix_ss, 2)
         for i in 1:j
