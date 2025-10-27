@@ -53,9 +53,13 @@ end
 #     return ss
 # end
 
-function score(ss::GenericSuffStats)
-    isnothing(ss.dist) && @error("No distribution provided for scoring GenericSuffStats")
+function score(ss::GenericSuffStats{T, D}) where {T, D}
     samples = get_samples(ss)
-    d = fit(typeof(ss.dist), samples)
+    d = fit(D, samples)
     return -sum(logpdf.(d, samples))
+end
+
+function to_params(ss::GenericSuffStats)
+    d = fit(typeof(ss.dist), get_samples(ss))
+    return params(d)
 end

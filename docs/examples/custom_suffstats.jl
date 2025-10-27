@@ -1,4 +1,5 @@
-import NetworkHistogram: SuffStats, add_sample, remove_sample, make_k_block, score
+import NetworkHistogram: SuffStats, add_sample, remove_sample, make_k_block, score,
+                         to_params, CategoricalConvertor, num_bins, to_distribution
 using StaticArrays
 using Accessors
 
@@ -32,6 +33,10 @@ end
     return n - sum(abs2, ss.h) / max(n, 1)
 end
 
+function to_params(ss::MyCustomSuffStats)
+    n = max(sum(ss.h), 1)
+    return ss.h ./ n
+end
 ##
 
 using Distributions
@@ -48,7 +53,8 @@ function W_multiplex(x, y)
     return DiscreteNonParametric(0:3, SVector{4}(ps))
 end
 
-m = 4
+convertor = CategoricalConvertor(4, Dict(0 => 1, 1 => 2, 2 => 3, 3 => 4))
+
 graphon = DecoratedGraphon(W_multiplex)
 
 n = 2000
@@ -59,32 +65,23 @@ k = 20
 oracle_labels = ordered_start_labels(n, k);
 initial_labels = shuffle(oracle_labels);
 
-max_iter = 1_000_000
+max_iter = 500
 stalled_iters = 5_000
 
-data = A .+ 1;  # shift to 1,2,3,4 for categorical
-es_new = NetworkHistogram.GreedySuffStats(data, initial_labels, num_categories = m,
+data = convertor.(A)
+es_new = NetworkHistogram.GreedySuffStats(
+    data, initial_labels, num_categories = num_bins(convertor),
     type_suff_stats = :custom,
     max_iter = max_iter,
     swap_rule = NetworkHistogram.RandomGroupSwap(),
     stop_rule = NetworkHistogram.PreviousBestValue(stalled_iters, Inf, :min),
-    progress = true,
-    dist = Categorical(m)
+    progress = true
 );
-node_labels_es_new = NetworkHistogram.estimate!(
+node_labels_es_new, parameters = NetworkHistogram.estimate!(
     es_new, data, initial_labels; iter_progress = 10_000)
 
-function params(ss::Union{NetworkHistogram.CategoricalSuffStats, MyCustomSuffStats})
-    ss.h ./ sum(ss.h)
-end
-parameters = Matrix{SVector{m, Float64}}(undef, k, k)
-@inbounds for j in 1:k, i in 1:k
-    parameters[i, j] = SVector{m, Float64}(
-        params(es_new.block_ss[i, j])...)
-end
-model_es_new = NetworkHistogram.DecoratedSBM(
-    DiscreteNonParametric.(Ref(0:(m - 1)), parameters), counts(node_labels_es_new) ./
-                                                        length(node_labels_es_new));
+model_es_new = NetworkHistogram.DecoratedSBM(to_distribution.(convertor, parameters),
+    counts(node_labels_es_new) ./ length(node_labels_es_new));
 
 res_new = NetworkHistogram.NethistResult(node_labels_es_new, model_es_new);
 NetworkHistogram.align_res_true_latents!(res_new, oracle_labels);

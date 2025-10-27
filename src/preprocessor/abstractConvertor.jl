@@ -1,6 +1,6 @@
 abstract type AbstractConvertor end
 
-Base.broadcastable(o::T) where {T <: AbstractConvertor} = Ref(o)
+Base.broadcastable(o::AbstractConvertor) = Ref(o)
 
 """
     Convert data from its original form to a processed form suitable for SBM estimation.

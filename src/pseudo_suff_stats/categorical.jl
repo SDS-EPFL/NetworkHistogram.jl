@@ -39,3 +39,8 @@ end
 @inline function score(ss::CategoricalSuffStats)
     return ss.n - sum(abs2, ss.h) / max(ss.n, 1)
 end
+
+function to_params(ss::CategoricalSuffStats)
+    n = max(ss.n, 1)
+    return ss.h ./ n
+end

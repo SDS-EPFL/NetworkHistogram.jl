@@ -12,7 +12,7 @@ import Base: eltype, convert, size, getindex, setindex!, copy!, similar,
              IndexStyle, axes, length, iterate, copyto!, fill!
 import SparseArrays: getcolptr, nonzeros, FixedSparseCSC
 
-export SymArray, eltype, deepcopy!, sum_tri_with_diag, make_sym_init
+export SymArray, eltype, deepcopy!
 
 """
     SymArray{F} <: AbstractSparseMatrix{F, 2}
@@ -39,8 +39,6 @@ sym[2, 1]  # Returns 5.0
 A = [1 2 3; 2 4 5; 3 5 6]
 sym = SymArray(A)
 ```
-
-See also: [`sum_tri_with_diag`](@ref)
 """
 mutable struct SymArray{F} <: AbstractSparseMatrix{F, Int}
     uppertrian::SparseMatrixCSC{F, Int}
@@ -80,20 +78,6 @@ function make_csc_format(k::Int, ::Type{F}) where {F}
         end
     end
     return k, k, colptr, rowval, nzval
-end
-
-function make_sym_init(k, d::Real)
-    a = SymArray{typeof(d)}(undef, k, k)
-    fill!(a, d)
-    return a
-end
-
-function make_sym_init(k, d)
-    a = SymArray{typeof(d)}(undef, k, k)
-    for j in 1:k, i in 1:j
-        a[i, j] = deepcopy(d)
-    end
-    return a
 end
 
 """
@@ -145,21 +129,6 @@ function copy!(dest::SymArray{F}, src::SymArray{F}) where {F}
     size(dest) == size(src) || throw(DimensionMismatch("arrays must have the same size"))
     copy!(dest.uppertrian.nzval, src.uppertrian.nzval)
     return nothing
-end
-
-"""
-    sum_tri_with_diag(a::SymArray)
-
-Efficiently sum all elements in the symmetric matrix (counting each off-diagonal once).
-
-# Returns
-- Sum of all unique elements in the symmetric matrix
-
-# Note
-This is more efficient than `sum(a)` because it only sums stored elements.
-"""
-function sum_tri_with_diag(a::SymArray)
-    return sum(a.uppertrian)
 end
 
 function convert(::Type{SymArray{F}}, a::AbstractMatrix{F}) where {F}
@@ -254,7 +223,6 @@ end
 # This maintains the symmetric structure during broadcast operations
 function Base.copyto!(dest::SymArray, bc::Broadcast.Broadcasted{SymArrayStyle})
     axes(dest) == axes(bc) || Broadcast.throwdm(axes(dest), axes(bc))
-
     _copyto_nzval!(dest, bc)
     return dest
     # # Try to use optimized nzval path for simple operations
@@ -279,9 +247,8 @@ function _copyto_nzval!(
     bc_nzval = _replace_with_nzval(bc)
 
     # Broadcast directly on the nzval array
-    dest_nzval = nonzeros(dest.uppertrian)
+    dest_nzval = dest.uppertrian.nzval
     copyto!(dest_nzval, bc_nzval)
-
     return dest
 end
 

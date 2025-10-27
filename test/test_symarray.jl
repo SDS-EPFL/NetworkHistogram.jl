@@ -261,24 +261,6 @@ using StaticArrays
         @test q[2, 1] == 2.0
     end
 
-    @testset "Special case: sum_tri_with_diag" begin
-        a = SymArray{Float64}(undef, 3, 3)
-        fill!(a, 1.0)
-        # Only upper triangle is stored: 6 elements
-        # [1,1], [1,2], [1,3], [2,2], [2,3], [3,3]
-        @test sum_tri_with_diag(a) == 6.0
-
-        b = SymArray{Float64}(undef, 4, 4)
-        fill!(b, 2.0)
-        # Upper triangle has 10 elements for 4x4
-        @test sum_tri_with_diag(b) == 20.0
-
-        # Verify it's different from full sum (which counts off-diag twice)
-        # Full sum would be 2*n*(n-1)/2 + n for value v
-        # = v*(n^2-n+n) = v*n^2
-        # While sum_tri_with_diag gives v*n*(n+1)/2
-    end
-
     @testset "Type stability" begin
         # Float64
         a = SymArray{Float64}(undef, 3, 3)
@@ -378,7 +360,8 @@ using StaticArrays
         @test result3 isa SymArray
 
         # SymArray + SymArray should return SymArray
-        b = make_sym_init(3, 3.0)
+        b = SymArray{Float64}(undef, 3, 3)
+        fill!(b, 3.0)
         result4 = a .+ b
         @test result4 isa SymArray
     end

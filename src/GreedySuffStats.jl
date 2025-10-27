@@ -154,5 +154,5 @@ function estimate!(
     finish!(pbar)
     @info "Optimization finished. Final loss: $current_loss"
 
-    return node_labels
+    return node_labels, to_params.(es.block_ss)
 end
