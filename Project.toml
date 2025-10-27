@@ -1,13 +1,12 @@
 name = "NetworkHistogram"
 uuid = "7806f430-7229-459c-b2e6-df35e8e4eb5d"
-version = "0.5.2"
+version = "0.6.0"
 authors = ["Charles Dufour", "Jake Grainger"]
 
 [deps]
 Accessors = "7d9f7c33-5ae7-4f3b-8dc6-eff91059b697"
 ArgCheck = "dce04be8-c92d-5529-be00-80e4d2c0e197"
 Clustering = "aaaa29a8-35af-508c-8bc3-b662a17a0fe5"
-DiscretizeDistributions = "1dbf0e27-43cd-4e03-8ecf-3f7be9d12b15"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Graphons = "e0c12bfd-47d7-434e-afb7-632611640ca5"
 IntervalSets = "8197267c-284f-5f27-9208-e0e47529a953"
@@ -23,18 +22,15 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 [weakdeps]
 Bootstrap = "e28b5b4c-05e8-5b66-bc03-6f0c0a0a06e0"
 LightMC = "b58f5c6e-c887-41d6-b553-02118416cd5d"
-Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 
 [extensions]
 BootstrapExt = "Bootstrap"
 LightMCExt = "LightMC"
-MakieExt = "Makie"
 
 [compat]
 Accessors = "0.1.42"
 ArgCheck = "2.5.0"
 Clustering = "0.15.8"
-DiscretizeDistributions = "0.1.2"
 IntervalSets = "0.7.11"
 LinearAlgebra = "1.12.0"
 Reexport = "1.2.2"

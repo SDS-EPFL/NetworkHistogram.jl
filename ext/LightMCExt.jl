@@ -3,8 +3,6 @@ module LightMCExt
 using NetworkHistogram
 using LightMC
 
-import NetworkHistogram: agg_params, logpdf, sample, params, distance, _fast_compressed_obs,
-                         from_adjs_to_decorated
 using LightMC: DiscreteMarkovChain, SampleChain, transition_matrix, ConvertBinaryMC
 
 logpdf(d::DiscreteMarkovChain, x) = LightMC.logpdf(d, x)

@@ -16,5 +16,4 @@ abstract type Result end
 #     model::M
 # end
 
-include("GreedyAverage.jl")
 include("GreedySuffStats.jl")

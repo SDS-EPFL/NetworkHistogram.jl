@@ -1,4 +1,5 @@
 include("SymArray.jl")
+include("config_rules/include.jl")
 
 function ordered_start_labels(n::Int, k::Int)
     labels = Vector{Int}(undef, n)

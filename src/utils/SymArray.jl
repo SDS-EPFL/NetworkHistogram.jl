@@ -96,8 +96,6 @@ function make_sym_init(k, d)
     return a
 end
 
-@deprecate SymArray(k::Int, d::F) where {F} make_sym_init(k, d)
-
 """
     SymArray(d::AbstractMatrix{F})
 

@@ -4,13 +4,6 @@ function info_to_print(::StopRule)
     return nothing
 end
 
-function initialise_stop_rule!(stop_rule::StopRule, a, g)
-end
-
-function score(a::Assignment)
-    return loglikelihood(a)
-end
-
 mutable struct PreviousBestValue{T, S} <: StopRule
     k::Int
     previous_best_value::T

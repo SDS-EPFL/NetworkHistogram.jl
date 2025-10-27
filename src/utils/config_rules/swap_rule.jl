@@ -25,11 +25,3 @@ function select_indices_swap(node_labels::AbstractVector{Int}, ::RandomGroupSwap
     index2 = rand(findall(x -> x == groups[2], node_labels))
     return index1, index2
 end
-
-function select_indices_swap(a::Assignment, rule::NodeSwapRule)
-    select_indices_swap(a.node_labels, rule)
-end
-
-function select_indices_swap(assignment::Assignment, rule::RandomGroupSwap)
-    return select_indices_swap(assignment.node_labels, rule, number_groups(assignment))
-end

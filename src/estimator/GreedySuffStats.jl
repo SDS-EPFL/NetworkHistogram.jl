@@ -237,6 +237,7 @@ function estimate!(
     # Initialize node labels
     node_labels = copy(node_labels_init)
     n = length(node_labels)
+    k = length(unique(node_labels))
     n_edges = n * (n - 1) / 2
     init!(es, data, node_labels)
 
@@ -256,7 +257,7 @@ function estimate!(
     # Main optimization loop
     for iter in 1:(es.max_iter)
         # Select two nodes to potentially swap
-        index1, index2 = select_indices_swap(node_labels, es.node_swap_rule)
+        index1, index2 = select_indices_swap(node_labels, es.node_swap_rule, k)
 
         group1 = node_labels[index1]
         group2 = node_labels[index2]
