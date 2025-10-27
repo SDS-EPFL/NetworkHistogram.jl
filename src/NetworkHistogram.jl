@@ -18,13 +18,15 @@ using Reexport
 
 import Graphons: _extract_param, convert_to_params
 
-include("utils/include.jl")
-
+include("SymArray.jl")
 @reexport using .FastSymArray
 
 include("distributions/hist_dist.jl")
 include("preprocessor/abstractConvertor.jl")
-include("estimator/abstractEstimator.jl")
+include("config_rules/include.jl")
+include("pseudo_suff_stats/abstract_suffstat.jl")
+include("GreedySuffStats.jl")
+include("utils/utils_node_labels.jl")
 include("api.jl")
 
 export GreedyParams, nethist, nethist_discrete_edges, ordered_start_labels, RandomGroupSwap,
