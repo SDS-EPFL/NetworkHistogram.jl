@@ -1,8 +1,56 @@
 
+function nethist_categorical(
+        A, k,
+        labels_start = shuffle(ordered_start_labels(size(A, 1), k));
+        max_iter = 1_000_000,
+        stalled_iters = 5_000,
+        progress_bar = true)
+    _nethist(
+        A, labels_start,
+        CategoricalConvertor(A),
+        :categorical;
+        max_iter = max_iter,
+        stalled_iters = stalled_iters,
+        progress_bar = progress_bar
+    )
+end
 
+function nethist_continuous(
+        A, k,
+        labels_start = shuffle(ordered_start_labels(size(A, 1), k));
+        num_bins_::Int = 10,
+        max_iter = 1_000_000,
+        stalled_iters = 5_000,
+        progress_bar = true)
+    _nethist(
+        A, labels_start,
+        UnitIntervalConvertor(num_bins_),
+        :categorical;
+        max_iter = max_iter,
+        stalled_iters = stalled_iters,
+        progress_bar = progress_bar
+    )
+end
 
-
-
+function _nethist(A, labels_start, convertor, type_suff_stats; max_iter = max_iter,
+        stalled_iters = 10_000,
+        progress_bar = true)
+    data = convertor.(A)
+    @info "Using $(num_bins(convertor)) discrete categories for edge values"
+    es = NetworkHistogram.GreedySuffStats(
+        data, labels_start, num_categories = num_bins(convertor),
+        type_suff_stats = type_suff_stats,
+        max_iter = max_iter,
+        swap_rule = NetworkHistogram.RandomGroupSwap(),
+        stop_rule = NetworkHistogram.PreviousBestValue(stalled_iters, Inf, :min),
+        progress = progress_bar
+    )
+    node_labels, parameters = NetworkHistogram.estimate!(
+        es, data, labels_start; iter_progress = 10_000)
+    model = NetworkHistogram.DecoratedSBM(to_distribution.(convertor, parameters),
+        counts(node_labels) ./ length(node_labels))
+    return NetworkHistogram.NethistResult(node_labels, model)
+end
 
 # function nethist_binary_edges(A, initial_node_labels, params::GreedyParams)
 #     k = length(unique(initial_node_labels))

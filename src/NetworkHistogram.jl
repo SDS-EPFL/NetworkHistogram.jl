@@ -8,7 +8,7 @@ import Base: convert, eltype, zero
 using Distributions
 using LinearAlgebra
 using ArgCheck
-import Random: randperm, AbstractRNG, rand
+import Random: randperm, AbstractRNG, rand, shuffle
 import Distributions: logpdf, pdf
 
 using IntervalSets
