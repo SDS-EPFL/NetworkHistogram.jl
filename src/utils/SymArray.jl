@@ -186,7 +186,7 @@ Base.@propagate_inbounds function getindex(A::SymArray, i0::Integer, i1::Integer
     i0, i1 = minmax(i0, i1)
     @boundscheck checkbounds(A, i0, i1)
     r1 = Int(@inbounds getcolptr(A.uppertrian)[i1])
-    nonzeros(A.uppertrian)[r1 + i0 - 1]
+    A.uppertrian.nzval[r1 + i0 - 1]
 end
 
 # faster indexing by avoiding search, modified from SparseArrays
@@ -194,7 +194,7 @@ Base.@propagate_inbounds function setindex!(A::SymArray, v, i::Int, j::Int)
     i, j = minmax(i, j)
     @boundscheck checkbounds(A, i, j)
     r1 = Int(@inbounds getcolptr(A.uppertrian)[j])
-    nonzeros(A.uppertrian)[r1 + i - 1] = v
+    A.uppertrian.nzval[r1 + i - 1] = v
 end
 
 function similar(a::SymArray, ::Type{T} = eltype(a), dims::Dims{2} = size(a)) where {T}
@@ -223,8 +223,8 @@ function sum_tri_with_diag(a::SymArray)
 end
 
 function convert(::Type{SymArray{F}}, a::AbstractMatrix{F}) where {F}
-    @assert size(a, 1) == size(a, 2)
-    k = size(a, 1)
+    k, n = size(a)
+    @assert k==n "Input matrix must be square, got size $(size(a))"
 
     # Directly build upper triangle sparse matrix
     # Pre-allocate with exact size needed
@@ -255,38 +255,34 @@ end
 deepcopy!(dest::SymArray{F}, src::SymArray{F}) where {F <: Real} = copy!(dest, src)
 
 # Broadcasting support - custom style to maintain symmetric structure
-struct SymArrayStyle <: Broadcast.AbstractArrayStyle{2} end
-SymArrayStyle(::Val{2}) = SymArrayStyle()
+# struct SymArrayStyle <: Broadcast.AbstractArrayStyle{2} end
+# SymArrayStyle(::Val{2}) = SymArrayStyle()
 
-Base.BroadcastStyle(::Type{<:SymArray}) = SymArrayStyle()
+const SymArrayStyle = Broadcast.ArrayStyle{SymArray}
+
+Base.BroadcastStyle(::Type{<:SymArray}) = Broadcast.ArrayStyle{SymArray}() # SymArrayStyle()
 
 # When broadcasting with scalars or other styles, keep SymArrayStyle
 Base.BroadcastStyle(::SymArrayStyle, ::Broadcast.DefaultArrayStyle{0}) = SymArrayStyle()
 Base.BroadcastStyle(::Broadcast.DefaultArrayStyle{0}, ::SymArrayStyle) = SymArrayStyle()
 
-# When broadcasting with other arrays, use default array style
-function Base.BroadcastStyle(::SymArrayStyle, ::Broadcast.DefaultArrayStyle)
-    Broadcast.DefaultArrayStyle{2}()
-end
-function Base.BroadcastStyle(::Broadcast.DefaultArrayStyle, ::SymArrayStyle)
-    Broadcast.DefaultArrayStyle{2}()
-end
+# When broadcasting with regular arrays (not scalars), defer to the array's style
+# This ensures SymArray .+ Matrix returns Matrix, not SymArray
+Base.BroadcastStyle(::SymArrayStyle, s::Broadcast.DefaultArrayStyle) = s
+Base.BroadcastStyle(s::Broadcast.DefaultArrayStyle, ::SymArrayStyle) = s
 
 # When broadcasting between SymArrays, keep SymArrayStyle
 Base.BroadcastStyle(::SymArrayStyle, ::SymArrayStyle) = SymArrayStyle()
 
 # Custom similar for broadcasted SymArrays
 function Base.similar(
-        bc::Broadcast.Broadcasted{SymArrayStyle}, ::Type{ElType}) where {ElType}
+        bc::Broadcast.Broadcasted{Broadcast.ArrayStyle{SymArray}}, ::Type{ElType}) where {ElType}
     A = find_symarray(bc)
-    return SymArray(similar(A.uppertrian, ElType))
-end
-
-# Custom similar for broadcasted SymArrays
-function Base.similar(
-        bc::Broadcast.Broadcasted{SymArrayStyle}, ::Type{Nothing})
-    A = find_symarray(bc)
-    return similar(Array{Nothing}, axes(bc))
+    if A == nothing
+        return SymArray(similar(SparseMatrixCSC{ElType, Int}, axes(bc)...))
+    else
+        return SymArray(similar(A.uppertrian, ElType))
+    end
 end
 
 # Helper function to find a SymArray in the broadcast tree
@@ -296,5 +292,80 @@ find_symarray(x) = x
 find_symarray(args::Tuple{}) = nothing
 find_symarray(a::SymArray, rest) = a
 find_symarray(::Any, rest) = find_symarray(rest)
+
+# Override broadcasted to eagerly evaluate when SymArrayStyle is involved
+# This prevents issues with nested broadcasts losing the SymArray type
+# hack, needs to be fixed later
+function Broadcast.broadcasted(::SymArrayStyle, f, args...)
+    # Eagerly materialize any nested Broadcasted{SymArrayStyle} to maintain type stability
+    materialized_args = map(args) do arg
+        if arg isa Broadcast.Broadcasted{SymArrayStyle}
+            # Materialize nested SymArray broadcasts immediately
+            return copy(arg)
+        else
+            return arg
+        end
+    end
+    # Now create the broadcast with materialized args
+    return Broadcast.Broadcasted{SymArrayStyle}(f, materialized_args)
+end
+
+# Specialized copyto! for efficient in-place broadcasting into SymArray
+# This maintains the symmetric structure during broadcast operations
+function Base.copyto!(dest::SymArray, bc::Broadcast.Broadcasted{SymArrayStyle})
+    axes(dest) == axes(bc) || Broadcast.throwdm(axes(dest), axes(bc))
+
+    _copyto_nzval!(dest, bc)
+    return dest
+    # # Try to use optimized nzval path for simple operations
+    # if _can_use_nzval_broadcast(bc)
+    #     return _copyto_nzval!(dest, bc)
+    # end
+
+    # # Fallback: iterate using CartesianIndices but only over upper triangle
+    # bc′ = Broadcast.preprocess(dest, bc)
+    # @inbounds for j in 1:size(dest, 2)
+    #     for i in 1:j
+    #         dest[i, j] = bc′[i, j]
+    #     end
+    # end
+    # return dest
+end
+
+# Optimized copyto! that works directly on nzval arrays
+function _copyto_nzval!(
+        dest::SymArray{T}, bc::Broadcast.Broadcasted{SymArrayStyle}) where {T}
+    # Replace SymArrays in the broadcast tree with their nzval arrays
+    bc_nzval = _replace_with_nzval(bc)
+
+    # Broadcast directly on the nzval array
+    dest_nzval = nonzeros(dest.uppertrian)
+    copyto!(dest_nzval, bc_nzval)
+
+    return dest
+end
+
+# Replace SymArrays in broadcast tree with their nzval arrays
+function _replace_with_nzval(bc::Broadcast.Broadcasted{SymArrayStyle})
+    # Create new broadcasted with transformed arguments
+    new_args = map(_replace_with_nzval, bc.args)
+    # Don't specify style - let it be inferred
+    return Broadcast.Broadcasted(bc.f, new_args)
+end
+
+function _replace_with_nzval(sa::SymArray)
+    return sa.uppertrian.nzval
+end
+
+function _replace_with_nzval(bc::Broadcast.Broadcasted)
+    # Recursively process nested broadcasts
+    new_args = map(_replace_with_nzval, bc.args)
+    return Broadcast.Broadcasted(bc.f, new_args)
+end
+
+function _replace_with_nzval(x)
+    # For scalars and other types, return as-is
+    return x
+end
 
 end

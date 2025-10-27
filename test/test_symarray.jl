@@ -324,7 +324,84 @@ using StaticArrays
         @test all(c[i, j] == 2.0 for i in 1:3, j in 1:3)
 
         sin_a = @. sin(a)
-        @test sin_a isa SymArray
-        @test all(sin_a[i, j] == sin(2.0) for i in 1:3, j in 1:3)
+        sin_a_bis = sin.(a)
+        for sin_test in (sin_a, sin_a_bis)
+            @test sin_test isa SymArray
+            @test all(sin_test[i, j] == sin(2.0) for i in 1:3, j in 1:3)
+        end
+    end
+
+    @testset "Broadcasting with regular arrays" begin
+        a = SymArray(3, 2.0)
+        M = [1.0 2.0 3.0; 4.0 5.0 6.0; 7.0 8.0 9.0]
+
+        # SymArray + Matrix should return Matrix (follows Matrix type)
+        result1 = a .+ M
+        @test result1 isa Matrix{Float64}
+        @test !(result1 isa SymArray)
+
+        # Matrix + SymArray should also return Matrix
+        result2 = M .+ a
+        @test result2 isa Matrix{Float64}
+        @test !(result2 isa SymArray)
+
+        # Check values are correct
+        for i in 1:3, j in 1:3
+            @test result1[i, j] ≈ 2.0 + M[i, j]
+            @test result2[i, j] ≈ M[i, j] + 2.0
+        end
+
+        # SymArray + scalar should still return SymArray
+        result3 = a .+ 5.0
+        @test result3 isa SymArray
+
+        # SymArray + SymArray should return SymArray
+        b = SymArray(3, 3.0)
+        result4 = a .+ b
+        @test result4 isa SymArray
+    end
+
+    @testset "SymArray broadcast with Matrix returns Matrix" begin
+        # Create a SymArray and a regular Matrix
+        a = SymArray(3, 2.0)
+        M = [1.0 2.0 3.0; 4.0 5.0 6.0; 7.0 8.0 9.0]
+
+        # SymArray + Matrix should return Matrix
+        result1 = a .+ M
+        @test result1 isa Matrix{Float64}
+        @test !(result1 isa SymArray)
+        @test size(result1) == (3, 3)
+
+        # Matrix + SymArray should also return Matrix
+        result2 = M .+ a
+        @test result2 isa Matrix{Float64}
+        @test !(result2 isa SymArray)
+
+        # Check values are correct
+        for i in 1:3, j in 1:3
+            @test result1[i, j] ≈ 2.0 + M[i, j]
+            @test result2[i, j] ≈ M[i, j] + 2.0
+        end
+
+        # SymArray + scalar should still return SymArray
+        result3 = a .+ 5.0
+        @test result3 isa SymArray
+        @test all(result3[i, j] ≈ 7.0 for i in 1:3, j in 1:3)
+
+        # SymArray + SymArray should return SymArray
+        b = SymArray(3, 3.0)
+        result4 = a .+ b
+        @test result4 isa SymArray
+        @test all(result4[i, j] ≈ 5.0 for i in 1:3, j in 1:3)
+
+        # Chained operations with scalars should still work
+        result5 = (a .+ 1) .* 2
+        @test result5 isa SymArray
+        @test all(result5[i, j] ≈ 6.0 for i in 1:3, j in 1:3)
+
+        a_ones = SymArray(3, 1.0)
+        result_sum_two_matrices = a_ones .+ M .+ M
+        @test result_sum_two_matrices isa Matrix{Float64}
+        @test all(result_sum_two_matrices[i, j] ≈ 1 + 2 * M[i, j] for i in 1:3, j in 1:3)
     end
 end
