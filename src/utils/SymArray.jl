@@ -12,7 +12,7 @@ import Base: eltype, convert, size, getindex, setindex!, copy!, similar,
              IndexStyle, axes, length, iterate, copyto!, fill!
 import SparseArrays: getcolptr, nonzeros, FixedSparseCSC
 
-export SymArray, eltype, deepcopy!, sum_tri_with_diag
+export SymArray, eltype, deepcopy!, sum_tri_with_diag, make_sym_init
 
 """
     SymArray{F} <: AbstractSparseMatrix{F, 2}
@@ -27,8 +27,9 @@ This implementation uses Julia's SparseMatrixCSC for efficient storage and acces
 
 # Examples
 ```julia
-# Create a 3×3 symmetric matrix initialized with zeros
-sym = SymArray(3, 0.0)
+# Create a 3×3 symmetric matrix
+sym = SymArray{Float64}(undef, 3, 3)
+sym .= 0.0
 
 # Access elements (symmetric)
 sym[1, 2] = 5.0
@@ -81,89 +82,30 @@ function make_csc_format(k::Int, ::Type{F}) where {F}
     return k, k, colptr, rowval, nzval
 end
 
-"""
-    SymArray(k::Int, d::F)
-
-Create a k×k symmetric matrix initialized with copies of value `d`.
-
-# Arguments
-- `k::Int`: Dimension of the matrix (must be positive)
-- `d::F`: Initial value for all entries
-
-# Example
-```julia
-sym = SymArray(5, 0.0)  # 5×5 matrix of zeros
-```
-"""
-function SymArray(k::T, d::F) where {F, T <: Real}
-    k > 0 || throw(ArgumentError("Matrix dimension k=$k must be positive"))
-
-    # Pre-allocate arrays with exact size needed for upper triangle
-    n_elements = div(k * (k + 1), 2)
-    I_indices = Vector{Int}(undef, n_elements)
-    J_indices = Vector{Int}(undef, n_elements)
-    values = Vector{F}(undef, n_elements)
-
-    idx = 1
-    for j in 1:k
-        for i in 1:j
-            I_indices[idx] = i
-            J_indices[idx] = j
-            values[idx] = deepcopy(d)
-            idx += 1
-        end
-    end
-
-    uppertrian = sparse(I_indices, J_indices, values, k, k)
-    return SymArray{F}(uppertrian)
+function make_sym_init(k, d::Real)
+    a = SymArray{typeof(d)}(undef, k, k)
+    fill!(a, d)
+    return a
 end
 
-function SymArray(k::T, d::AbstractArray) where {T <: Real}
-    k > 0 || throw(ArgumentError("Matrix dimension k=$k must be positive"))
-
-    # Pre-allocate arrays with exact size needed for upper triangle
-    n_elements = div(k * (k + 1), 2)
-    I_indices = Vector{Int}(undef, n_elements)
-    J_indices = Vector{Int}(undef, n_elements)
-    values = Vector{typeof(d)}(undef, n_elements)
-
-    idx = 1
-    for j in 1:k
-        for i in 1:j
-            I_indices[idx] = i
-            J_indices[idx] = j
-            values[idx] = deepcopy(d)
-            idx += 1
-        end
+function make_sym_init(k, d)
+    a = SymArray{typeof(d)}(undef, k, k)
+    for j in 1:k, i in 1:j
+        a[i, j] = deepcopy(d)
     end
-
-    uppertrian = sparse(I_indices, J_indices, values, k, k)
-    return SymArray{typeof(d)}(uppertrian)
+    return a
 end
+
+@deprecate SymArray(k::Int, d::F) where {F} make_sym_init(k, d)
 
 """
     SymArray(d::AbstractMatrix{F})
 
-Create a SymArray from an existing matrix. The matrix should be symmetric.
-Validates symmetry with a tolerance for floating-point errors.
+Create a SymArray from an existing matrix.The matrix must be square and is assumed to be symmetric.
 """
 function SymArray(d::AbstractMatrix{F}) where {F}
-    size(d, 1) == size(d, 2) || throw(ArgumentError(
-        "Input matrix must be square, got size $(size(d))"))
-
-    # Validate symmetry for floating-point types
-    if F <: AbstractFloat
-        k = size(d, 1)
-        max_asymmetry = zero(F)
-        for j in 1:k, i in 1:(j - 1)
-            max_asymmetry = max(max_asymmetry, abs(d[i, j] - d[j, i]))
-        end
-        tol = sqrt(eps(F)) * maximum(abs, d)
-        if max_asymmetry > tol
-            @warn "Input matrix has asymmetry up to $max_asymmetry (tolerance: $tol). Using upper triangle."
-        end
-    end
-
+    m, n = size(d)
+    m == n || throw(ArgumentError("Input matrix must be square, got size $(size(d))"))
     return convert(SymArray{F}, d)
 end
 

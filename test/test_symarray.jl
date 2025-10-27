@@ -7,7 +7,7 @@ using StaticArrays
 @testset "SymArray Array Interface" begin
     @testset "Construction and basic properties" begin
         # Test construction with scalar
-        a = SymArray(3, 1.0)
+        a = make_sym_init(3, 1.0)
         @test a isa AbstractArray{Float64, 2}
         @test size(a) == (3, 3)
         @test length(a) == 9
@@ -15,17 +15,17 @@ using StaticArrays
         @test eltype(a) == Float64
 
         # Test construction with zeros
-        b = SymArray(5, 0.0)
+        b = make_sym_init(5, 0.0)
         @test size(b) == (5, 5)
         @test all(b[i, j] == 0.0 for i in 1:5 for j in 1:5)
 
         # Test dimension validation
-        @test_throws ArgumentError SymArray(0, 1.0)
-        @test_throws ArgumentError SymArray(-1, 1.0)
+        @test_throws ArgumentError make_sym_init(0, 1.0)
+        @test_throws ArgumentError make_sym_init(-1, 1.0)
     end
 
     @testset "Indexing - getindex and setindex!" begin
-        a = SymArray(4, 0.0)
+        a = make_sym_init(4, 0.0)
 
         # Test setindex! in upper triangle
         a[1, 2] = 5.0
@@ -48,7 +48,7 @@ using StaticArrays
     end
 
     @testset "Symmetry property" begin
-        a = SymArray(5, 0.0)
+        a = make_sym_init(5, 0.0)
 
         # Set values and verify symmetry
         for i in 1:5
@@ -93,7 +93,7 @@ using StaticArrays
     end
 
     @testset "similar function" begin
-        a = SymArray(3, 5.0)
+        a = make_sym_init(3, 5.0)
 
         # Test similar without type
         b = similar(a)
@@ -117,7 +117,7 @@ using StaticArrays
     end
 
     @testset "copy! and deepcopy!" begin
-        a = SymArray(3, 0.0)
+        a = make_sym_init(3, 0.0)
         a[1, 1] = 1.0
         a[1, 2] = 2.0
         a[2, 3] = 5.0
@@ -132,7 +132,7 @@ using StaticArrays
         @test b[3, 2] == 5.0
 
         # Test dimension mismatch
-        d = SymArray(4, 0.0)
+        d = make_sym_init(4, 0.0)
         @test_throws DimensionMismatch copy!(d, a)
 
         # Test deepcopy!
@@ -162,7 +162,7 @@ using StaticArrays
     end
 
     @testset "Array operations" begin
-        a = SymArray(3, 2.0)
+        a = make_sym_init(3, 2.0)
 
         # Test iteration
         count = 0
@@ -180,7 +180,7 @@ using StaticArrays
         @test any(x -> x == 2.0, a)
 
         # Test maximum/minimum
-        b = SymArray(3, 0.0)
+        b = make_sym_init(3, 0.0)
         b[1, 1] = 5.0
         b[2, 3] = -3.0
         @test maximum(b) == 5.0
@@ -188,8 +188,8 @@ using StaticArrays
     end
 
     @testset "Mathematical operations" begin
-        a = SymArray(3, 2.0)
-        b = SymArray(3, 3.0)
+        a = make_sym_init(3, 2.0)
+        b = make_sym_init(3, 3.0)
 
         # Element-wise operations (using broadcasting)
         c = a .+ b
@@ -211,13 +211,13 @@ using StaticArrays
         @test all(f[i, j] == 1.5 for i in 1:3, j in 1:3)
 
         # Test unary operations
-        g = SymArray(3, -2.0)
+        g = make_sym_init(3, -2.0)
         h = abs.(g)
         @test h isa SymArray
         @test all(h[i, j] == 2.0 for i in 1:3, j in 1:3)
 
         # Test with mixed values
-        m = SymArray(3, 0.0)
+        m = make_sym_init(3, 0.0)
         m[1, 1] = 1.0
         m[1, 2] = 2.0
         m[2, 2] = 3.0
@@ -234,7 +234,7 @@ using StaticArrays
         @test n[3, 3] == 16.0
 
         # Test operations between two SymArrays with different values
-        p = SymArray(3, 0.0)
+        p = make_sym_init(3, 0.0)
         p[1, 1] = 10.0
         p[2, 2] = 20.0
         p[3, 3] = 30.0
@@ -249,12 +249,12 @@ using StaticArrays
     end
 
     @testset "Special case: sum_tri_with_diag" begin
-        a = SymArray(3, 1.0)
+        a = make_sym_init(3, 1.0)
         # Only upper triangle is stored: 6 elements
         # [1,1], [1,2], [1,3], [2,2], [2,3], [3,3]
         @test sum_tri_with_diag(a) == 6.0
 
-        b = SymArray(4, 2.0)
+        b = make_sym_init(4, 2.0)
         # Upper triangle has 10 elements for 4x4
         @test sum_tri_with_diag(b) == 20.0
 
@@ -266,20 +266,20 @@ using StaticArrays
 
     @testset "Type stability" begin
         # Float64
-        a = SymArray(3, 1.0)
+        a = make_sym_init(3, 1.0)
         @test typeof(a[1, 1]) == Float64
 
         # Int
-        b = SymArray(3, 1)
+        b = make_sym_init(3, 1)
         @test typeof(b[1, 1]) == Int
 
         # Float32
-        c = SymArray(3, 1.0f0)
+        c = make_sym_init(3, 1.0f0)
         @test typeof(c[1, 1]) == Float32
     end
 
     @testset "Sparse matrix properties" begin
-        a = SymArray(10, 0.0)
+        a = make_sym_init(10, 0.0)
         # Initially all elements are stored (including zeros)
         # Set only a few elements to non-zero
         a[1, 5] = 3.0
@@ -297,14 +297,14 @@ using StaticArrays
 
     @testset "Edge cases" begin
         # 1x1 matrix
-        a = SymArray(1, 5.0)
+        a = make_sym_init(1, 5.0)
         @test size(a) == (1, 1)
         @test a[1, 1] == 5.0
         a[1, 1] = 10.0
         @test a[1, 1] == 10.0
 
         # Large diagonal
-        b = SymArray(100, 0.0)
+        b = make_sym_init(100, 0.0)
         for i in 1:100
             b[i, i] = Float64(i)
         end
@@ -332,7 +332,7 @@ using StaticArrays
     end
 
     @testset "Broadcasting with regular arrays" begin
-        a = SymArray(3, 2.0)
+        a = make_sym_init(3, 2.0)
         M = [1.0 2.0 3.0; 4.0 5.0 6.0; 7.0 8.0 9.0]
 
         # SymArray + Matrix should return Matrix (follows Matrix type)
@@ -356,14 +356,14 @@ using StaticArrays
         @test result3 isa SymArray
 
         # SymArray + SymArray should return SymArray
-        b = SymArray(3, 3.0)
+        b = make_sym_init(3, 3.0)
         result4 = a .+ b
         @test result4 isa SymArray
     end
 
     @testset "SymArray broadcast with Matrix returns Matrix" begin
         # Create a SymArray and a regular Matrix
-        a = SymArray(3, 2.0)
+        a = make_sym_init(3, 2.0)
         M = [1.0 2.0 3.0; 4.0 5.0 6.0; 7.0 8.0 9.0]
 
         # SymArray + Matrix should return Matrix
@@ -389,7 +389,7 @@ using StaticArrays
         @test all(result3[i, j] ≈ 7.0 for i in 1:3, j in 1:3)
 
         # SymArray + SymArray should return SymArray
-        b = SymArray(3, 3.0)
+        b = make_sym_init(3, 3.0)
         result4 = a .+ b
         @test result4 isa SymArray
         @test all(result4[i, j] ≈ 5.0 for i in 1:3, j in 1:3)
@@ -399,7 +399,7 @@ using StaticArrays
         @test result5 isa SymArray
         @test all(result5[i, j] ≈ 6.0 for i in 1:3, j in 1:3)
 
-        a_ones = SymArray(3, 1.0)
+        a_ones = make_sym_init(3, 1.0)
         result_sum_two_matrices = a_ones .+ M .+ M
         @test result_sum_two_matrices isa Matrix{Float64}
         @test all(result_sum_two_matrices[i, j] ≈ 1 + 2 * M[i, j] for i in 1:3, j in 1:3)
