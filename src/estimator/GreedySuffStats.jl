@@ -226,7 +226,7 @@ function GreedySuffStats(
     return es
 end
 
-function estimate(
+function estimate!(
         es::GreedySuffStats,
         data,
         node_labels_init;
