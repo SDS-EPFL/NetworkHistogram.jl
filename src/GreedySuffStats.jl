@@ -30,20 +30,19 @@ function init!(es::GreedySuffStats, data, node_labels)
 end
 
 # TODO: allow for non-symmetric data
-@inline function score(matrix_ss::SymArray, data, node_labels; dist = nothing, norm = 1.0)
+@inline function score(matrix_ss::SymArray; norm = 1.0)
     total_loss = 0.0
     for m in matrix_ss.uppertrian.nzval
-        total_loss += score(m; dist = dist, data = data, node_labels = node_labels)
+        total_loss += score(m)
     end
     return total_loss / norm
 end
 
-@inline function score(matrix_ss, data, node_labels; dist = nothing, norm = 1.0)
+@inline function score(matrix_ss; norm = 1.0)
     total_loss = 0.0
     @inbounds for j in axes(matrix_ss, 2)
         for i in 1:j
-            inter = score(
-                matrix_ss[i, j]; dist = dist, data = data, node_labels = node_labels)
+            inter = score(matrix_ss[i, j])
             total_loss += inter
         end
     end
@@ -53,13 +52,15 @@ end
 function GreedySuffStats(
         data, node_labels; type_suff_stats = :categorical, max_iter = 10000,
         node_swap_rule = RandomGroupSwap(), stop_rule = PreviousBestValue(5_000, Inf, :min),
+        dist = nothing,
         kwargs...)
     # derive user input
     k = length(unique(node_labels))
 
     # allocate sufficient statistics blocks
-    block_ss = make_k_block(k, Val(type_suff_stats); data = data, kwargs...)
-    block_ss_swap = make_k_block(k, Val(type_suff_stats); data = data, kwargs...)
+    block_ss = make_k_block(k, Val(type_suff_stats); data = data, dist = dist, kwargs...)
+    block_ss_swap = make_k_block(
+        k, Val(type_suff_stats); data = data, dist = dist, kwargs...)
 
     # create estimator
     return GreedySuffStats{typeof(block_ss), typeof(node_swap_rule), typeof(stop_rule)}(
@@ -72,7 +73,6 @@ function estimate!(
         data,
         node_labels_init;
         progress = true,
-        dist = nothing,
         iter_progress = 5000
 )
     # Initialize node labels
@@ -93,7 +93,7 @@ function estimate!(
     progress_update_interval = max(1, es.max_iter ÷ iter_progress)
     # Initial log-likelihood
 
-    current_loss = score(es.block_ss, data, node_labels, dist = dist, norm = n_edges)
+    current_loss = score(es.block_ss, norm = n_edges)
     es.stop_rule.previous_best_value = current_loss
     # Main optimization loop
     for iter in 1:(es.max_iter)
@@ -124,7 +124,7 @@ function estimate!(
 
         # tentative swap
         @inbounds node_labels[index1], node_labels[index2] = group2, group1
-        new_loss = score(es.block_ss_swap, data, node_labels, dist = dist, norm = n_edges)
+        new_loss = score(es.block_ss_swap, norm = n_edges)
 
         if new_loss < current_loss
             # apply swap

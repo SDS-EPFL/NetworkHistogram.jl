@@ -36,6 +36,6 @@ function make_k_block(k, ::Val{:categorical}; num_categories, kwargs...)
     return k_block
 end
 
-@inline function score(ss::CategoricalSuffStats; kwargs...)
+@inline function score(ss::CategoricalSuffStats, dist)
     return ss.n - sum(abs2, ss.h) / max(ss.n, 1)
 end

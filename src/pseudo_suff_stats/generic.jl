@@ -1,12 +1,10 @@
-
-abstract type GenericSuffStatsType <: SuffStats end
-
-struct GenericSuffStats{T} <: GenericSuffStatsType
+struct GenericSuffStats{T, D} <: SuffStats
     samples::Vector{T}
+    dist::D
 end
 
-function GenericSuffStats(::AbstractArray{T}) where {T}
-    return GenericSuffStats{T}(Vector{T}())
+function GenericSuffStats(::AbstractArray{T}, dist::D) where {T, D}
+    return GenericSuffStats{T, D}(Vector{T}(), dist)
 end
 
 function get_samples(ss::GenericSuffStats)
@@ -26,12 +24,12 @@ function remove_sample(ss::GenericSuffStats, sample)
     return ss
 end
 
-function make_k_block(k, generic; data::AbstractArray, kwargs...)
-    @warn "Using GenericSuffStats may lead to high memory usage for large datasets.
+function make_k_block(k, generic; data::AbstractArray, dist::D, kwargs...) where {D}
+    @warn "Using GenericSuffStats may be very slow even for small graphs.
          Consider using more specialized sufficient statistics types when possible."
-    k_block = SymArray{GenericSuffStats{eltype(data)}}(undef, k, k)
+    k_block = SymArray{GenericSuffStats{eltype(data), D}}(undef, k, k)
     for j in 1:k, i in 1:k
-        k_block[i, j] = GenericSuffStats(data)
+        k_block[i, j] = GenericSuffStats(data, dist)
     end
     return k_block
 end
@@ -55,11 +53,9 @@ end
 #     return ss
 # end
 
-function score(ss::GenericSuffStatsType; dist::D, kwargs...) where {D}
-    if dist === nothing
-        @error("No distribution provided for scoring GenericSuffStats")
-    end
+function score(ss::GenericSuffStats)
+    isnothing(ss.dist) && @error("No distribution provided for scoring GenericSuffStats")
     samples = get_samples(ss)
-    d = fit(D, samples)
+    d = fit(typeof(ss.dist), samples)
     return -sum(logpdf.(d, samples))
 end

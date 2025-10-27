@@ -36,7 +36,7 @@ function make_k_block(k, ::Val{:binary}; kwargs...)
     return k_block
 end
 
-@inline function score(ss::BernoulliSuffStats; kwargs...)
+@inline function score(ss::BernoulliSuffStats)
     n = max(ss.n, 1)
     p = ss.h / n
     return n * (xlogx(1 - p) + xlogx(p))

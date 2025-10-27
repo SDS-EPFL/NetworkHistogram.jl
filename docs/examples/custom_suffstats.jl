@@ -27,7 +27,7 @@ function make_k_block(k, ::Val{:custom}; num_categories, kwargs...)
     return k_block
 end
 
-@inline function score(ss::MyCustomSuffStats; kwargs...)
+@inline function score(ss::MyCustomSuffStats)
     n = sum(ss.h)
     return n - sum(abs2, ss.h) / max(n, 1)
 end
@@ -72,8 +72,7 @@ es_new = NetworkHistogram.GreedySuffStats(data, initial_labels, num_categories =
     dist = Categorical(m)
 );
 node_labels_es_new = NetworkHistogram.estimate!(
-    es_new, data, initial_labels; dist = Categorical(m),
-    iter_progress = 10_000)
+    es_new, data, initial_labels; iter_progress = 10_000)
 
 function params(ss::Union{NetworkHistogram.CategoricalSuffStats, MyCustomSuffStats})
     ss.h ./ sum(ss.h)
