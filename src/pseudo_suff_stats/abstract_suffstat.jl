@@ -3,6 +3,8 @@ abstract type SuffStats end
 function add_sample end
 function remove_sample end
 function make_k_block end
+
+# score will be minimized
 function score end
 function to_params end
 

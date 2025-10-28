@@ -11,7 +11,7 @@ using LightMC: DiscreteMarkovChain, SampleChain, transition_matrix, ConvertBinar
 # need to define a convertor that only look at the possible transitions and not all of them
 struct McConvertor <: AbstractConvertor end
 
-get_convertor(::Val{:mc}; kwargs...) = McConvertor()
+get_convertor(::Val{:mc}; kwargs...) = McConvertor(kwargs...)
 
 function (c::McConvertor)(chain::SampleChain)
     return SVector([SVector(c...) for c in eachcol(chain.transitions)]...)

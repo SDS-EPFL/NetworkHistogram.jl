@@ -10,7 +10,7 @@ using LinearAlgebra
 using ArgCheck
 import Random: randperm, AbstractRNG, rand, shuffle
 import Distributions: logpdf, pdf
-
+import LogExpFunctions: xlogx
 using IntervalSets
 
 using Reexport

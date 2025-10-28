@@ -39,7 +39,7 @@ end
 function score(ss::BernoulliSuffStats)
     n = max(ss.n, 1)
     p = ss.h / n
-    return n * (xlogx(1 - p) + xlogx(p))
+    return -n * (xlogx(1 - p) + xlogx(p))
 end
 
 function to_params(ss::BernoulliSuffStats)
