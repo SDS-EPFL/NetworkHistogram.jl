@@ -23,6 +23,9 @@ function reset!(stop_rule::PreviousBestValue{T}, score_value::T) where {T}
     stop_rule.iterations_since_best = 0
 end
 
+reset!(stop_rule::PreviousMaxValue) = reset!(stop_rule, -Inf)
+reset!(stop_rule::PreviousMinValue) = reset!(stop_rule, Inf)
+
 function compare_to_best(current, past, ::PreviousMaxValue)
     return current > past
 end

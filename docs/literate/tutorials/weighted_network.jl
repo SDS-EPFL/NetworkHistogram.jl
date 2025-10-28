@@ -39,10 +39,7 @@ stalled_iters = 5_000
 res_new = NetworkHistogram.nethist_continuous(
     A, k,
     starting_labels;
-    num_bins_ = 10,
-    max_iter = max_iter,
-    stalled_iters = stalled_iters,
-    progress_bar = true
+    num_bins_ = 10
 );
 
 # convertor = NetworkHistogram.UnitIntervalConvertor(10)
