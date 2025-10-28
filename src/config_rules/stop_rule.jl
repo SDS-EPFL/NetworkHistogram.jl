@@ -18,8 +18,8 @@ end
 const PreviousMaxValue{T} = PreviousBestValue{T, Val(:max)}
 const PreviousMinValue{T} = PreviousBestValue{T, Val(:min)}
 
-function reset!(stop_rule::PreviousBestValue{T}, score_value::T) where {T}
-    stop_rule.previous_best_value = score_value
+function reset!(stop_rule::PreviousBestValue{T}, loss_value::T) where {T}
+    stop_rule.previous_best_value = loss_value
     stop_rule.iterations_since_best = 0
 end
 

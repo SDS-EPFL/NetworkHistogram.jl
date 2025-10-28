@@ -4,8 +4,8 @@ function add_sample end
 function remove_sample end
 function make_k_block end
 
-# score will be minimized
-function score end
+# loss will be minimized
+function loss end
 function to_params end
 
 # some suffstat may need the edge index (i,j) to update properly

@@ -3,7 +3,7 @@ module LightMCExt
 using StaticArrays
 using Accessors
 using NetworkHistogram
-import NetworkHistogram: SuffStats, add_sample, remove_sample, make_k_block, score,
+import NetworkHistogram: SuffStats, add_sample, remove_sample, make_k_block, loss,
                          to_params, AbstractConvertor, to_distribution, get_convertor
 
 using LightMC: DiscreteMarkovChain, SampleChain, transition_matrix, ConvertBinaryMC
@@ -45,14 +45,14 @@ function remove_sample(ss::McSuffStats, sample)
     return ss
 end
 
-function _score(counts::SVector)
+function _loss(counts::SVector)
     n = sum(counts)
     norm_ = max(n, 1)
     return (n - sum(abs2, counts) / norm_) / norm_
 end
 
-function score(ss::McSuffStats)
-    return sum(_score, ss.h)
+function loss(ss::McSuffStats)
+    return sum(_loss, ss.h)
 end
 
 function to_params(ss::McSuffStats)

@@ -23,7 +23,7 @@ function make_k_block(k, ::Val{:categorical}; num_categories, kwargs...)
     return k_block
 end
 
-function score(ss::CategoricalSuffStats)
+function loss(ss::CategoricalSuffStats)
     n = sum(ss.h)
     return n - sum(abs2, ss.h) / max(n, 1)
 end

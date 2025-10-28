@@ -1,4 +1,4 @@
-import NetworkHistogram: SuffStats, add_sample, remove_sample, make_k_block, score,
+import NetworkHistogram: SuffStats, add_sample, remove_sample, make_k_block, loss,
                          to_params, CategoricalConvertor, num_bins, to_distribution
 using StaticArrays
 using Accessors
@@ -28,7 +28,7 @@ function make_k_block(k, ::Val{:custom}; num_categories, kwargs...)
     return k_block
 end
 
-@inline function score(ss::MyCustomSuffStats)
+@inline function loss(ss::MyCustomSuffStats)
     n = sum(ss.h)
     return n - sum(abs2, ss.h) / max(n, 1)
 end

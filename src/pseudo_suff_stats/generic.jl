@@ -53,7 +53,7 @@ end
 #     return ss
 # end
 
-function score(ss::GenericSuffStats{T, D}) where {T, D}
+function loss(ss::GenericSuffStats{T, D}) where {T, D}
     samples = get_samples(ss)
     d = fit(D, samples)
     return -sum(logpdf.(d, samples))

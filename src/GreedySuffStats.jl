@@ -30,19 +30,19 @@ function init!(es::GreedySuffStats, data, node_labels)
 end
 
 # TODO: allow for non-symmetric data
-@inline function score(matrix_ss::SymArray{<:SuffStats}; norm = 1.0)
+@inline function loss(matrix_ss::SymArray{<:SuffStats}; norm = 1.0)
     total_loss = 0.0
     for m in matrix_ss.uppertrian.nzval
-        total_loss += score(m)
+        total_loss += loss(m)
     end
     return total_loss / norm
 end
 
-@inline function score(matrix_ss::AbstractMatrix{<:SuffStats}; norm = 1.0)
+@inline function loss(matrix_ss::AbstractMatrix{<:SuffStats}; norm = 1.0)
     total_loss = 0.0
     @inbounds for j in axes(matrix_ss, 2)
         for i in 1:j
-            inter = score(matrix_ss[i, j])
+            inter = loss(matrix_ss[i, j])
             total_loss += inter
         end
     end
@@ -92,7 +92,7 @@ function estimate!(
     progress_update_interval = max(1, es.max_iter ÷ iter_progress)
     # Initial log-likelihood
 
-    current_loss = score(es.block_ss, norm = n_edges)
+    current_loss = loss(es.block_ss, norm = n_edges)
     reset!(es.stop_rule, current_loss)
     # Main optimization loop
     for iter in 1:(es.max_iter)
@@ -123,7 +123,7 @@ function estimate!(
 
         # tentative swap
         @inbounds node_labels[index1], node_labels[index2] = group2, group1
-        new_loss = score(es.block_ss_swap, norm = n_edges)
+        new_loss = loss(es.block_ss_swap, norm = n_edges)
 
         if compare_to_best(new_loss, current_loss, es.stop_rule)
             # apply swap
