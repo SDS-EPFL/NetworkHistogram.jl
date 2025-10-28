@@ -39,5 +39,12 @@ end
         end
         @test NH.loss(ss) ≈ loss_val
         @test NH.to_params(ss) == p
+
+        samples = ones(Int, 10)
+        ss_unique = NH.CategoricalSuffStats(3)
+        for s in samples
+            ss_unique = NH.add_sample(ss_unique, s)
+        end
+        @assert NH.loss(ss_unique) == 0.0
     end
 end
