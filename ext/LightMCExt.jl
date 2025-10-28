@@ -1,66 +1,60 @@
 module LightMCExt
 
+using StaticArrays
+using Accessors
 using NetworkHistogram
-using LightMC
+import NetworkHistogram: SuffStats, add_sample, remove_sample, make_k_block, score,
+                         to_params, AbstractConvertor, to_distribution, get_convertor
 
 using LightMC: DiscreteMarkovChain, SampleChain, transition_matrix, ConvertBinaryMC
 
-logpdf(d::DiscreteMarkovChain, x) = LightMC.logpdf(d, x)
-sample(x::DiscreteMarkovChain, args...) = LightMC.sample(x, args...)
-params(d) = LightMC.params(d)
+# need to define a convertor that only look at the possible transitions and not all of them
+struct McConvertor <: AbstractConvertor end
 
-function agg_params(d1::DiscreteMarkovChain, d2::DiscreteMarkovChain, w1, w2)
-    s1 = Int(sign(w1))
-    s2 = Int(sign(w2))
-    return DiscreteMarkovChain(s1 .* d1.transitions .+ s2 .* d2.transitions,
-        s1 .* d1.normalization .+ s2 .* d2.normalization)
+get_convertor(::Val{:mc}; kwargs...) = McConvertor()
+
+function (c::McConvertor)(chain::SampleChain)
+    return SVector([SVector(c...) for c in eachcol(chain.transitions)]...)
 end
 
-function distance(d1::DiscreteMarkovChain, d2::DiscreteMarkovChain)
-    mean(x -> x^2, transition_matrix(d1) - transition_matrix(d2))
+function to_distribution(::McConvertor, transition_matrix; kwargs...)
+    return DiscreteMarkovChain(transition_matrix, sum(transition_matrix; dims = 2))
 end
-function distance(d1::SampleChain, d2::SampleChain)
-    mean(x -> x^2, transition_matrix(d1) - transition_matrix(d2))
-end
-params(d::DiscreteMarkovChain) = (d.transitions, d.normalization)
-
-function _fast_compressed_obs(d::DiscreteMarkovChain, x::SampleChain, zeroinflated)
-    return x
+struct McSuffStats{M, T} <: SuffStats
+    h::SVector{M, T}
 end
 
-function from_adjs_to_decorated(adjs::AbstractArray{T, 3}, converter::ConvertBinaryMC,
-        threshold = 0.0) where {T <: Union{Missing, Real}}
-    sample_chain = MC.periodic_chain(adjs[1, 4, :], converter)
-    graph = Matrix{Union{typeof(sample_chain), Missing}}(
-        undef, size(adjs, 1), size(adjs, 2))
-    counts_t = sum(adjs, dims = 3)
-    for j in axes(adjs, 2)
-        for i in axes(adjs, 1)
-            if i == j || counts_t[i, j] <= threshold * size(adjs, 3)
-                graph[i, j] = missing
-            else
-                graph[i, j] = LightMC.periodic_chain(adjs[i, j, :], converter)
-            end
-        end
+function McSuffStats(num_states::Int)
+    inter = @SVector zeros(SVector{num_states, Int}, num_states)
+    return McSuffStats(inter)
+end
+
+function add_sample(ss::McSuffStats, sample)
+    @inbounds for (i, s) in enumerate(sample)
+        ss = @set ss.h[i] = ss.h[i] + s
     end
-    return graph
+    return ss
 end
 
-function from_adjs_to_decorated(adjs::AbstractArray{T, 2}, converter::ConvertBinaryMC,
-        threshold = 0.0) where {T <: Union{Missing, AbstractArray}}
-    sample_chain = LightMC.periodic_chain(adjs[1, 4], converter)
-    graph = Matrix{Union{typeof(sample_chain), Missing}}(
-        undef, size(adjs, 1), size(adjs, 2))
-    for j in axes(adjs, 2)
-        for i in axes(adjs, 1)
-            if i == j || sum(adjs[i, j]) <= threshold * length(adjs[i, j])
-                graph[i, j] = missing
-            else
-                graph[i, j] = LightMC.periodic_chain(adjs[i, j], converter)
-            end
-        end
+function remove_sample(ss::McSuffStats, sample)
+    @inbounds for (i, s) in enumerate(sample)
+        ss = @set ss.h[i] = ss.h[i] - s
     end
-    return graph
+    return ss
+end
+
+function _score(counts::SVector)
+    n = sum(counts)
+    norm_ = max(n, 1)
+    return (n - sum(abs2, counts) / norm_) / norm_
+end
+
+function score(ss::McSuffStats)
+    return sum(_score, ss.h)
+end
+
+function to_params(ss::McSuffStats)
+    return reduce(hcat, ss.h)
 end
 
 end

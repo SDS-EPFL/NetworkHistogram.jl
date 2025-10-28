@@ -14,6 +14,11 @@ function CategoricalConvertor(data::AbstractArray{T}) where {T}
     return CategoricalConvertor{T}(m, map)
 end
 
+function CategoricalConvertor(num_categories::Int)
+    map = Dict{Int, Int}(i => i for i in 1:num_categories)
+    return CategoricalConvertor{Int}(num_categories, map)
+end
+
 function num_bins(c::CategoricalConvertor)
     return c.m
 end
