@@ -24,6 +24,8 @@ struct McSuffStats{M, T} <: SuffStats
     h::SVector{M, T}
 end
 
+# this will also need to be modified to take into account the structure of the markov chain
+# as above (e.g. only count the transitions that are possible)
 function McSuffStats(num_states::Int)
     inter = @SVector zeros(SVector{num_states, Int}, num_states)
     return McSuffStats(inter)
