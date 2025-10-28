@@ -56,7 +56,7 @@ end
 function loss(ss::GenericSuffStats{T, D}) where {T, D}
     samples = get_samples(ss)
     d = fit(D, samples)
-    return -sum(logpdf.(d, samples))
+    return -mapreduce(BaseFix1(logpdf, d), +, samples)
 end
 
 function to_params(ss::GenericSuffStats)
