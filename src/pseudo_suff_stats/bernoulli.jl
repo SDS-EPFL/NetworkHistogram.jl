@@ -8,24 +8,24 @@ function BernoulliSuffStats()
     return BernoulliSuffStats{Int}(0, 0)
 end
 
-@inline function add_sample(ss::BernoulliSuffStats, sample::Bool)
+function add_sample(ss::BernoulliSuffStats, sample::Bool)
     sample && (@reset ss.h += 1)
     @reset ss.n += 1
     return ss
 end
 
-@inline function add_sample(ss::BernoulliSuffStats, ::Nothing)
+function add_sample(ss::BernoulliSuffStats, ::Nothing)
     @reset ss.n += 1
     return ss
 end
 
-@inline function remove_sample(ss::BernoulliSuffStats, sample::Bool)
+function remove_sample(ss::BernoulliSuffStats, sample::Bool)
     sample && (@reset ss.h -= 1)
     @reset ss.n -= 1
     return ss
 end
 
-@inline function remove_sample(ss::BernoulliSuffStats, ::Nothing)
+function remove_sample(ss::BernoulliSuffStats, ::Nothing)
     @reset ss.n -= 1
     return ss
 end
@@ -36,7 +36,7 @@ function make_k_block(k, ::Val{:binary}; kwargs...)
     return k_block
 end
 
-@inline function score(ss::BernoulliSuffStats)
+function score(ss::BernoulliSuffStats)
     n = max(ss.n, 1)
     p = ss.h / n
     return n * (xlogx(1 - p) + xlogx(p))

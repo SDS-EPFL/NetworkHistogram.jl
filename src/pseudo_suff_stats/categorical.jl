@@ -8,24 +8,24 @@ function CategoricalSuffStats(num_categories::Int)
     return CategoricalSuffStats{num_categories, Int}(h, 0)
 end
 
-@inline function add_sample(ss::CategoricalSuffStats, sample::Int)
+function add_sample(ss::CategoricalSuffStats, sample::Int)
     ss = @set ss.h[sample] += 1
     ss = @set ss.n += 1
     return ss
 end
 
-@inline function add_sample(ss::CategoricalSuffStats, ::Nothing)
+function add_sample(ss::CategoricalSuffStats, ::Nothing)
     @reset ss.n += 1
     return ss
 end
 
-@inline function remove_sample(ss::CategoricalSuffStats, sample::Int)
+function remove_sample(ss::CategoricalSuffStats, sample::Int)
     ss = @set ss.h[sample] -= 1
     ss = @set ss.n -= 1
     return ss
 end
 
-@inline function remove_sample(ss::CategoricalSuffStats, ::Nothing)
+function remove_sample(ss::CategoricalSuffStats, ::Nothing)
     @reset ss.n -= 1
     return ss
 end
@@ -36,7 +36,7 @@ function make_k_block(k, ::Val{:categorical}; num_categories, kwargs...)
     return k_block
 end
 
-@inline function score(ss::CategoricalSuffStats)
+function score(ss::CategoricalSuffStats)
     return ss.n - sum(abs2, ss.h) / max(ss.n, 1)
 end
 
