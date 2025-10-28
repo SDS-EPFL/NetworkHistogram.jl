@@ -94,7 +94,7 @@ function estimate!(
     # Initial log-likelihood
 
     current_loss = score(es.block_ss, norm = n_edges)
-    es.stop_rule.previous_best_value = current_loss
+    reset!(es.stop_rule, current_loss)
     # Main optimization loop
     for iter in 1:(es.max_iter)
         # Select two nodes to potentially swap
@@ -126,7 +126,7 @@ function estimate!(
         @inbounds node_labels[index1], node_labels[index2] = group2, group1
         new_loss = score(es.block_ss_swap, norm = n_edges)
 
-        if new_loss < current_loss
+        if compare_to_best(new_loss, current_loss, es.stop_rule)
             # apply swap
             copy!(es.block_ss, es.block_ss_swap)
             current_loss = new_loss

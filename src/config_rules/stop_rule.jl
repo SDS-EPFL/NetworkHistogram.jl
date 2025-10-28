@@ -5,7 +5,7 @@ function info_to_print(::StopRule)
 end
 
 mutable struct PreviousBestValue{T, S} <: StopRule
-    k::Int
+    const k::Int
     previous_best_value::T
     iterations_since_best::Int
 end
@@ -18,9 +18,9 @@ end
 const PreviousMaxValue{T} = PreviousBestValue{T, Val(:max)}
 const PreviousMinValue{T} = PreviousBestValue{T, Val(:min)}
 
-function initialise_stop_rule!(stop_rule::PreviousBestValue, a)
-    score_value = score(a)
+function reset!(stop_rule::PreviousBestValue{T}, score_value::T) where {T}
     stop_rule.previous_best_value = score_value
+    stop_rule.iterations_since_best = 0
 end
 
 function compare_to_best(current, past, ::PreviousMaxValue)
@@ -44,15 +44,12 @@ stopping_rule
 
 function stopping_rule(loss::T, stop_rule::PreviousBestValue{T}) where {T <: Real}
     if compare_to_best(loss, stop_rule.previous_best_value, stop_rule)
-        stop_rule.previous_best_value = loss
-        stop_rule.iterations_since_best = 0
+        reset!(stop_rule, loss)
     else
         stop_rule.iterations_since_best += 1
     end
     return stop_rule.iterations_since_best >= stop_rule.k
 end
-
-stopping_rule(a, stop_rule::StopRule) = stopping_rule(score(a), stop_rule)
 
 function info_to_print(stop_rule::PreviousBestValue)
     ("stalled iter: ", stop_rule.iterations_since_best)
