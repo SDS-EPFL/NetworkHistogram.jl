@@ -31,7 +31,7 @@ function _nethist(
     end
     data = convertor.(A)
     @info "Using $(num_bins(convertor)) discrete categories for edge values"
-    es = NetworkHistogram.GreedySuffStats(
+    es = GreedySuffStats(
         data, labels_start, num_categories = num_bins(convertor),
         type_suff_stats = type_suff_stats,
         max_iter = params.max_iter,
@@ -40,9 +40,41 @@ function _nethist(
         progress = params.display_progress;
         kwargs...
     )
-    node_labels, parameters = NetworkHistogram.estimate!(
+    node_labels, parameters = estimate!(
         es, data, labels_start; iter_progress = params.progress_freq)
-    model = NetworkHistogram.DecoratedSBM(to_distribution.(convertor, parameters),
-        counts(node_labels) ./ length(node_labels))
-    return NetworkHistogram.NethistResult(node_labels, model)
+
+    return convert_to_result(node_labels, convertor, parameters)
 end
+
+function oracle_estimator(
+        data, oracle_labels, convertor; type_suff_stats = Val(:categorical))
+    k = length(unique(oracle_labels))
+    # allocate sufficient statistics blocks
+    block_ss = make_k_block(k, type_suff_stats; data = data)
+    block_ss_swap = make_k_block(k, type_suff_stats; data = data)
+    es_dummy = GreedySuffStats(block_ss, block_ss_swap, RandomGroupSwap(),
+        PreviousBestValue(1_000, Inf, :min), 1)
+    init!(es_dummy, data, oracle_labels)
+    parameters = to_params.(es_dummy.block_ss)
+    return convert_to_result(oracle_labels, convertor, parameters)
+end
+
+function convert_to_result(node_labels, convertor, parameters)
+    model = DecoratedSBM(to_distribution.(convertor, parameters),
+        counts(node_labels) ./ length(node_labels))
+    return NethistResult(node_labels, model)
+end
+
+function convert_to_result(
+        node_labels, convertor::BinaryConvertor, parameters::AbstractMatrix{<:Real})
+    model = SBM(to_distribution.(convertor, parameters),
+        counts(node_labels) ./ length(node_labels))
+    return NethistResult(node_labels, model)
+end
+
+# function convert_to_result(
+#         node_labels, convertor::BinaryConvertor, parameters::SymArray{<:Real})
+#     model = SBM(Matrix(to_distribution.(convertor, parameters)),
+#         counts(node_labels) ./ length(node_labels))
+#     return NethistResult(node_labels, model)
+# end

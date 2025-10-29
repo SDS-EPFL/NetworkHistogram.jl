@@ -17,6 +17,7 @@ get_convertor(s::String, ; kwargs...) = get_convertor(Symbol(s); kwargs...)
 get_convertor(s::Symbol; kwargs...) = get_convertor(Val(s); kwargs...)
 get_convertor(::T; kwargs...) where {T} = @error "No convertor found for type $T"
 
+include("binary.jl")
 include("categorical.jl")
 include("continuous.jl")
 
@@ -26,4 +27,8 @@ end
 
 function get_convertor(::Val{:continuous}; kwargs...)
     return UnitIntervalConvertor(kwargs[:num_bins])
+end
+
+function get_convertor(::Val{:binary}; kwargs...)
+    return BinaryConvertor()
 end
