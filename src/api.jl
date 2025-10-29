@@ -65,16 +65,8 @@ function convert_to_result(node_labels, convertor, parameters)
     return NethistResult(node_labels, model)
 end
 
-function convert_to_result(
-        node_labels, convertor::BinaryConvertor, parameters::AbstractMatrix{<:Real})
+function convert_to_result(node_labels, convertor::BinaryConvertor, parameters)
     model = SBM(to_distribution.(convertor, parameters),
         counts(node_labels) ./ length(node_labels))
     return NethistResult(node_labels, model)
 end
-
-# function convert_to_result(
-#         node_labels, convertor::BinaryConvertor, parameters::SymArray{<:Real})
-#     model = SBM(Matrix(to_distribution.(convertor, parameters)),
-#         counts(node_labels) ./ length(node_labels))
-#     return NethistResult(node_labels, model)
-# end
