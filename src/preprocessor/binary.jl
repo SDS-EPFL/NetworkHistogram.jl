@@ -8,3 +8,5 @@ function to_distribution(
         c::BinaryConvertor, p::T; kwargs...) where {T <: Real}
     return p
 end
+
+num_bins(::BinaryConvertor) = 2

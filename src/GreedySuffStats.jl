@@ -51,22 +51,20 @@ end
     return total_loss / norm
 end
 
-function GreedySuffStats(
-        data, node_labels; type_suff_stats = Val(:categorical), max_iter = 10000,
-        node_swap_rule = RandomGroupSwap(), stop_rule = PreviousBestValue(5_000, Inf, :min),
-        dist = nothing,
-        kwargs...)
-    # derive user input
+function make_greedy_suffstats_estimator(
+        data,
+        node_labels;
+        type_suff_stats = Val(:categorical),
+        max_iter = 10_000,
+        node_swap_rule = RandomGroupSwap(),
+        stop_rule = PreviousBestValue(5_000, Inf, :min),
+        kwargs...
+)
     k = length(unique(node_labels))
-
-    # allocate sufficient statistics blocks
-    block_ss = make_k_block(k, type_suff_stats; data = data, dist = dist, kwargs...)
-    block_ss_swap = make_k_block(k, type_suff_stats; data = data, dist = dist, kwargs...)
-
-    # create estimator
+    block_ss = make_k_block(k, type_suff_stats; data = data, kwargs...)
+    block_ss_swap = make_k_block(k, type_suff_stats; data = data, kwargs...)
     return GreedySuffStats{typeof(block_ss), typeof(node_swap_rule), typeof(stop_rule)}(
         block_ss, block_ss_swap, node_swap_rule, stop_rule, max_iter)
-    return es
 end
 
 function estimate!(

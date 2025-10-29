@@ -8,7 +8,7 @@ function nethist_categorical(
         A, labels_start,
         convertor,
         Val(:categorical),
-        params,
+        params;
         num_categories = num_bins(convertor)
     )
 end
@@ -16,15 +16,15 @@ end
 function nethist_continuous(
         A, k,
         labels_start = ordered_start_labels(size(A, 1), k);
-        num_bins_::Int = 10,
+        bins::Int = 10,
         params::GreedyParams = GreedyParams())
-    convertor = UnitIntervalConvertor(num_bins_)
+    convertor = UnitIntervalConvertor(bins)
     @info "Using $(num_bins(convertor)) discrete categories for edge values"
     _nethist(
         A, labels_start,
         convertor,
         Val(:categorical),
-        params,
+        params;
         num_categories = num_bins(convertor)
     )
 end
@@ -48,30 +48,39 @@ function _nethist(
         reset!(params)
     end
     data = convertor.(A)
-    es = GreedySuffStats(
-        data, labels_start,
+    es = make_greedy_suffstats_estimator(
+        data,
+        labels_start;
         type_suff_stats = type_suff_stats,
         max_iter = params.max_iter,
-        swap_rule = params.node_swap_rule,
+        node_swap_rule = params.node_swap_rule,
         stop_rule = params.stop_rule,
-        progress = params.display_progress;
         kwargs...
     )
     node_labels, parameters = estimate!(
-        es, data, labels_start; iter_progress = params.progress_freq)
+        es, data, labels_start;
+        progress = params.display_progress,
+        iter_progress = params.progress_freq)
 
     return convert_to_result(node_labels, convertor, parameters)
 end
 
 function oracle_estimator(
-        data, oracle_labels, convertor; type_suff_stats = Val(:categorical))
+        A, oracle_labels, convertor; type_suff_stats = Val(:categorical), kwargs...)
+
+    # prepare data
     k = length(unique(oracle_labels))
-    # allocate sufficient statistics blocks
-    block_ss = make_k_block(k, type_suff_stats; data = data)
-    block_ss_swap = make_k_block(k, type_suff_stats; data = data)
-    es_dummy = GreedySuffStats(block_ss, block_ss_swap, RandomGroupSwap(),
+    data = convertor.(A)
+    # prepare suff stats
+    block_ss = make_k_block(
+        k, type_suff_stats; data = data, num_categories = num_bins(convertor), kwargs...)
+
+    # compute oracle suff stats
+    es_dummy = GreedySuffStats(block_ss, copy(block_ss), RandomGroupSwap(),
         PreviousBestValue(1_000, Inf, :min), 1)
     init!(es_dummy, data, oracle_labels)
+
+    # retrieve parameters
     @info "Oracle estimator loss: $(loss(es_dummy, norm = get_num_obs(data)))"
     parameters = to_params.(es_dummy.block_ss)
     return convert_to_result(oracle_labels, convertor, parameters)
