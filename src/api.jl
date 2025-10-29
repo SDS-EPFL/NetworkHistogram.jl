@@ -1,24 +1,42 @@
 function nethist_categorical(
         A, k,
-        labels_start = shuffle(ordered_start_labels(size(A, 1), k));
+        labels_start = ordered_start_labels(size(A, 1), k);
         params::GreedyParams = GreedyParams())
+    convertor = CategoricalConvertor(A)
+    @info "Using $(num_bins(convertor)) discrete categories for edge values"
     _nethist(
         A, labels_start,
-        CategoricalConvertor(A),
+        convertor,
         Val(:categorical),
-        params
+        params,
+        num_categories = num_bins(convertor)
     )
 end
 
 function nethist_continuous(
         A, k,
-        labels_start = shuffle(ordered_start_labels(size(A, 1), k));
+        labels_start = ordered_start_labels(size(A, 1), k);
         num_bins_::Int = 10,
+        params::GreedyParams = GreedyParams())
+    convertor = UnitIntervalConvertor(num_bins_)
+    @info "Using $(num_bins(convertor)) discrete categories for edge values"
+    _nethist(
+        A, labels_start,
+        convertor,
+        Val(:categorical),
+        params,
+        num_categories = num_bins(convertor)
+    )
+end
+
+function nethist_binary(
+        A, k,
+        labels_start = ordered_start_labels(size(A, 1), k);
         params::GreedyParams = GreedyParams())
     _nethist(
         A, labels_start,
-        UnitIntervalConvertor(num_bins_),
-        Val(:categorical),
+        BinaryConvertor(),
+        Val(:binary),
         params
     )
 end
@@ -30,9 +48,8 @@ function _nethist(
         reset!(params)
     end
     data = convertor.(A)
-    @info "Using $(num_bins(convertor)) discrete categories for edge values"
     es = GreedySuffStats(
-        data, labels_start, num_categories = num_bins(convertor),
+        data, labels_start,
         type_suff_stats = type_suff_stats,
         max_iter = params.max_iter,
         swap_rule = params.node_swap_rule,
@@ -55,6 +72,7 @@ function oracle_estimator(
     es_dummy = GreedySuffStats(block_ss, block_ss_swap, RandomGroupSwap(),
         PreviousBestValue(1_000, Inf, :min), 1)
     init!(es_dummy, data, oracle_labels)
+    @info "Oracle estimator loss: $(loss(es_dummy, norm = get_num_obs(data)))"
     parameters = to_params.(es_dummy.block_ss)
     return convert_to_result(oracle_labels, convertor, parameters)
 end

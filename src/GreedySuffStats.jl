@@ -17,7 +17,7 @@ end
 
 function init!(es::GreedySuffStats, data, node_labels)
     # Initialize the sufficient statistics for each block
-    @inbounds for j in axes(data, 2)
+    for j in axes(data, 2)
         gj = node_labels[j]
         for i in 1:(j - 1)  # More efficient than i < j check inside loop
             edge_value = data[i, j]
@@ -28,6 +28,8 @@ function init!(es::GreedySuffStats, data, node_labels)
         end
     end
 end
+
+loss(es::GreedySuffStats; norm = 1.0) = loss(es.block_ss; norm = norm)
 
 # TODO: allow for non-symmetric data
 @inline function loss(matrix_ss::SymArray{<:SuffStats}; norm = 1.0)

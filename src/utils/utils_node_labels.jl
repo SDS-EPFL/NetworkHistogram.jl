@@ -43,3 +43,8 @@ function order_groups(node_labels, latents::AbstractVector)
     return sort(
         1:k, by = x -> Tuple(get(counts[x], g, 0) for g in 1:k), rev = true)
 end
+
+function get_num_obs(A::AbstractMatrix)
+    n = size(A, 1)
+    return n * (n - 1) ÷ 2
+end
