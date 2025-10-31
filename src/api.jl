@@ -4,7 +4,7 @@ function nethist_categorical(
         params::GreedyParams = GreedyParams())
     convertor = CategoricalConvertor(A)
     @info "Using $(num_bins(convertor)) discrete categories for edge values"
-    _nethist(
+    return _nethist(
         A, labels_start,
         convertor,
         Val(:categorical),
@@ -20,7 +20,7 @@ function nethist_continuous(
         params::GreedyParams = GreedyParams())
     convertor = UnitIntervalConvertor(bins)
     @info "Using $(num_bins(convertor)) discrete categories for edge values"
-    _nethist(
+    return _nethist(
         A, labels_start,
         convertor,
         Val(:categorical),
@@ -33,7 +33,7 @@ function nethist_binary(
         A, k,
         labels_start = ordered_start_labels(size(A, 1), k);
         params::GreedyParams = GreedyParams())
-    _nethist(
+    return _nethist(
         A, labels_start,
         BinaryConvertor(),
         Val(:binary),

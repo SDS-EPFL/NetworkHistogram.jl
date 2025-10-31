@@ -19,7 +19,13 @@ function HistDistribution(bins, ps)
     return HistDistribution{typeof(bins), typeof(ps), typeof(cum_ps)}(bins, ps, cum_ps)
 end
 
-logpdf(d::HistDistribution, x::Real) = log(pdf(d, x))
+function logpdf(d::HistDistribution, x::Real)
+    # potentially slow
+    bin_idx = findfirst(b -> x ∈ b, d.bins)
+    p = d.probs[bin_idx]
+    bin_idx == 1 && return log(p)
+    return log(p) - log(width(d.bins[bin_idx]))
+end
 
 function pdf(d::HistDistribution, x::Real)
     # potentially slow
