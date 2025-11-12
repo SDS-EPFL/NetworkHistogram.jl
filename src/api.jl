@@ -66,7 +66,8 @@ function _nethist(
 end
 
 function oracle_estimator(
-        A, oracle_labels, convertor; type_suff_stats = Val(:categorical), kwargs...)
+        A, oracle_labels, convertor; type_suff_stats = Val(:categorical),
+        name = "oracle", kwargs...)
 
     # prepare data
     k = length(unique(oracle_labels))
@@ -81,7 +82,7 @@ function oracle_estimator(
     init!(es_dummy, data, oracle_labels)
 
     # retrieve parameters
-    @info "Oracle estimator loss: $(loss(es_dummy, norm = get_num_obs(data)))"
+    @info "$name estimator loss: $(loss(es_dummy, norm = get_num_obs(data)))"
     parameters = to_params.(es_dummy.block_ss)
     return convert_to_result(oracle_labels, convertor, parameters)
 end

@@ -71,34 +71,35 @@ res_new = NetworkHistogram.nethist_continuous(
 NetworkHistogram.align_res_true_latents!(res_new, res_oracle.labels);
 xs = range(0, 1; length = 100)
 
-# function viz_one_group!(axis, g1, g2, A, ξs, res_oracle, res_new, xs; n_viz = 20, p = p)
-#     nodes_1 = findall(res_oracle.labels .== g1)
-#     nodes_2 = findall(res_oracle.labels .== g2)
-#     edge_values = [A[x, y] for y in nodes_2 for x in nodes_1]
-#     Mke.vlines!(axis, edge_values, ymax = 0.025, color = :lightgray)
-#     # Mke.hist!(axis, edge_values; normalization = :pdf, color = :gray)
-#     x1 = sample(ξs[nodes_1], n_viz, replace = false)
-#     x2 = sample(ξs[nodes_2], n_viz, replace = false)
-#     for x_ in x1
-#         for y_ in x2
-#             Mke.lines!(axis, xs, pdf_kuma(graphon_params(x_, y_)..., xs, p),
-#                 color = :gray, alpha = 0.1)
-#         end
-#     end
-#     Mke.lines!(axis, xs, map(Base.Fix1(pdf, res_oracle.model.θ[g1, g2]), xs),
-#         color = :blue, label = "True")
-#     Mke.lines!(axis, xs, map(Base.Fix1(pdf, res_new.model.θ[g1, g2]), xs),
-#         color = :black, linestyle = :dash, label = "Estimated")
-# end
-# for g in 1:k
-#     @showprogress for g2 in 1:g
-#         fig = Mke.Figure(size = (600, 400))
-#         ax = Mke.Axis(fig[1, 1], title = "Group $g vs Group $g2", xlabel = "Edge Value",
-#             ylabel = "Density")
-#         viz_one_group!(ax, g, g2, A, ξs, res_oracle, res_new, xs, p = p)
-#         display(fig)
-#     end
-# end
+function viz_one_group!(axis, g1, g2, A, ξs, res_oracle, res_new, xs; n_viz = 20, p = p)
+    nodes_1 = findall(res_oracle.labels .== g1)
+    nodes_2 = findall(res_oracle.labels .== g2)
+    edge_values = [A[x, y] for y in nodes_2 for x in nodes_1]
+    Mke.vlines!(axis, edge_values, ymax = 0.025, color = :lightgray)
+    # Mke.hist!(axis, edge_values; normalization = :pdf, color = :gray)
+    x1 = sample(ξs[nodes_1], n_viz, replace = false)
+    x2 = sample(ξs[nodes_2], n_viz, replace = false)
+    for x_ in x1
+        for y_ in x2
+            Mke.lines!(axis, xs, pdf_kuma(graphon_params(x_, y_)..., xs, p),
+                color = :gray, alpha = 0.1)
+        end
+    end
+    Mke.lines!(axis, xs, map(Base.Fix1(pdf, res_oracle.model.θ[g1, g2]), xs),
+        color = :blue, label = "True")
+    Mke.lines!(axis, xs, map(Base.Fix1(pdf, res_new.model.θ[g1, g2]), xs),
+        color = :black, linestyle = :dash, label = "Estimated")
+end
+
+for g in 1:k
+    @showprogress for g2 in 1:g
+        fig = Mke.Figure(size = (600, 400))
+        ax = Mke.Axis(fig[1, 1], title = "Group $g vs Group $g2", xlabel = "Edge Value",
+            ylabel = "Density")
+        viz_one_group!(ax, g, g2, A, ξs, res_oracle, res_new, xs, p = p, n_viz = 5)
+        display(fig)
+    end
+end
 
 ##
 ssm_test = SSM(res_new.model, k)
@@ -116,3 +117,24 @@ Mke.lines(shape_range, criterion_values)
 
 # k_knee = knees(kr)[1]
 # ssm_knee = SSM(res_new.model, k_knee)
+
+##
+
+clustering_res = kmeans(A, k)
+
+res_kmeans = NetworkHistogram.oracle_estimator(
+    A, assignments(clustering_res), NetworkHistogram.UnitIntervalConvertor(n_bins);
+    type_suff_stats = Val(:categorical),
+    name = "k-means");
+
+NetworkHistogram.align_res_true_latents!(res_kmeans, res_oracle.labels, type = :greedy);
+
+for g in 1:k
+    @showprogress for g2 in 1:g
+        fig = Mke.Figure(size = (600, 400))
+        ax = Mke.Axis(fig[1, 1], title = "Group $g vs Group $g2", xlabel = "Edge Value",
+            ylabel = "Density")
+        viz_one_group!(ax, g, g2, A, ξs, res_oracle, res_kmeans, xs, p = p, n_viz = 5)
+        display(fig)
+    end
+end

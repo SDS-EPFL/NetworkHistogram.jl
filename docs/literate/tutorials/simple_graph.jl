@@ -122,7 +122,7 @@ end
 
 # the block labels found by the optimization are not necessarily aligned with the true latent positions, hence the need to align them for better visualization.
 
-NetworkHistogram.align_res_true_latents!(res, oracle_res.labels);
+NetworkHistogram.align_res_true_latents!(res, oracle_res.labels, type = :greedy);
 
 # and display the true function, the oracle estimator, and the fitted model
 let
@@ -165,6 +165,63 @@ let
     titles = ["SBM", "SSM argmin", "SSM knee"]
     axes = [Mke.Axis(fig[1, i], aspect = Mke.DataAspect(), title = titles[i]) for i in 1:3]
     Mke.heatmap!(axes[1], res.model, colormap = :binary, colorrange = (0, 1))
+    Mke.heatmap!(axes[2], ssm_estimated,
+        colormap = :binary, colorrange = (0, 1))
+    Mke.heatmap!(axes[3], ssm_knee, colormap = :binary, colorrange = (0, 1))
+    Mke.Colorbar(fig[1, 4], colormap = :binary,
+        limits = (0, 1), label = "Edge Probability", width = 20)
+    fig
+end
+
+##
+
+k_kmeans = 10;
+clustering_res = kmeans(A, k_kmeans);
+
+res_kmeans = NetworkHistogram.oracle_estimator(
+    A, assignments(clustering_res), NetworkHistogram.BinaryConvertor();
+    type_suff_stats = Val(:binary),
+    name = "k-means");
+
+NetworkHistogram.align_res_true_latents!(res_kmeans, oracle_res.labels, type = :greedy);
+
+# and display the true function, the oracle estimator, and the fitted model
+let
+    fig = Mke.Figure(size = (1220, 400))
+    titles = ["True Graphon W(u,v)", "Oracle Estimator", "Fitted Network Histogram"]
+    axes = [Mke.Axis(fig[1, i], aspect = Mke.DataAspect(), title = titles[i]) for i in 1:3]
+    Mke.heatmap!(axes[1], w, colormap = :binary, colorrange = (0, 1))
+    Mke.heatmap!(axes[2], oracle_res.model,
+        colormap = :binary, colorrange = (0, 1))
+    Mke.heatmap!(axes[3], res_kmeans.model, colormap = :binary, colorrange = (0, 1))
+    Mke.Colorbar(fig[1, 4], colormap = :binary,
+        limits = (0, 1), label = "Edge Probability", width = 20)
+    fig
+end
+
+# ξ = NetworkHistogram.node_labels_to_latents(res.labels, res.model);
+shape_range = 1:(k_kmeans * (k_kmeans + 1) ÷ 2 - 1)
+ssm_estimated, criterion_values = Graphons.estimate_ssm(
+    res_kmeans.model, A, res_kmeans.labels, shape_range)
+
+using Kneedle
+kr = kneedle(shape_range, criterion_values, "convex_dec", 1, scan_type = :smoothing)
+#  Let's extract the optimal number of shapes using the Kneedle algorithm:
+
+k_knee = knees(kr)[1]
+ssm_knee = SSM(res_kmeans.model, k_knee)
+
+println("Number of shapes in SSM argmin: ", length(ssm_estimated.θ))
+println("Number of shapes in SSM knee: ", length(ssm_knee.θ))
+println("Number of shapes in SBM: ", length(res_kmeans.model.θ))
+
+# We greatly reduced the number of parameters from the original SBM estimate while preserving much of the structure of the estimated graphon as seen below:
+
+let
+    fig = Mke.Figure(size = (1220, 400))
+    titles = ["SBM", "SSM argmin", "SSM knee"]
+    axes = [Mke.Axis(fig[1, i], aspect = Mke.DataAspect(), title = titles[i]) for i in 1:3]
+    Mke.heatmap!(axes[1], res_kmeans.model, colormap = :binary, colorrange = (0, 1))
     Mke.heatmap!(axes[2], ssm_estimated,
         colormap = :binary, colorrange = (0, 1))
     Mke.heatmap!(axes[3], ssm_knee, colormap = :binary, colorrange = (0, 1))
