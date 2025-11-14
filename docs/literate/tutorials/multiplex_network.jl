@@ -110,16 +110,21 @@ kr = kneedle(shape_range, criterion_values, "convex_dec", 1, scan_type = :smooth
 k_knee = knees(kr)[1]
 ssm = SSM(res.model, k_knee)
 
+models_to_plot = [graphon, res.model, ssm_estimated, ssm]
+model_names = ["True graphon", "Block model",
+    "SSM argmin k=$(length(ssm_estimated.θ))", "SSM knee k=$k_knee"]
+
 let
-    fig = Mke.Figure(size = (4 * h, 3 * h))
-    for (i, model) in enumerate([graphon, res.model, ssm])
+    fig = Mke.Figure(size = (4 * h, length(models_to_plot) * h))
+    for (i, model) in enumerate(models_to_plot)
         for m in 1:4
-            ax = Mke.Axis(fig[i, m], aspect = Mke.DataAspect())
-            Mke.hidedecorations!(ax)
+            ax = Mke.Axis(
+                fig[i, m], aspect = Mke.DataAspect(), ylabel = m == 1 ? model_names[i] : "")
+            Mke.hidedecorations!(ax, label = false)
             Mke.heatmap!(ax, model, k = m, colormap = :lipari, colorrange = (0, 1))
         end
     end
-    Mke.Colorbar(fig[2, end + 1], colormap = :lipari,
+    Mke.Colorbar(fig[2:3, end + 1], colormap = :lipari,
         limits = (0, 1), width = 0.05 * h)
     fig
     display(fig) #src
