@@ -58,15 +58,10 @@ end
 # We can also align the fitted model to the true one using optimal transport. We need to load the `PythonCall.jl`
 # package for that, as we will use the `POT` Python library.
 
+ENV["JULIA_CONDAPKG_VERBOSITY"] = "-1" #hide conda messages
 using PythonCall
 θ_oracle = probs.(oracle_res.model.θ);
 θ_hat = probs.(res.model.θ);
-
-# path_hardcoded = "/Users/dufour/Documents/code/networks/static/NetworkHistogram/ext/PythonOptimalTransport/"
-# pyimport("sys").path.append(path_hardcoded)
-
-# const fngw_import = pyimport("fngw")
-# fngw2 = @pyconst(pyimport("fngw")).fused_network_gromov_wasserstein2
 
 perm = NetworkHistogram.get_perm_alignment(θ_hat, θ_oracle);
 
@@ -77,9 +72,11 @@ estimator_aligned = DecoratedSBM(DiscreteNonParametric.(Ref(0:3), θ_hat_aligned
 let
     fig = Mke.Figure(size = (2 * h, h))
     for m in 1:4
-        ax = Mke.Axis(fig[1, m], aspect = Mke.DataAspect())
+        ax = Mke.Axis(
+            fig[1, m], aspect = Mke.DataAspect(), ylabel = m == 1 ? "Estimated" : "")
         Mke.heatmap!(ax, estimator_aligned, k = m, colormap = :binary, colorrange = (0, 1))
-        ax2 = Mke.Axis(fig[2, m], aspect = Mke.DataAspect())
+        ax2 = Mke.Axis(
+            fig[2, m], aspect = Mke.DataAspect(), ylabel = m == 1 ? "Oracle" : "")
         Mke.heatmap!(
             ax2, oracle_res.model, k = m, colormap = :binary, colorrange = (0, 1))
     end
