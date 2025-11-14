@@ -6,7 +6,6 @@ using NetworkHistogram
 using Distributions
 using LinearAlgebra
 using Random
-using ProgressMeter
 
 import Distributions: pdf
 
@@ -29,7 +28,7 @@ let
 end
 
 n = 2000
-k = 10
+k = 5
 n_bins = 20
 p = 0.9
 A = sample_graph(graphon, n) .* Symmetric(rand(Bernoulli(p), n, n));
@@ -92,7 +91,7 @@ function viz_one_group!(axis, g1, g2, A, ξs, res_oracle, res_new, xs; n_viz = 2
 end
 
 for g in 1:k
-    @showprogress for g2 in 1:g
+    for g2 in 1:g
         fig = Mke.Figure(size = (600, 400))
         ax = Mke.Axis(fig[1, 1], title = "Group $g vs Group $g2", xlabel = "Edge Value",
             ylabel = "Density")
@@ -130,7 +129,7 @@ res_kmeans = NetworkHistogram.oracle_estimator(
 NetworkHistogram.align_res_true_latents!(res_kmeans, res_oracle.labels);
 
 for g in 1:k
-    @showprogress for g2 in 1:g
+    for g2 in 1:g
         fig = Mke.Figure(size = (600, 400))
         ax = Mke.Axis(fig[1, 1], title = "Group $g vs Group $g2", xlabel = "Edge Value",
             ylabel = "Density")
