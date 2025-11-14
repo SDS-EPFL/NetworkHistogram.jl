@@ -32,27 +32,35 @@ DocMeta.setdocmeta!(
     recursive = true)
 
 # based on available extensions, include them in the documentation
-modules = [
+modules_all = [
     NetworkHistogram,
     Base.get_extension(NetworkHistogram, :BootstrapExt),
     Base.get_extension(NetworkHistogram, :LightMCExt),
     Base.get_extension(NetworkHistogram, :MakieExt),
     Base.get_extension(NetworkHistogram, :PythonOptimalTransport)
 ]
+println("all modules: ", modules_all)
 
 #TODO: safety check, should probably throw an error instead
-filter!(x -> !isnothing(x), modules)
+modules = [filter(!isnothing, modules_all)...]
+println("build/docs with modules: ", modules)
+
+using DocumenterInterLinks
+
+links = InterLinks(
+    "ot" => "https://pythonot.github.io/",
+)
 
 makedocs(;
     modules = modules,
     authors = "Jake Grainger, Charles Dufour",
-    #repo = "github.com/SDS-EPFL/NetworkHistogram.jl.git",
+    repo = "github.com/SDS-EPFL/NetworkHistogram.jl.git",
     sitename = "NetworkHistogram.jl",
-    #format = Documenter.HTML(;
-    #                         prettyurls = get(ENV, "CI", "false") == "true",
-    #                         canonical = "https://SDS-EPFL.github.io/NetworkHistogram.jl",
-    #                         edit_link = "main",
-    #                         assets = String[]),
+    format = Documenter.HTML(;
+        prettyurls = get(ENV, "CI", "false") == "true",
+        canonical = "https://SDS-EPFL.github.io/NetworkHistogram.jl",
+        edit_link = "main",
+        assets = String[]),
     pages = [
         "Home" => "index.md",
         "API Reference" => "api.md",
@@ -60,7 +68,8 @@ makedocs(;
             "Multiplex networks" => "tutorials/multiplex_network.md",
             "Weighted networks" => "tutorials/weighted_network.md",
             "Temporal networks" => "tutorials/temporal_networks.md"]],
-    checkdocs = :none)
+    checkdocs = :none,
+    plugins = [links])
 
 deploydocs(;
     repo = "github.com/SDS-EPFL/NetworkHistogram.jl.git")
