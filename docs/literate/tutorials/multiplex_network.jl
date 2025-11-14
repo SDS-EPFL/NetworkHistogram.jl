@@ -34,7 +34,7 @@ n = 1000
 true_latents = range(0, 1; length = n)
 A = sample_graph(graphon, true_latents);
 
-k = 20
+k = 10
 oracle_labels = ordered_start_labels(n, k);
 initial_labels = shuffle(oracle_labels);
 
@@ -55,10 +55,41 @@ let
     fig
 end
 
+# We can also align the fitted model to the true one using optimal transport. We need to load the `PythonCall.jl`
+# package for that, as we will use the `POT` Python library.
+
+using PythonCall
+θ_oracle = probs.(oracle_res.model.θ);
+θ_hat = probs.(res.model.θ);
+
+# path_hardcoded = "/Users/dufour/Documents/code/networks/static/NetworkHistogram/ext/PythonOptimalTransport/"
+# pyimport("sys").path.append(path_hardcoded)
+
+# const fngw_import = pyimport("fngw")
+# fngw2 = @pyconst(pyimport("fngw")).fused_network_gromov_wasserstein2
+
+perm = NetworkHistogram.get_perm_alignment(θ_hat, θ_oracle);
+
+θ_hat_aligned = θ_hat[perm, perm];
+estimator_aligned = DecoratedSBM(DiscreteNonParametric.(Ref(0:3), θ_hat_aligned),
+    res.model.size[perm]);
+
+let
+    fig = Mke.Figure(size = (2 * h, h))
+    for m in 1:4
+        ax = Mke.Axis(fig[1, m], aspect = Mke.DataAspect())
+        Mke.heatmap!(ax, estimator_aligned, k = m, colormap = :binary, colorrange = (0, 1))
+        ax2 = Mke.Axis(fig[2, m], aspect = Mke.DataAspect())
+        Mke.heatmap!(
+            ax2, oracle_res.model, k = m, colormap = :binary, colorrange = (0, 1))
+    end
+    fig
+end
+
 # The fitted network histogram can be further processed to obtain a smoother estimate of the underlying graphon.
 
 using Clustering
-shape_range = 1:30
+shape_range = 1:20
 ssm_estimated, criterion_values = Graphons.estimate_ssm(
     res.model, A, true_latents, shape_range);
 
