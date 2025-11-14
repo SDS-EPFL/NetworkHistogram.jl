@@ -58,7 +58,7 @@ end
 # We can also align the fitted model to the true one using optimal transport. We need to load the `PythonCall.jl`
 # package for that, as we will use the `POT` Python library.
 
-ENV["JULIA_CONDAPKG_VERBOSITY"] = "-1" #hide conda messages
+ENV["JULIA_CONDAPKG_VERBOSITY"] = "-1" # hide conda messages #hide
 using PythonCall
 θ_oracle = probs.(oracle_res.model.θ);
 θ_hat = probs.(res.model.θ);

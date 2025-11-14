@@ -38,25 +38,20 @@ n = 1000
 true_latents = range(0, 1; length = n)
 A = sample_graph(graphon, true_latents);
 
-k = 20
+k = 10
 oracle_labels = ordered_start_labels(n, k);
 initial_labels = shuffle(oracle_labels);
 
-res = NetworkHistogram.nethist_discrete_edges(A,
-    initial_labels, GreedyParams(
-        1_000_000,
-        RandomGroupSwap(),
-        Strict(),
-        PreviousBestValue(5_000, Inf, :min),
-        false # progress bar
-    ));
-nothing #hide
+oracle_res = NetworkHistogram.oracle_estimator(
+    A, oracle_labels, NetworkHistogram.CategoricalConvertor(A));
+
+res = NetworkHistogram.nethist_categorical(A, k, initial_labels)
 ````
 
 Visualize the fitted models for different numbers of groups after aligning with true latents
 
 ````@example multiplex_network
-NetworkHistogram.align_res_true_latents!(res, oracle_labels);
+NetworkHistogram.align_res_true_latents!(res, oracle_res.labels);
 let
     fig = Mke.Figure(size = (4 * h, h))
     for m in 1:4
@@ -67,11 +62,41 @@ let
 end
 ````
 
+We can also align the fitted model to the true one using optimal transport. We need to load the `PythonCall.jl`
+package for that, as we will use the `POT` Python library.
+
+````@example multiplex_network
+ENV["JULIA_CONDAPKG_VERBOSITY"] = "-1" # hide conda messages #hide
+using PythonCall
+θ_oracle = probs.(oracle_res.model.θ);
+θ_hat = probs.(res.model.θ);
+
+perm = NetworkHistogram.get_perm_alignment(θ_hat, θ_oracle);
+
+θ_hat_aligned = θ_hat[perm, perm];
+estimator_aligned = DecoratedSBM(DiscreteNonParametric.(Ref(0:3), θ_hat_aligned),
+    res.model.size[perm]);
+
+let
+    fig = Mke.Figure(size = (2 * h, h))
+    for m in 1:4
+        ax = Mke.Axis(
+            fig[1, m], aspect = Mke.DataAspect(), ylabel = m == 1 ? "Estimated" : "")
+        Mke.heatmap!(ax, estimator_aligned, k = m, colormap = :binary, colorrange = (0, 1))
+        ax2 = Mke.Axis(
+            fig[2, m], aspect = Mke.DataAspect(), ylabel = m == 1 ? "Oracle" : "")
+        Mke.heatmap!(
+            ax2, oracle_res.model, k = m, colormap = :binary, colorrange = (0, 1))
+    end
+    fig
+end
+````
+
 The fitted network histogram can be further processed to obtain a smoother estimate of the underlying graphon.
 
 ````@example multiplex_network
 using Clustering
-shape_range = 1:30
+shape_range = 1:20
 ssm_estimated, criterion_values = Graphons.estimate_ssm(
     res.model, A, true_latents, shape_range);
 

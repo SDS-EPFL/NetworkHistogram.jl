@@ -49,24 +49,6 @@ res_new = NetworkHistogram.nethist_continuous(
     bins = n_bins
 );
 
-# convertor = NetworkHistogram.UnitIntervalConvertor(10)
-
-# data = convertor.(A)
-# es_new = NetworkHistogram.GreedySuffStats(
-#     data, initial_labels, num_categories = num_bins(convertor),
-#     type_suff_stats = :categorical,
-#     max_iter = max_iter,
-#     swap_rule = NetworkHistogram.RandomGroupSwap(),
-#     stop_rule = NetworkHistogram.PreviousBestValue(stalled_iters, Inf, :min),
-#     progress = true
-# );
-# node_labels_es_new, parameters = NetworkHistogram.estimate!(
-#     es_new, data, initial_labels; iter_progress = 10_000)
-
-# model_es_new = NetworkHistogram.DecoratedSBM(to_distribution.(convertor, parameters),
-#     counts(node_labels_es_new) ./ length(node_labels_es_new));
-
-# res_new = NetworkHistogram.NethistResult(node_labels_es_new, model_es_new);
 NetworkHistogram.align_res_true_latents!(res_new, res_oracle.labels);
 xs = range(0, 1; length = 100)
 
@@ -75,7 +57,6 @@ function viz_one_group!(axis, g1, g2, A, ξs, res_oracle, res_new, xs; n_viz = 2
     nodes_2 = findall(res_oracle.labels .== g2)
     edge_values = [A[x, y] for y in nodes_2 for x in nodes_1]
     Mke.vlines!(axis, edge_values, ymax = 0.025, color = :lightgray)
-    # Mke.hist!(axis, edge_values; normalization = :pdf, color = :gray)
     x1 = sample(ξs[nodes_1], n_viz, replace = false)
     x2 = sample(ξs[nodes_2], n_viz, replace = false)
     for x_ in x1

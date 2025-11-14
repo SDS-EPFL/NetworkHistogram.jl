@@ -149,7 +149,7 @@ end
 the block labels found by the optimization are not necessarily aligned with the true latent positions, hence the need to align them for better visualization.
 
 ````@example simple_graph
-NetworkHistogram.align_res_true_latents!(res, oracle_res.labels, type = :greedy);
+NetworkHistogram.align_res_true_latents!(res, oracle_res.labels);
 nothing #hide
 ````
 
@@ -224,7 +224,7 @@ res_kmeans = NetworkHistogram.oracle_estimator(
     type_suff_stats = Val(:binary),
     name = "k-means");
 
-NetworkHistogram.align_res_true_latents!(res_kmeans, oracle_res.labels, type = :greedy);
+NetworkHistogram.align_res_true_latents!(res_kmeans, oracle_res.labels);
 nothing #hide
 ````
 

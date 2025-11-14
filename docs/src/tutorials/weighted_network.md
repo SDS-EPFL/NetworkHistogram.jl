@@ -10,7 +10,6 @@ using NetworkHistogram
 using Distributions
 using LinearAlgebra
 using Random
-using ProgressMeter
 
 import Distributions: pdf
 
@@ -33,7 +32,7 @@ let
 end
 
 n = 2000
-k = 10
+k = 5
 n_bins = 20
 p = 0.9
 A = sample_graph(graphon, n) .* Symmetric(rand(Bernoulli(p), n, n));
@@ -53,29 +52,7 @@ res_new = NetworkHistogram.nethist_continuous(
     starting_labels;
     bins = n_bins
 );
-nothing #hide
-````
 
-convertor = NetworkHistogram.UnitIntervalConvertor(10)
-
-data = convertor.(A)
-es_new = NetworkHistogram.GreedySuffStats(
-    data, initial_labels, num_categories = num_bins(convertor),
-    type_suff_stats = :categorical,
-    max_iter = max_iter,
-    swap_rule = NetworkHistogram.RandomGroupSwap(),
-    stop_rule = NetworkHistogram.PreviousBestValue(stalled_iters, Inf, :min),
-    progress = true
-);
-node_labels_es_new, parameters = NetworkHistogram.estimate!(
-    es_new, data, initial_labels; iter_progress = 10_000)
-
-model_es_new = NetworkHistogram.DecoratedSBM(to_distribution.(convertor, parameters),
-    counts(node_labels_es_new) ./ length(node_labels_es_new));
-
-res_new = NetworkHistogram.NethistResult(node_labels_es_new, model_es_new);
-
-````@example weighted_network
 NetworkHistogram.align_res_true_latents!(res_new, res_oracle.labels);
 xs = range(0, 1; length = 100)
 
@@ -84,11 +61,6 @@ function viz_one_group!(axis, g1, g2, A, ξs, res_oracle, res_new, xs; n_viz = 2
     nodes_2 = findall(res_oracle.labels .== g2)
     edge_values = [A[x, y] for y in nodes_2 for x in nodes_1]
     Mke.vlines!(axis, edge_values, ymax = 0.025, color = :lightgray)
-````
-
-Mke.hist!(axis, edge_values; normalization = :pdf, color = :gray)
-
-````@example weighted_network
     x1 = sample(ξs[nodes_1], n_viz, replace = false)
     x2 = sample(ξs[nodes_2], n_viz, replace = false)
     for x_ in x1
@@ -104,7 +76,7 @@ Mke.hist!(axis, edge_values; normalization = :pdf, color = :gray)
 end
 
 for g in 1:k
-    @showprogress for g2 in 1:g
+    for g2 in 1:g
         fig = Mke.Figure(size = (600, 400))
         ax = Mke.Axis(fig[1, 1], title = "Group $g vs Group $g2", xlabel = "Edge Value",
             ylabel = "Density")
@@ -142,10 +114,10 @@ res_kmeans = NetworkHistogram.oracle_estimator(
     type_suff_stats = Val(:categorical),
     name = "k-means");
 
-NetworkHistogram.align_res_true_latents!(res_kmeans, res_oracle.labels, type = :greedy);
+NetworkHistogram.align_res_true_latents!(res_kmeans, res_oracle.labels);
 
 for g in 1:k
-    @showprogress for g2 in 1:g
+    for g2 in 1:g
         fig = Mke.Figure(size = (600, 400))
         ax = Mke.Axis(fig[1, 1], title = "Group $g vs Group $g2", xlabel = "Edge Value",
             ylabel = "Density")
