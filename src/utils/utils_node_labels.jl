@@ -11,10 +11,7 @@ function ordered_start_labels(n::Int, k::Int)
     return labels
 end
 
-function align_res_true_latents!(res::NethistResult, latents; type = nothing)
-    if !isnothing(type)
-        @warn "type argument is deprecated, only :greedy is supported now."
-    end
+function align_res_true_latents!(res::NethistResult, latents)
     new_labels, mapping = order_groups(res.labels, latents)
     res.labels .= new_labels
     perm = [key for (key, val) in sort(collect(mapping), by = last)]

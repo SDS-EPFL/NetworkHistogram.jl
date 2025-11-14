@@ -127,7 +127,7 @@ res_kmeans = NetworkHistogram.oracle_estimator(
     type_suff_stats = Val(:categorical),
     name = "k-means");
 
-NetworkHistogram.align_res_true_latents!(res_kmeans, res_oracle.labels, type = :greedy);
+NetworkHistogram.align_res_true_latents!(res_kmeans, res_oracle.labels);
 
 for g in 1:k
     @showprogress for g2 in 1:g

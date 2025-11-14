@@ -39,11 +39,9 @@ modules_all = [
     Base.get_extension(NetworkHistogram, :MakieExt),
     Base.get_extension(NetworkHistogram, :PythonOptimalTransport)
 ]
-println("all modules: ", modules_all)
 
 #TODO: safety check, should probably throw an error instead
 modules = [filter(!isnothing, modules_all)...]
-println("build/docs with modules: ", modules)
 
 using DocumenterInterLinks
 
