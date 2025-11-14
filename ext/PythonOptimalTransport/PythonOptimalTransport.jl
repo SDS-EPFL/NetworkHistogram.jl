@@ -66,7 +66,7 @@ function get_perm_alignment(src::AbstractMatrix{T1}, target::AbstractMatrix{T2};
         kwargs...
     )
     plan = pyconvert(Matrix{Float64}, log_["T"])
-    return plan_to_permutation(plan)
+    return plan_to_permutation(plan), plan
 end
 
 """

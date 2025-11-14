@@ -6,22 +6,23 @@ using NetworkHistogram
 using Distributions
 using LinearAlgebra
 using Random
+using Graphons
 
 import Distributions: pdf
 
 pdf_kuma(α, β, x, p = 1.0) = @. p * (α * β * x^(α - 1) .* (1 - x^α)^(β - 1))
 
-graphon_params = (x, y) -> (4 * (cos(π * (x - y)) + 1) + 1, max(x, y) * 8 + 1)
+graphon_params = (x, y) -> (3 * abs(sin(2 * π * x) * sin(2 * π * y)) + 0.8, max(x, y) * 8)
 
 graphon = DecoratedGraphon((x, y) -> Kumaraswamy(graphon_params(x, y)...))
 
 import CairoMakie as Mke
 let
-    fig = Mke.Figure()
-    ax = Mke.Axis(fig[1, 1], aspect = Mke.DataAspect())
-    hm = Mke.heatmap!(ax, graphon, colormap = :viridis)
+    fig = Mke.Figure(size = (510, 200))
+    ax = Mke.Axis(fig[1, 1], aspect = Mke.DataAspect(), title = "α")
+    hm = Mke.heatmap!(ax, graphon, k = 1, colormap = :viridis)
     Mke.Colorbar(fig[1, 2], hm)
-    ax2 = Mke.Axis(fig[1, 3], aspect = Mke.DataAspect())
+    ax2 = Mke.Axis(fig[1, 3], aspect = Mke.DataAspect(), title = "β")
     hm2 = Mke.heatmap!(ax2, graphon, k = 2, colormap = :viridis)
     Mke.Colorbar(fig[1, 4], hm2)
     fig
@@ -29,10 +30,12 @@ end
 
 # We sample a weighted network from the graphon
 
+Random.seed!(1234);
 n = 2000
-k = 5
+k = 12
 n_bins = 20
-p = 0.9
+p = 0.8
+
 A = sample_graph(graphon, n) .* Symmetric(rand(Bernoulli(p), n, n));
 ξs = range(0, 1; length = n)
 oracle_latents = ordered_start_labels(n, k);
@@ -43,7 +46,7 @@ res_oracle = NetworkHistogram.oracle_estimator(
 starting_labels = shuffle(oracle_latents);
 
 max_iter = 1_000_000
-stalled_iters = 5_000
+stalled_iters = 10_000
 
 res_new = NetworkHistogram.nethist_continuous(
     A, k,
@@ -51,8 +54,30 @@ res_new = NetworkHistogram.nethist_continuous(
     bins = n_bins
 );
 
-NetworkHistogram.align_res_true_latents!(res_new, res_oracle.labels);
-xs = range(0, 1; length = 100)
+ENV["JULIA_CONDAPKG_VERBOSITY"] = "-1" # hide conda messages #hide
+using PythonCall
+
+θ_oracle = Graphons._extract_param.(res_oracle.model.θ);
+θ_hat = Graphons._extract_param.(res_new.model.θ);
+perm, plan = NetworkHistogram.get_perm_alignment(θ_oracle, θ_hat);
+
+let
+    fig = Mke.Figure(size = (600, 400))
+    ax = Mke.Axis(fig[1, 1], title = "OT plan heatmap",
+        xlabel = "Fitted groups", ylabel = "Oracle groups")
+    hm = Mke.heatmap!(ax, plan, colormap = :binary)
+    Mke.Colorbar(fig[1, 2], hm)
+    fig
+    Mke.display(fig) #src
+end
+
+fitted_labels = map(x -> perm[x], res_new.labels);
+res_ot_aligned = NetworkHistogram.oracle_estimator(
+    A, fitted_labels, NetworkHistogram.UnitIntervalConvertor(n_bins),
+    name = "aligned with OT perm");
+# NetworkHistogram.align_res_true_latents!(res_new, res_oracle.labels);
+
+xs = range(0, 1; length = 20)
 
 function viz_one_group!(axis, g1, g2, A, ξs, res_oracle, res_new, xs; n_viz = 20, p = p)
     nodes_1 = findall(res_oracle.labels .== g1)
@@ -76,9 +101,10 @@ end
 fig = Mke.Figure(size = (1000, 1000))
 for g in 1:k
     for g2 in 1:g
-        ax = Mke.Axis(fig[g, g2], title = "Group $g vs Group $g2", xlabel = "Edge Value",
-            ylabel = "Density")
-        viz_one_group!(ax, g, g2, A, ξs, res_oracle, res_new, xs, p = p, n_viz = 5)
+        ax = Mke.Axis(fig[g, g2])#, title = "Group $g vs Group $g2", xlabel = "Edge Value",ylabel = "Density")
+        Mke.hidedecorations!(ax)
+        viz_one_group!(ax, g, g2, A, ξs, res_oracle,
+            res_ot_aligned, xs, p = p, n_viz = 5)
     end
 end
 fig
@@ -100,7 +126,8 @@ for g in 1:k
     for g2 in 1:g
         ax = Mke.Axis(fig[g, g2], title = "Group $g vs Group $g2", xlabel = "Edge Value",
             ylabel = "Density")
-        viz_one_group!(ax, g, g2, A, ξs, res_oracle, res_kmeans, xs, p = p, n_viz = 5)
+        viz_one_group!(
+            ax, g, g2, A, ξs, res_oracle, res_kmeans, xs, p = p, n_viz = 5)
     end
 end
 
