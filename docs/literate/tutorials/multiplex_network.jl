@@ -38,18 +38,14 @@ k = 20
 oracle_labels = ordered_start_labels(n, k);
 initial_labels = shuffle(oracle_labels);
 
-res = NetworkHistogram.nethist_discrete_edges(A,
-    initial_labels, GreedyParams(
-        1_000_000,
-        RandomGroupSwap(),
-        Strict(),
-        PreviousBestValue(5_000, Inf, :min),
-        false # progress bar
-    ));
+oracle_res = NetworkHistogram.oracle_estimator(
+    A, oracle_labels, NetworkHistogram.CategoricalConvertor(A));
+
+res = NetworkHistogram.nethist_categorical(A, k, initial_labels)
 
 # Visualize the fitted models for different numbers of groups after aligning with true latents
 
-NetworkHistogram.align_res_true_latents!(res, oracle_labels);
+NetworkHistogram.align_res_true_latents!(res, oracle_res.labels);
 let
     fig = Mke.Figure(size = (4 * h, h))
     for m in 1:4

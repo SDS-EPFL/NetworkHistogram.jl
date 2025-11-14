@@ -1,7 +1,7 @@
 function nethist_categorical(
         A, k,
         labels_start = ordered_start_labels(size(A, 1), k);
-        params::GreedyParams = GreedyParams())
+        params::GreedyParams = GreedyParams(stalled_iter = 10_000))
     convertor = CategoricalConvertor(A)
     @info "Using $(num_bins(convertor)) discrete categories for edge values"
     return _nethist(
