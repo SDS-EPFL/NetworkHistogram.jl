@@ -31,8 +31,20 @@ DocMeta.setdocmeta!(
     NetworkHistogram, :DocTestSetup, :(using NetworkHistogram);
     recursive = true)
 
+# based on available extensions, include them in the documentation
+modules = [
+    NetworkHistogram,
+    Base.get_extension(NetworkHistogram, :BootstrapExt),
+    Base.get_extension(NetworkHistogram, :LightMCExt),
+    Base.get_extension(NetworkHistogram, :MakieExt),
+    Base.get_extension(NetworkHistogram, :PythonOptimalTransport)
+]
+
+#TODO: safety check, should probably throw an error instead
+filter!(x -> !isnothing(x), modules)
+
 makedocs(;
-    modules = [NetworkHistogram],
+    modules = modules,
     authors = "Jake Grainger, Charles Dufour",
     #repo = "github.com/SDS-EPFL/NetworkHistogram.jl.git",
     sitename = "NetworkHistogram.jl",
