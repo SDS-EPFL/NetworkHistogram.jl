@@ -27,6 +27,8 @@ let
     fig
 end
 
+# We sample a weighted network from the graphon
+
 n = 2000
 k = 5
 n_bins = 20
@@ -71,32 +73,16 @@ function viz_one_group!(axis, g1, g2, A, ξs, res_oracle, res_new, xs; n_viz = 2
         color = :black, linestyle = :dash, label = "Estimated")
 end
 
+fig = Mke.Figure(size = (1000, 1000))
 for g in 1:k
     for g2 in 1:g
-        fig = Mke.Figure(size = (600, 400))
-        ax = Mke.Axis(fig[1, 1], title = "Group $g vs Group $g2", xlabel = "Edge Value",
+        ax = Mke.Axis(fig[g, g2], title = "Group $g vs Group $g2", xlabel = "Edge Value",
             ylabel = "Density")
         viz_one_group!(ax, g, g2, A, ξs, res_oracle, res_new, xs, p = p, n_viz = 5)
-        display(fig)
     end
 end
-
-##
-ssm_test = SSM(res_new.model, k)
-
-shape_range = 1:(k * (k + 1) ÷ 2 - 1)
-ssm_estimated, criterion_values = Graphons.estimate_ssm(
-    res_new.model, A, res_new.labels, shape_range)
-
-Mke.lines(shape_range, criterion_values)
-
-##
-# using Kneedle
-# kr = kneedle(shape_range, criterion_values, "convex_dec", 1, scan_type = :smoothing)
-# #  Let's extract the optimal number of shapes using the Kneedle algorithm:
-
-# k_knee = knees(kr)[1]
-# ssm_knee = SSM(res_new.model, k_knee)
+fig
+Mke.display(fig) #src
 
 ##
 
@@ -109,12 +95,14 @@ res_kmeans = NetworkHistogram.oracle_estimator(
 
 NetworkHistogram.align_res_true_latents!(res_kmeans, res_oracle.labels);
 
+fig = Mke.Figure(size = (1000, 1000))
 for g in 1:k
     for g2 in 1:g
-        fig = Mke.Figure(size = (600, 400))
-        ax = Mke.Axis(fig[1, 1], title = "Group $g vs Group $g2", xlabel = "Edge Value",
+        ax = Mke.Axis(fig[g, g2], title = "Group $g vs Group $g2", xlabel = "Edge Value",
             ylabel = "Density")
         viz_one_group!(ax, g, g2, A, ξs, res_oracle, res_kmeans, xs, p = p, n_viz = 5)
-        display(fig)
     end
 end
+
+fig
+display(fig) #src
