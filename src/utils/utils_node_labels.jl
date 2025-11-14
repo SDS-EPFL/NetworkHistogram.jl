@@ -11,14 +11,11 @@ function ordered_start_labels(n::Int, k::Int)
     return labels
 end
 
-function align_res_true_latents!(res::NethistResult, latents; type = :greedy)
-    if type ∉ (:opt, :greedy)
-        error("Unknown alignment type: $type. Use :opt or :greedy.")
+function align_res_true_latents!(res::NethistResult, latents; type = nothing)
+    if !isnothing(type)
+        @warn "type argument is deprecated, only :greedy is supported now."
     end
-    if type == :opt
-        @warn "The :opt alignment may not work that well; consider using :greedy instead."
-    end
-    new_labels, mapping = order_groups(res.labels, latents, Val(type))
+    new_labels, mapping = order_groups(res.labels, latents)
     res.labels .= new_labels
     perm = [key for (key, val) in sort(collect(mapping), by = last)]
     permute!(res.model, perm)
@@ -31,11 +28,7 @@ function permute!(sbm, perm)
     sbm.cumsize .= cumsum(sbm.size)
 end
 
-function order_groups(node_labels, latents::AbstractVector, ::Val{:opt})
-    return align_partitions(node_labels, latents)
-end
-
-function order_groups(node_labels, latents::AbstractVector, ::Val{:greedy})
+function order_groups(node_labels, latents::AbstractVector)
     n = length(node_labels)
     k = length(unique(node_labels))
     sort_perm = sortperm(latents)
@@ -54,3 +47,15 @@ function get_num_obs(A::AbstractMatrix)
     n = size(A, 1)
     return n * (n - 1) ÷ 2
 end
+
+"""
+Align the source and target matrices using optimal transport. This function requires
+the PythonCall.jl package to be loaded
+"""
+function align_matrices end
+
+"""
+Get the permutation aligning source and target matrices using optimal transport. This function requires
+the PythonCall.jl package to be loaded
+"""
+function get_perm_alignment end

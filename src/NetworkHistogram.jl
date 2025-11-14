@@ -21,7 +21,6 @@ import Graphons: _extract_param, convert_to_params, node_labels_to_latents
 include("SymArray.jl")
 @reexport using .FastSymArray
 
-include("utils/align_partition.jl")
 include("distributions/hist_dist.jl")
 include("preprocessor/abstractConvertor.jl")
 include("config_rules/include.jl")
@@ -31,6 +30,6 @@ include("utils/utils_node_labels.jl")
 include("api.jl")
 
 export GreedyParams, nethist, nethist_discrete_edges, ordered_start_labels, RandomGroupSwap,
-       Strict, PreviousBestValue, nethist_binary_edges, align_partitions
+       Strict, PreviousBestValue, nethist_binary_edges
 
 end
