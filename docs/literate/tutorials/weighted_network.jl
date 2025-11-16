@@ -32,8 +32,8 @@ end
 
 Random.seed!(1234);
 n = 2000
-k = 12
-n_bins = 20
+k = 15
+n_bins = 10
 p = 0.8
 
 A = sample_graph(graphon, n) .* Symmetric(rand(Bernoulli(p), n, n));
@@ -59,23 +59,12 @@ using PythonCall
 
 θ_oracle = Graphons._extract_param.(res_oracle.model.θ);
 θ_hat = Graphons._extract_param.(res_new.model.θ);
-perm, plan = NetworkHistogram.get_perm_alignment(θ_oracle, θ_hat);
-
-let
-    fig = Mke.Figure(size = (600, 400))
-    ax = Mke.Axis(fig[1, 1], title = "OT plan heatmap",
-        xlabel = "Fitted groups", ylabel = "Oracle groups")
-    hm = Mke.heatmap!(ax, plan, colormap = :binary)
-    Mke.Colorbar(fig[1, 2], hm)
-    fig
-    Mke.display(fig) #src
-end
+perm = NetworkHistogram.get_perm_alignment(θ_oracle, θ_hat);
 
 fitted_labels = map(x -> perm[x], res_new.labels);
 res_ot_aligned = NetworkHistogram.oracle_estimator(
     A, fitted_labels, NetworkHistogram.UnitIntervalConvertor(n_bins),
     name = "aligned with OT perm");
-# NetworkHistogram.align_res_true_latents!(res_new, res_oracle.labels);
 
 xs = range(0, 1; length = 20)
 
@@ -101,7 +90,7 @@ end
 fig = Mke.Figure(size = (1000, 1000))
 for g in 1:k
     for g2 in 1:g
-        ax = Mke.Axis(fig[g, g2])#, title = "Group $g vs Group $g2", xlabel = "Edge Value",ylabel = "Density")
+        ax = Mke.Axis(fig[g, g2])
         Mke.hidedecorations!(ax)
         viz_one_group!(ax, g, g2, A, ξs, res_oracle,
             res_ot_aligned, xs, p = p, n_viz = 5)
@@ -109,27 +98,3 @@ for g in 1:k
 end
 fig
 Mke.display(fig) #src
-
-##
-
-clustering_res = kmeans(A, k)
-
-res_kmeans = NetworkHistogram.oracle_estimator(
-    A, assignments(clustering_res), NetworkHistogram.UnitIntervalConvertor(n_bins);
-    type_suff_stats = Val(:categorical),
-    name = "k-means");
-
-NetworkHistogram.align_res_true_latents!(res_kmeans, res_oracle.labels);
-
-fig = Mke.Figure(size = (1000, 1000))
-for g in 1:k
-    for g2 in 1:g
-        ax = Mke.Axis(fig[g, g2], title = "Group $g vs Group $g2", xlabel = "Edge Value",
-            ylabel = "Density")
-        viz_one_group!(
-            ax, g, g2, A, ξs, res_oracle, res_kmeans, xs, p = p, n_viz = 5)
-    end
-end
-
-fig
-display(fig) #src

@@ -7,6 +7,12 @@ struct NethistResult{L, M} <: Result
     model::M
 end
 
+function permute!(res::NethistResult, perm::AbstractVector{<:Integer})
+    permute!(res.model, perm)
+    res.labels .= map(x -> perm[x], res.labels)
+    return res
+end
+
 struct GreedySuffStats{M, NodeR <: NodeSwapRule, StopR <: StopRule} <: SBMEstimator
     block_ss::M
     block_ss_swap::M
