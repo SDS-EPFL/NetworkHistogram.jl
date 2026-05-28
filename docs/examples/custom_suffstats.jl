@@ -69,7 +69,7 @@ max_iter = 1_000_000
 stalled_iters = 5_000
 
 data = convertor.(A)
-es_new = NetworkHistogram.GreedySuffStats(
+es_new = NetworkHistogram.make_greedy_suffstats_estimator(
     data, initial_labels, num_categories = num_bins(convertor),
     type_suff_stats = Val(:custom),
     max_iter = max_iter,
