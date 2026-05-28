@@ -72,6 +72,7 @@ using StaticArrays
 
         @test size(a) == (3, 3)
         for i in 1:3, j in 1:3
+
             @test a[i, j] == M[i, j]
         end
 
@@ -144,6 +145,7 @@ using StaticArrays
         # Test deepcopy!
         src = SymArray{Vector{Int}}(undef, 4, 4)
         for j in 1:4, i in j:4
+
             src[i, j] = [i, j]
         end
 
@@ -151,6 +153,7 @@ using StaticArrays
         dest = similar(src)
         deepcopy!(dest, src)
         for j in 1:4, i in j:4
+
             @test dest[i, j] == src[i, j]
             @test !(dest[i, j] === src[i, j])  # Ensure deep copy
         end
@@ -158,10 +161,12 @@ using StaticArrays
         # on assigned dest
         dest2 = similar(src)
         for j in 1:4, i in j:4
+
             dest2[i, j] = [-1, -1]
         end
         deepcopy!(dest2, src)
         for j in 1:4, i in j:4
+
             @test dest2[i, j] == src[i, j]
             @test !(dest2[i, j] === src[i, j])  # Ensure deep copy
         end
@@ -351,6 +356,7 @@ using StaticArrays
 
         # Check values are correct
         for i in 1:3, j in 1:3
+
             @test result1[i, j] ≈ 2.0 + M[i, j]
             @test result2[i, j] ≈ M[i, j] + 2.0
         end
@@ -385,6 +391,7 @@ using StaticArrays
 
         # Check values are correct
         for i in 1:3, j in 1:3
+
             @test result1[i, j] ≈ 2.0 + M[i, j]
             @test result2[i, j] ≈ M[i, j] + 2.0
         end

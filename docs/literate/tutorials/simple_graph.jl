@@ -144,11 +144,13 @@ using Clustering
 
 # ξ = NetworkHistogram.node_labels_to_latents(res.labels, res.model);
 shape_range = 1:(k * (k + 1) ÷ 2 - 1)
-ssm_estimated, criterion_values = Graphons.estimate_ssm(
+ssm_estimated,
+criterion_values = Graphons.estimate_ssm(
     res.model, A, res.labels, shape_range)
 
 using Kneedle
-kr = kneedle(shape_range, criterion_values, "convex_dec", 1, kneedle_scan_algorithm = ScanSmoothing(;S=1.0))
+kr = kneedle(shape_range, criterion_values, "convex_dec", 1,
+    kneedle_scan_algorithm = ScanSmoothing(; S = 1.0))
 #  Let's extract the optimal number of shapes using the Kneedle algorithm:
 
 k_knee = knees(kr)[1]
@@ -201,11 +203,13 @@ end
 
 # ξ = NetworkHistogram.node_labels_to_latents(res.labels, res.model);
 shape_range = 1:(k_kmeans * (k_kmeans + 1) ÷ 2 - 1)
-ssm_estimated, criterion_values = Graphons.estimate_ssm(
+ssm_estimated,
+criterion_values = Graphons.estimate_ssm(
     res_kmeans.model, A, res_kmeans.labels, shape_range)
 
 using Kneedle
-kr = kneedle(shape_range, criterion_values, "convex_dec", 1, kneedle_scan_algorithm = ScanSmoothing(;S=1.0))
+kr = kneedle(shape_range, criterion_values, "convex_dec", 1,
+    kneedle_scan_algorithm = ScanSmoothing(; S = 1.0))
 #  Let's extract the optimal number of shapes using the Kneedle algorithm:
 
 k_knee = knees(kr)[1]

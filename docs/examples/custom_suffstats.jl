@@ -77,7 +77,8 @@ es_new = NetworkHistogram.make_greedy_suffstats_estimator(
     stop_rule = NetworkHistogram.PreviousBestValue(stalled_iters, Inf, :min),
     progress = true
 );
-node_labels_es_new, parameters = NetworkHistogram.estimate!(
+node_labels_es_new,
+parameters = NetworkHistogram.estimate!(
     es_new, data, initial_labels; iter_progress = 10_000)
 
 model_es_new = NetworkHistogram.DecoratedSBM(to_distribution.(convertor, parameters),

@@ -100,11 +100,13 @@ end
 
 using Clustering
 shape_range = 1:30
-ssm_estimated, criterion_values = Graphons.estimate_ssm(
+ssm_estimated,
+criterion_values = Graphons.estimate_ssm(
     res.model, A, true_latents, shape_range);
 
 using Kneedle
-kr = kneedle(shape_range, criterion_values, "convex_dec", 1,  kneedle_scan_algorithm = ScanSmoothing(;S=1.0));
+kr = kneedle(shape_range, criterion_values, "convex_dec", 1,
+    kneedle_scan_algorithm = ScanSmoothing(; S = 1.0));
 #  Let's extract the optimal number of shapes using the Kneedle algorithm:
 
 k_knee = knees(kr)[1]

@@ -29,6 +29,7 @@ function make_k_block(k, generic; data::AbstractArray, dist::D, kwargs...) where
          Consider using more specialized sufficient statistics types when possible."
     k_block = SymArray{GenericSuffStats{eltype(data), D}}(undef, k, k)
     for j in 1:k, i in 1:k
+
         k_block[i, j] = GenericSuffStats(data, dist)
     end
     return k_block

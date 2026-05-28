@@ -57,7 +57,8 @@ function _nethist(
         stop_rule = params.stop_rule,
         kwargs...
     )
-    node_labels, parameters = estimate!(
+    node_labels,
+    parameters = estimate!(
         es, data, labels_start;
         progress = params.display_progress,
         iter_progress = params.progress_freq)

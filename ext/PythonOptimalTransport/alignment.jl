@@ -37,7 +37,8 @@ function get_perm_alignment(
 ) where {T1 <: AbstractVector, T2 <: AbstractVector}
     C1 = jl_to_np(target)
     C2 = jl_to_np(src)
-    dist, log_ = fngw.x.fused_network_gromov_wasserstein2(
+    dist,
+    log_ = fngw.x.fused_network_gromov_wasserstein2(
         M = jl_to_np(zeros(size(target, 1), size(src, 1))),
         C1 = C1,
         C2 = C2,

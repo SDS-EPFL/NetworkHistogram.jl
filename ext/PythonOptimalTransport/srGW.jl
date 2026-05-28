@@ -398,14 +398,16 @@ function mm_lpl1_semirelaxed(
 
     # Inner solver selection
     if gamma_entropy == 0
-        inner_solver = (total_linear_cost, T_init_local) -> cg_semirelaxed(
+        inner_solver = (total_linear_cost,
+            T_init_local) -> cg_semirelaxed(
             C1, p, C2; alpha = alpha, linear_cost = total_linear_cost,
             init_mode = init_mode, T_init = T_init_local, symmetry = symmetry,
             use_log = inner_log, eps = eps_inner, max_iter = max_iter_inner,
             seed = seed, verbose = verbose
         )
     else
-        inner_solver = (total_linear_cost, T_init_local) -> md_semirelaxed(
+        inner_solver = (total_linear_cost,
+            T_init_local) -> md_semirelaxed(
             C1, p, C2, gamma_entropy; alpha = alpha, linear_cost = total_linear_cost,
             init_mode = init_mode, T_init = T_init_local, symmetry = symmetry,
             use_log = inner_log, eps = eps_inner, max_iter = max_iter_inner,
