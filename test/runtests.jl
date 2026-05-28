@@ -1,15 +1,9 @@
-using NetworkHistogram
 using Test
+using LinearAlgebra, SparseArrays
+using NetworkHistogram
 
-using JLD
-include("simple_test_example.jl")
-
-@testset "NetworkHistogram.jl" begin
-    include("pipeline_test.jl")
-    include("test_multilayer.jl")
-    include("proposal_test.jl")
-    include("starting_labels_test.jl")
-    include("oracle_bandwidth_test.jl")
-    include("error_handling_tests.jl")
-    include("config_rules/config_rule_test.jl")
+@testset "Tests" begin
+    include("test_symarray.jl")
+    include("test_pseudo_suff_stats.jl")
+    include("test_hist_dist.jl")
 end

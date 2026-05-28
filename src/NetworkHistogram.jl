@@ -1,29 +1,35 @@
 module NetworkHistogram
+using Accessors
+using StatsBase
+using StaticArrays
+using ProgressMeter
+import StatsAPI: loglikelihood, fit, params
+import Base: convert, eltype, zero
+using Distributions
+using LinearAlgebra
+using ArgCheck
+import Random: randperm, AbstractRNG, rand, shuffle
+import Distributions: logpdf, pdf
+import LogExpFunctions: xlogx
+using IntervalSets
+using Hungarian
+using Reexport
+@reexport using Graphons
 
-using ValueHistories, StatsBase, Random, LinearAlgebra, Kronecker
+import Graphons: _extract_param, convert_to_params, node_labels_to_latents
 
-using Arpack: eigs
-using ArnoldiMethod: partialschur, partialeigen, SR, LR
+include("SymArray.jl")
+@reexport using .FastSymArray
 
-export graphhist, PreviousBestValue, Strict, RandomNodeSwap
-export OrderedStart, RandomStart, EigenStart, DistStart
+include("distributions/hist_dist.jl")
+include("preprocessor/abstractConvertor.jl")
+include("config_rules/include.jl")
+include("pseudo_suff_stats/abstract_suffstat.jl")
+include("GreedySuffStats.jl")
+include("utils/utils_node_labels.jl")
+include("api.jl")
 
-include("group_numbering.jl")
-include("assignment.jl")
-include("history.jl")
+export GreedyParams, nethist, nethist_discrete_edges, ordered_start_labels, RandomGroupSwap,
+       Strict, PreviousBestValue, nethist_binary_edges
 
-include("config_rules/starting_assignment_rule.jl")
-include("config_rules/swap_rule.jl")
-include("config_rules/accept_rule.jl")
-include("config_rules/stop_rule.jl")
-include("config_rules/bandwidth_selection_rule.jl")
-
-include("optimize.jl")
-include("histogram.jl")
-include("proposal.jl")
-
-include("utils.jl")
-
-include("data/gt.jl")
-include("data/datasets.jl")
 end

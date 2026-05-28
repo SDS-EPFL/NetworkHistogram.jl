@@ -1,27 +1,27 @@
 abstract type NodeSwapRule end
 
 struct RandomNodeSwap <: NodeSwapRule end
-
+struct RandomGroupSwap <: NodeSwapRule end
 """
-    select_swap(node_assignment::Assignment, A, ::NodeSwapRule)
+    select_indices_swap(node_assignment::Assignment, ::NodeSwapRule)
 
 Selects two nodes to swap based on the `NodeSwapRule`, the adjacency matrix `A` and the
 current assignment `node_assignment`.
 
 # Implemented rules
 - `RandomNodeSwap()`: Select two nodes at random.
+- `RandomGroupSwap()`: Select two nodes from two different groups at random.
 """
 select_swap
 
-function select_swap(node_assignment::Assignment, A, ::RandomNodeSwap)
-    index1 = rand(1:size(A, 1))
-    label1 = node_assignment.node_labels[index1]
-    index2 = index1
-    for _ in 1:10
-        index2 = rand(1:size(A, 1))
-        if node_assignment.node_labels[index2] != label1
-            break
-        end
-    end
-    return (index1, index2)
+function select_indices_swap(node_labels::AbstractVector{Int}, ::RandomNodeSwap)
+    return Tuple(StatsBase.samplepair(1:length(node_labels)))
+end
+
+function select_indices_swap(node_labels::AbstractVector{Int}, ::RandomGroupSwap,
+        k::Int = length(unique(node_labels)))
+    groups = StatsBase.sample(1:k, 2; replace = false)
+    index1 = rand(findall(x -> x == groups[1], node_labels))
+    index2 = rand(findall(x -> x == groups[2], node_labels))
+    return index1, index2
 end
