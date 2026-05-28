@@ -20,21 +20,21 @@ This function uses [`gromov_wasserstein`](https://pythonot.github.io/gen_modules
 - [`ot.gromov.gromov_wasserstein`](@extref)
 """
 function get_perm_alignment(
-    src::AbstractMatrix{<:Real},
-    target::AbstractMatrix{<:Real};
-    kwargs...,
+        src::AbstractMatrix{<:Real},
+        target::AbstractMatrix{<:Real};
+        kwargs...
 )
-    plan =
-        ot[].gromov.gromov_wasserstein(C2 = jl_to_np(src), C1 = jl_to_np(target), kwargs...)
+    plan = ot[].gromov.gromov_wasserstein(
+        C2 = jl_to_np(src), C1 = jl_to_np(target), kwargs...)
     plan = pyconvert(typeof(target), plan)
     return plan_to_permutation(plan)
 end
 
 function get_perm_alignment(
-    src::AbstractMatrix{T1},
-    target::AbstractMatrix{T2};
-    kwargs...,
-) where {T1<:AbstractVector,T2<:AbstractVector}
+        src::AbstractMatrix{T1},
+        target::AbstractMatrix{T2};
+        kwargs...
+) where {T1 <: AbstractVector, T2 <: AbstractVector}
     C1 = jl_to_np(target)
     C2 = jl_to_np(src)
     dist, log_ = fngw.x.fused_network_gromov_wasserstein2(
@@ -48,7 +48,7 @@ function get_perm_alignment(
         alpha = 1.0,
         beta = 0.0,
         log = true,
-        kwargs...,
+        kwargs...
     )
     plan = pyconvert(Matrix{Float64}, log_["T"])
     return plan_to_permutation(plan)

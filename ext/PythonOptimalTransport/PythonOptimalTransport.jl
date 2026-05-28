@@ -22,8 +22,6 @@ end
 
 include("alignment.jl")
 
-
-
 # look at https://pythonot.github.io/auto_examples/backends/plot_optim_gromov_pytorch.html#sphx-glr-auto-examples-backends-plot-optim-gromov-pytorch-py
 # to implement semi-relaxed gromov-wasserstein ?
 end
